@@ -1,18 +1,30 @@
-사용법
+K-EDGE 안전 원화 수정
 
-1. 이 압축 안의 두 파일을 홈페이지 폴더에 넣기
+1. 아래 2개 파일을 홈페이지 폴더에 넣기
    C:\Users\pc1\Desktop\k-edge-homepage
 
-2. KEDGE_원화가격_자동수정.bat 더블클릭
+- kedge_safe_krw_fix.py
+- RUN_KRW_FIX.bat
 
-3. 끝나면 CMD에서 아래 실행
+2. RUN_KRW_FIX.bat 더블클릭
+
+3. 성공 후 CMD:
+   git status
    git add .
-   git commit -m "fix krw pricing all pages"
+   git commit -m "fix all krw prices safely"
    git push
 
-수정 내용:
-- 월 26 USD → 월 35,000원
-- 월 49 USD → 월 70,000원
-- 월 70 USD → 월 100,000원
-- $26/$49/$70 도 원화로 변경
-- 레퍼럴 20% 할인 가격 문구도 원화로 보강
+수정:
+정상가
+26 USD -> 35,000원
+49 USD -> 70,000원
+70 USD -> 100,000원
+
+레퍼럴가
+21 USD -> 28,000원
+39 USD -> 56,000원
+56 USD -> 80,000원
+
+주의:
+PowerShell 방식 아님.
+UTF-8 파일만 수정하고, 수정 전 자동 백업 폴더를 만듭니다.
