@@ -1,0 +1,18 @@
+PWA 설치가 안 떠서 수정한 완성본입니다.
+
+바뀐 것:
+- manifest.json 정상화
+- service-worker.js 정상화
+- icon-192.png / icon-512.png 생성
+- 모든 HTML에 PWA 연결 코드 추가
+- github_upload_pwa.bat 추가
+
+사용법:
+1) 이 압축을 풉니다.
+2) 안에 있는 파일 전체를 기존 C:\Users\pc1\Desktop\k-edge-homepage 폴더에 덮어씁니다.
+3) github_upload_pwa.bat 더블클릭합니다.
+4) 끝나면 휴대폰 크롬에서 사이트 접속 후 새로고침 2~3번 합니다.
+5) 우측 상단 점 3개에서 앱 설치 또는 홈 화면에 추가를 누릅니다.
+
+주의:
+기존 k-edge-homepage 폴더의 .git 폴더는 삭제하지 마세요.
