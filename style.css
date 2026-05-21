@@ -202,3 +202,64 @@ footer a{color:#31d5ff;text-decoration:none;font-weight:800}
 .signal-table .row span:nth-child(5),
 .signal-table .row span:nth-child(6){font-variant-numeric:tabular-nums}
 .pricing-table .price-row td{white-space:nowrap}
+
+/* ===== 모바일 최적화 v1: PC 유지 / 휴대폰만 적용 ===== */
+@media (max-width:680px){
+  main{width:96vw;}
+  .topbar{height:58px;padding:0 10px;}
+  .brand{gap:6px;}
+  .brand b{font-size:16px;}
+  .kmark{width:28px;height:28px;font-size:24px;}
+  .top-actions{gap:6px;}
+  .join{min-width:72px;height:38px;font-size:13px;}
+
+  .hero-wrap{grid-template-columns:1fr;gap:12px;padding:12px 0;min-height:auto;}
+  .hero-left h1{font-size:26px;line-height:1.35;margin:14px 0 10px;letter-spacing:-1px;}
+  .hero-desc{font-size:14px;line-height:1.5;margin-bottom:16px;}
+  .exchange-pill{font-size:11px;padding:6px 10px;}
+  .hero-buttons{gap:10px;}
+  .btn{height:46px;font-size:15px;padding:0 16px;}
+  .feature-line{font-size:12px;gap:8px;margin-top:16px;}
+
+  .hero-center{transform:scale(.58);transform-origin:center top;height:180px;}
+  .live-edge-card{padding:16px;}
+  .live-edge-card h3{font-size:18px;margin:14px 0;}
+  .live-head b{font-size:22px;}
+  .live-metrics{grid-template-columns:1fr 1fr;gap:8px;}
+  .live-metrics div{padding:10px;}
+  .live-metrics strong{font-size:14px;}
+
+  .stats-panel article{padding:14px;}
+  .stats-panel p{font-size:14px;}
+  .stats-panel b{font-size:22px;}
+  .section h2{font-size:24px;}
+  .sub{font-size:13px;line-height:1.5;}
+
+  .service-card{min-height:auto;padding:18px;}
+  .service-card h3{font-size:18px;}
+  .service-card ul{font-size:14px;line-height:1.7;}
+  .mini-bot{font-size:44px;}
+  .label{right:14px;top:16px;font-size:11px;padding:6px 10px;}
+
+  .benefits{padding:14px;gap:10px;}
+  .benefits article{grid-template-columns:52px 1fr;}
+  .benefits span{width:46px;height:46px;font-size:22px;}
+  .benefits b{font-size:15px;}
+  .benefits p{font-size:13px;}
+
+  .referral-obvious{padding:18px;}
+  .referral-obvious h2{font-size:22px;}
+  .referral-obvious p{font-size:13px;}
+  .referral-banner{padding:20px!important;}
+  .referral-banner h2{font-size:22px!important;}
+  .referral-banner p{font-size:13px!important;}
+
+  .page-hero{margin:28px auto 18px;padding:24px 18px;border-radius:16px;}
+  .page-hero h1{font-size:28px;letter-spacing:-1px;}
+  .page-hero p{font-size:14px;}
+  .guide-grid article{padding:18px;}
+  .product-detail-card{padding:22px;}
+  .product-detail-card h2{font-size:26px;}
+
+  footer{padding:24px 10px;font-size:13px;}
+}
