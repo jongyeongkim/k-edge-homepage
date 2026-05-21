@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="./style.css" />
   <link rel="icon" type="image/png" href="./favicon.png" />
-  <title>K-EDGE | 등록 및 결제</title>
+  <title>K-EDGE | ?�록 �?결제</title>
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#0b1020">
   <meta name="mobile-web-app-capable" content="yes">
@@ -18,75 +18,75 @@
   <header class="topbar">
     <a class="brand" href="./index.html"><span class="kmark">K</span><b>K-EDGE</b></a>
     <nav>
-      <a href="./index.html" data-nav="home">홈</a>
-      <a href="./pricing.html" data-nav="pricing">요금제</a>
-      <a href="./guide.html" data-nav="guide">가이드</a>
-      <a href="./referral.html" data-nav="referral">레퍼럴</a>
-      <a href="./payment.html" data-nav="payment">등록</a>
+      <a href="./index.html" data-nav="home">??/a>
+      <a href="./pricing.html" data-nav="pricing">?�금??/a>
+      <a href="./guide.html" data-nav="guide">가?�드</a>
+      <a href="./referral.html" data-nav="referral">?�퍼??/a>
+      <a href="./payment.html" data-nav="payment">?�록</a>
       <a href="./support.html" data-nav="support">문의</a>
-      <a href="./mypage.html" data-nav="mypage">내정보</a>
+      <a href="./mypage.html" data-nav="mypage">?�정�?/a>
     </nav>
     <div class="top-actions" id="topAuthArea">
-      <a class="login" href="./login.html">로그인</a>
-      <a class="join" href="./login.html">회원가입</a>
+      <a class="login" href="./login.html">로그??/a>
+      <a class="join" href="./login.html">?�원가??/a>
     </div>
   </header>
   <main>
     <section class="page-hero">
       <p class="exchange-pill">REGISTER</p>
-      <h1>VIP / BOT 등록 센터</h1>
-      <p>상품 선택 → 설명 확인 → 결제정보 확인 → 등록하면 DB에 저장됩니다.</p>
+      <h1>VIP / BOT ?�록 ?�터</h1>
+      <p>?�품 ?�택 ???�명 ?�인 ??결제?�보 ?�인 ???�록?�면 DB???�?�됩?�다.</p>
     </section>
 
     <section class="section payment">
       <div class="rate-box">
-        <b>실시간 환율</b>
-        <span>1 USD ≈ <strong id="usdKrwText">불러오는 중</strong></span>
-        <small>등록 금액은 접속 시점의 환율 기준으로 원화 예상가를 표시합니다.</small>
+        <b>?�시�??�율</b>
+        <span>1 USD ??<strong id="usdKrwText">불러?�는 �?/strong></span>
+        <small>?�록 금액?� ?�속 ?�점???�율 기�??�로 ?�화 ?�상가�??�시?�니??</small>
       </div>
 
       <div class="register-grid">
         <article class="register-card">
-          <h3>가입 상품 선택</h3>
+          <h3>가???�품 ?�택</h3>
           <select id="productSelect" onchange="changeProductInfo()">
             <option value="VIP">VIP</option>
-            <option value="SEMI">VIP + 반자동</option>
-            <option value="AUTO">VIP + 자동</option>
+            <option value="SEMI">VIP + 반자??/option>
+            <option value="AUTO">VIP + ?�동</option>
           </select>
 
           <div id="productInfo" class="product-info"></div>
 
           <h3>결제 방식</h3>
           <select id="payType" onchange="changePayInfo()">
-            <option value="USDT">USDT 테더</option>
-            <option value="BANK">국내 계좌</option>
-            <option value="CARD">신용카드 준비중</option>
+            <option value="USDT">USDT ?�더</option>
+            <option value="BANK">�?�� 계좌</option>
+            <option value="CARD">?�용카드 준비중</option>
           </select>
 
           <div id="payInfo" class="pay-info"></div>
 
-          <input id="payName" placeholder="입금자명 또는 보내는 사람 이름">
-          <input id="txidInput" placeholder="TxID / 입금 메모 / 확인용 내용">
-          <button type="button" onclick="submitVipRequest()">등록 신청하기</button>
+          <input id="payName" placeholder="?�금?�명 ?�는 보내???�람 ?�름">
+          <input id="txidInput" placeholder="TxID / ?�금 메모 / ?�인???�용">
+          <button type="button" onclick="submitVipRequest()">?�록 ?�청?�기</button>
           <p id="vipRequestMsg" class="form-msg"></p>
         </article>
 
         <article class="register-card">
-          <h3>등록 안내</h3>
+          <h3>?�록 ?�내</h3>
           <div class="product-info">
-            <h4>진행 순서</h4>
+            <h4>진행 ?�서</h4>
             <ul>
-              <li>회원가입 또는 로그인</li>
-              <li>가입 상품 선택</li>
-              <li>결제수단 선택</li>
-              <li>입금자명 또는 TxID 입력</li>
-              <li>관리자 확인 후 승인</li>
+              <li>?�원가???�는 로그??/li>
+              <li>가???�품 ?�택</li>
+              <li>결제?�단 ?�택</li>
+              <li>?�금?�명 ?�는 TxID ?�력</li>
+              <li>관리자 ?�인 ???�인</li>
             </ul>
           </div>
           <div class="admin-contact">
             <b>빠른 관리자 문의</b>
-            <p>텔레그램: @listing0517</p>
-            <a class="btn ghost full" href="https://t.me/listing0517" target="_blank">관리자 텔레그램 문의</a>
+            <p>?�레그램: @listing0517</p>
+            <a class="btn ghost full" href="https://t.me/listing0517" target="_blank">관리자 ?�레그램 문의</a>
           </div>
         </article>
       </div>
@@ -95,9 +95,9 @@
   <footer>
   <b>K-EDGE TEAM</b>
   <p>Telegram: <a href="https://t.me/listing0517" target="_blank">@listing0517</a></p>
-  <p>본 서비스는 정보 제공 목적이며, 투자 판단과 책임은 이용자 본인에게 있습니다.</p>
-  <p class="footer-note">실시간 데이터는 시장 상황에 따라 변동될 수 있으며 참고용 정보입니다.</p>
-  <p><a href="./referral.html">레퍼럴</a> · <a href="./pricing.html">요금제</a> · <a href="./support.html">문의</a></p>
+  <p>�??�비?�는 ?�보 ?�공 목적?�며, ?�자 ?�단�?책임?� ?�용??본인?�게 ?�습?�다.</p>
+  <p class="footer-note">?�시�??�이?�는 ?�장 ?�황???�라 변?�될 ???�으�?참고???�보?�니??</p>
+  <p><a href="./referral.html">?�퍼??/a> · <a href="./pricing.html">?�금??/a> · <a href="./support.html">문의</a></p>
 </footer>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./script.js"></script>
