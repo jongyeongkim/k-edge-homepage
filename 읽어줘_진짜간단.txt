@@ -1,0 +1,6 @@
+1) 이 압축을 풀기
+2) 안에 있는 파일 전체 선택(Ctrl+A)
+3) 기존 폴더 C:\Users\pc1\Desktop\k-edge-homepage 에 붙여넣기
+4) 덮어쓰기 예
+5) github_upload_pwa_더블클릭.bat 더블클릭
+6) 끝

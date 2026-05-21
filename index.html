@@ -6,12 +6,12 @@
   <link rel="stylesheet" href="./style.css" />
   <link rel="icon" type="image/png" href="./favicon.png" />
   <title>K-EDGE | 실제 엣지 기반 양방 감지</title>
-  <link rel="manifest" href="./manifest.json" />
-  <meta name="theme-color" content="#0b1020" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-title" content="K-EDGE" />
-  <link rel="apple-touch-icon" href="./icon-192.png" />
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0b1020">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="K-EDGE">
+  <link rel="apple-touch-icon" href="/icon-192.png">
 </head>
 <body data-page="home">
   <div class="bg-grid"></div>
@@ -170,7 +170,7 @@
 <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", function () {
-    navigator.serviceWorker.register("./service-worker.js").catch(function (err) {
+    navigator.serviceWorker.register("/service-worker.js").catch(function (err) {
       console.log("Service Worker registration failed:", err);
     });
   });
