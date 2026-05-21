@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="./style.css" />
   <link rel="icon" type="image/png" href="./favicon.png" />
-  <title>K-EDGE | ?�정�?/title>
+  <title>K-EDGE | 내정보</title>
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#0b1020">
   <meta name="mobile-web-app-capable" content="yes">
@@ -18,52 +18,52 @@
   <header class="topbar">
     <a class="brand" href="./index.html"><span class="kmark">K</span><b>K-EDGE</b></a>
     <nav>
-      <a href="./index.html" data-nav="home">??/a>
-      <a href="./pricing.html" data-nav="pricing">?�금??/a>
-      <a href="./guide.html" data-nav="guide">가?�드</a>
-      <a href="./referral.html" data-nav="referral">?�퍼??/a>
-      <a href="./payment.html" data-nav="payment">?�록</a>
+      <a href="./index.html" data-nav="home">홈</a>
+      <a href="./pricing.html" data-nav="pricing">요금제</a>
+      <a href="./guide.html" data-nav="guide">가이드</a>
+      <a href="./referral.html" data-nav="referral">레퍼럴</a>
+      <a href="./payment.html" data-nav="payment">등록</a>
       <a href="./support.html" data-nav="support">문의</a>
-      <a href="./mypage.html" data-nav="mypage">?�정�?/a>
+      <a href="./mypage.html" data-nav="mypage">내정보</a>
     </nav>
     <div class="top-actions" id="topAuthArea">
-      <a class="login" href="./login.html">로그??/a>
-      <a class="join" href="./join.html">?�원가??/a>
+      <a class="login" href="./login.html">로그인</a>
+      <a class="join" href="./join.html">회원가입</a>
     </div>
   </header>
   <main>
     <section class="page-hero">
       <p class="exchange-pill">MY PAGE</p>
-      <h1>?�정�?/h1>
-      <p>로그???�태?� 구독 ?�보�??�인?�니??</p>
+      <h1>내정보</h1>
+      <p>로그인 상태와 구독 정보를 확인합니다.</p>
     </section>
 
     <section class="section auth-section">
-      <div class="auth-status" id="authStatus"><b>로그???�태 ?�인 �?..</b></div>
+      <div class="auth-status" id="authStatus"><b>로그인 상태 확인 중...</b></div>
 
       <div class="mypage-grid" id="mypageLoggedOut" style="display:none;">
         <div class="auth-card center-card">
-          <h3>로그?�이 ?�요?�니??/h3>
-          <p>?�정�??�인?� 로그?????�용?????�습?�다.</p>
-          <a class="btn primary full" href="./login.html">로그?�하�?/a>
+          <h3>로그인이 필요합니다</h3>
+          <p>내정보 확인은 로그인 후 이용할 수 있습니다.</p>
+          <a class="btn primary full" href="./login.html">로그인하기</a>
           <br><br>
-          <a class="btn ghost full" href="./join.html">?�원가??/a>
+          <a class="btn ghost full" href="./join.html">회원가입</a>
         </div>
       </div>
 
       <div class="mypage-grid" id="mypageLoggedIn" style="display:none;">
         <div class="auth-card profile-card">
-          <h3>??계정</h3>
-          <p>?�메??: <span id="myEmail">-</span></p>
-          <p>구독?�태 : <span id="myPlan">FREE</span></p>
-          <p>?�레그램 : <span id="myTelegram">미등�?/span></p>
-          <button onclick="logoutUser()">로그?�웃</button>
+          <h3>내 계정</h3>
+          <p>이메일 : <span id="myEmail">-</span></p>
+          <p>구독상태 : <span id="myPlan">FREE</span></p>
+          <p>텔레그램 : <span id="myTelegram">미등록</span></p>
+          <button onclick="logoutUser()">로그아웃</button>
         </div>
         <div class="auth-card">
-          <h3>빠른 ?�동</h3>
-          <a class="btn primary full" href="./payment.html">?�록 ?�터</a>
+          <h3>빠른 이동</h3>
+          <a class="btn primary full" href="./payment.html">등록 센터</a>
           <br><br>
-          <a class="btn ghost full" href="./support.html">문의?�터</a>
+          <a class="btn ghost full" href="./support.html">문의센터</a>
         </div>
       </div>
     </section>
@@ -71,9 +71,9 @@
   <footer>
   <b>K-EDGE TEAM</b>
   <p>Telegram: <a href="https://t.me/listing0517" target="_blank">@listing0517</a></p>
-  <p>�??�비?�는 ?�보 ?�공 목적?�며, ?�자 ?�단�?책임?� ?�용??본인?�게 ?�습?�다.</p>
-  <p class="footer-note">?�시�??�이?�는 ?�장 ?�황???�라 변?�될 ???�으�?참고???�보?�니??</p>
-  <p><a href="./referral.html">?�퍼??/a> · <a href="./pricing.html">?�금??/a> · <a href="./support.html">문의</a></p>
+  <p>본 서비스는 정보 제공 목적이며, 투자 판단과 책임은 이용자 본인에게 있습니다.</p>
+  <p class="footer-note">실시간 데이터는 시장 상황에 따라 변동될 수 있으며 참고용 정보입니다.</p>
+  <p><a href="./referral.html">레퍼럴</a> · <a href="./pricing.html">요금제</a> · <a href="./support.html">문의</a></p>
 </footer>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./script.js"></script>
@@ -89,4 +89,3 @@ if ("serviceWorker" in navigator) {
 </script>
 </body>
 </html>
-
