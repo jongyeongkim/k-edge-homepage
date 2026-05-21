@@ -421,3 +421,42 @@ footer a{color:#31d5ff;text-decoration:none;font-weight:800}
   .service-card .label{min-width:auto}
   .discount-line span{font-size:12px;padding:7px 10px}
 }
+
+
+/* ===== K-EDGE 원화/레퍼럴/카드 줄 정렬 강제 보강 ===== */
+.service-card{
+  display:flex!important;
+  flex-direction:column!important;
+}
+.service-card ul{
+  flex:1!important;
+}
+.service-card .outline{
+  margin-top:auto!important;
+  min-height:52px!important;
+  font-size:17px!important;
+}
+.discount-line{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:8px!important;
+  margin-top:12px!important;
+}
+.discount-line span{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding:8px 12px!important;
+  border-radius:999px!important;
+  border:1px solid rgba(255,202,56,.42)!important;
+  background:rgba(255,202,56,.10)!important;
+  color:#ffca38!important;
+  font-weight:950!important;
+  font-size:14px!important;
+  white-space:nowrap!important;
+}
+@media(max-width:680px){
+  .service-card .outline{min-height:46px!important;font-size:15px!important}
+  .discount-line span{font-size:12px!important;padding:7px 10px!important}
+}
+
