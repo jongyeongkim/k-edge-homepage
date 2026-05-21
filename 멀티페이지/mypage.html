@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="./style.css" />
+  <title>K-EDGE | 내정보</title>
+</head>
+<body data-page="mypage">
+  <div class="bg-grid"></div>
+  <header class="topbar">
+    <a class="brand" href="./index.html"><span class="kmark">K</span><b>K-EDGE</b></a>
+    <nav>
+      <a href="./index.html" data-nav="home">홈</a>
+      <a href="./pricing.html" data-nav="pricing">요금제</a>
+      <a href="./guide.html" data-nav="guide">가이드</a>
+      <a href="./payment.html" data-nav="payment">등록</a>
+      <a href="./support.html" data-nav="support">문의</a>
+      <a href="./mypage.html" data-nav="mypage">내정보</a>
+    </nav>
+    <div class="top-actions" id="topAuthArea">
+      <a class="login" href="./login.html">로그인</a>
+      <a class="join" href="./login.html">회원가입</a>
+    </div>
+  </header>
+  <main>
+    <section class="page-hero">
+      <p class="exchange-pill">MY PAGE</p>
+      <h1>내정보</h1>
+      <p>로그인 상태와 구독 정보를 확인합니다.</p>
+    </section>
+
+    <section class="section auth-section">
+      <div class="auth-status" id="authStatus"><b>로그인 상태 확인 중...</b></div>
+      <div class="auth-grid">
+        <div class="auth-card"><h3>내 정보</h3><p>이메일 : <span id="myEmail">-</span></p><p>구독상태 : <span id="myPlan">FREE</span></p><p>텔레그램 : <span id="myTelegram">미등록</span></p><button onclick="logoutUser()">로그아웃</button></div>
+        <div class="auth-card"><h3>빠른 이동</h3><a class="btn primary full" href="./payment.html">등록 센터</a><br><br><a class="btn ghost full" href="./support.html">문의센터</a></div>
+      </div>
+    </section>
+  </main>
+  <footer><b>K-EDGE</b><p>본 서비스는 정보 제공 목적이며, 투자 판단과 책임은 이용자 본인에게 있습니다.</p></footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./script.js"></script>
+</body>
+</html>

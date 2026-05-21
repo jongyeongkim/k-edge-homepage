@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="./style.css" />
+  <title>K-EDGE | 기능 가이드</title>
+</head>
+<body data-page="guide">
+  <div class="bg-grid"></div>
+  <header class="topbar">
+    <a class="brand" href="./index.html"><span class="kmark">K</span><b>K-EDGE</b></a>
+    <nav>
+      <a href="./index.html" data-nav="home">홈</a>
+      <a href="./pricing.html" data-nav="pricing">요금제</a>
+      <a href="./guide.html" data-nav="guide">가이드</a>
+      <a href="./payment.html" data-nav="payment">등록</a>
+      <a href="./support.html" data-nav="support">문의</a>
+      <a href="./mypage.html" data-nav="mypage">내정보</a>
+    </nav>
+    <div class="top-actions" id="topAuthArea">
+      <a class="login" href="./login.html">로그인</a>
+      <a class="join" href="./login.html">회원가입</a>
+    </div>
+  </header>
+  <main>
+    <section class="page-hero">
+      <p class="exchange-pill">GUIDE</p>
+      <h1>기능 가이드</h1>
+      <p>추상적인 AI 문구 대신, 실제로 어떤 데이터를 보는지 기준을 나눠 설명합니다.</p>
+    </section>
+
+    <section class="guide-grid">
+      <article><span>🔍</span><h3>실체결 가능금액 계산</h3><p>호가창에서 실제로 빠져나갈 수 있는 금액을 기준으로 알림합니다. 단순 괴리율이 아니라 체결 가능성을 같이 봅니다.</p></article>
+      <article><span>📊</span><h3>매수벽 / 매도벽 분석</h3><p>국내 현물과 해외 선물의 1% 벽을 확인해 유동성 기반으로 현실적인 진입 가능성을 판단합니다.</p></article>
+      <article><span>⚖️</span><h3>실제 엣지 계산</h3><p>코인 괴리에서 BTC 괴리를 제외해 시장 전체 프리미엄을 제거한 실제 기회만 따로 봅니다.</p></article>
+      <article><span>🚨</span><h3>초고속 입출금 공지</h3><p>업비트·빗썸·코인원 입출금 재개/정지 공지를 빠르게 감지하고 후속 시장 변화를 추적합니다.</p></article>
+      <article><span>🐋</span><h3>고래 입금 후속효과</h3><p>대형 입금, 거래소 이동, 핫월렛 변화를 감지하고 1시간 후속 흐름까지 추적하는 구조입니다.</p></article>
+      <article><span>🚀</span><h3>상장 기대감 탐지</h3><p>재단 공지, 마이그레이션, 메인넷, 브릿지, 지갑 활성화 같은 상장 전조 신호를 분리합니다.</p></article>
+      <article><span>🧬</span><h3>DEX 선행 매집 / 생존 추적</h3><p>신규 토큰 유동성, 거래량, 생존 가능성을 A/B/C 등급으로 나눠 단순 밈펌프와 구분합니다.</p></article>
+      <article><span>📈</span><h3>BTC Wave 분석</h3><p>엘리엇, 다이버전스, ATR, 무효가, 목표가를 기준으로 BTC 방향성 브리핑을 제공합니다.</p></article>
+    </section>
+  </main>
+  <footer><b>K-EDGE</b><p>본 서비스는 정보 제공 목적이며, 투자 판단과 책임은 이용자 본인에게 있습니다.</p></footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./script.js"></script>
+</body>
+</html>

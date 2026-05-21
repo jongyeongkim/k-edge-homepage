@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="icon" type="image/png" href="./favicon.png" />
+  <title>K-EDGE | 요금제 비교</title>
+</head>
+<body data-page="pricing">
+  <div class="bg-grid"></div>
+  <header class="topbar">
+    <a class="brand" href="./index.html"><span class="kmark">K</span><b>K-EDGE</b></a>
+    <nav>
+      <a href="./index.html" data-nav="home">홈</a>
+      <a href="./pricing.html" data-nav="pricing">요금제</a>
+      <a href="./guide.html" data-nav="guide">가이드</a>
+      <a href="./referral.html" data-nav="referral">레퍼럴</a>
+      <a href="./payment.html" data-nav="payment">등록</a>
+      <a href="./support.html" data-nav="support">문의</a>
+      <a href="./mypage.html" data-nav="mypage">내정보</a>
+    </nav>
+    <div class="top-actions" id="topAuthArea">
+      <a class="login" href="./login.html">로그인</a>
+      <a class="join" href="./login.html">회원가입</a>
+    </div>
+  </header>
+  <main>
+    <section class="page-hero">
+      <p class="exchange-pill">PRICING</p>
+      <h1>요금제 비교</h1>
+      <p>VIP부터 유료 정보 전체 제공, VIP+반자동/자동은 매매 실행 방식이 추가됩니다.</p>
+    </section>
+
+    <section class="section">
+      <div class="rate-box">
+        <b>실시간 환율</b>
+        <span>1 USD ≈ <strong id="usdKrwText">불러오는 중</strong></span>
+        <small>환율 정보를 불러오지 못할 경우 기본값으로 표시됩니다.</small>
+      </div>
+
+      <div class="pricing-table-wrap">
+        <table class="pricing-table">
+          <thead>
+            <tr><th>기능</th><th>FREE</th><th>VIP</th><th>VIP + 반자동</th><th>VIP + 자동</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>알림속도</td><td>5분 지연</td><td>실시간</td><td>실시간</td><td>실시간</td></tr>
+            <tr><td>실체결 가능금액</td><td>일부</td><td>✅</td><td>✅</td><td>✅</td></tr>
+            <tr><td>매수/매도벽 분석</td><td>❌</td><td>✅</td><td>✅</td><td>✅</td></tr>
+            <tr><td>현물-선물 차익거래</td><td>❌</td><td>✅</td><td>✅</td><td>✅</td></tr>
+            <tr><td>김프/역프</td><td>일부</td><td>✅</td><td>✅</td><td>✅</td></tr>
+            <tr><td>입출금 공지</td><td>일부</td><td>✅</td><td>✅</td><td>✅</td></tr>
+            <tr><td>입출금 후 시장 분석</td><td>❌</td><td>✅</td><td>✅</td><td>✅</td></tr>
+            <tr><td>고래 추적</td><td>❌</td><td>✅</td><td>✅</td><td>✅</td></tr>
+            <tr><td>상장 기대감</td><td>❌</td><td>✅</td><td>✅</td><td>✅</td></tr>
+            <tr><td>DEX 생존추적</td><td>❌</td><td>✅</td><td>✅</td><td>✅</td></tr>
+            <tr><td>BTC Wave</td><td>일부</td><td>✅</td><td>✅</td><td>✅</td></tr>
+            <tr><td>텔레그램</td><td>공개방</td><td>VIP 전용</td><td>VIP + 개인방</td><td>VIP + 개인방</td></tr>
+            <tr><td>자동 진입</td><td>❌</td><td>❌</td><td>승인형</td><td>완전자동</td></tr>
+            <tr><td>자동 청산</td><td>❌</td><td>❌</td><td>일부 지원</td><td>✅</td></tr>
+            <tr><td>API 연동</td><td>❌</td><td>❌</td><td>✅</td><td>✅</td></tr>
+            <tr><td>운영 방식</td><td>무료 정보</td><td>정보 제공</td><td>반자동</td><td>24시간 자동</td></tr>
+            <tr class="price-row"><td>가격</td><td>무료</td><td><span data-usd-price="26">월 26 USD</span></td><td><span data-usd-price="49">월 49 USD</span></td><td><span data-usd-price="70">월 70 USD</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="cta-row">
+        <a class="btn primary" href="./payment.html?product=VIP">VIP 등록</a>
+        <a class="btn ghost" href="./payment.html?product=SEMI">VIP + 반자동</a>
+        <a class="btn ghost" href="./payment.html?product=AUTO">VIP + 자동</a>
+      </div>
+    </section>
+  </main>
+  <footer>
+  <b>K-EDGE TEAM</b>
+  <p>Telegram: <a href="https://t.me/listing0517" target="_blank">@listing0517</a></p>
+  <p>본 서비스는 정보 제공 목적이며, 투자 판단과 책임은 이용자 본인에게 있습니다.</p>
+  <p class="footer-note">실시간 데이터는 시장 상황에 따라 변동될 수 있으며 참고용 정보입니다.</p>
+  <p><a href="./referral.html">레퍼럴</a> · <a href="./pricing.html">요금제</a> · <a href="./support.html">문의</a></p>
+</footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./script.js"></script>
+</body>
+</html>
