@@ -28,22 +28,29 @@
     </nav>
     <div class="top-actions" id="topAuthArea">
       <a class="login" href="./login.html">로그인</a>
-      <a class="join" href="./login.html">회원가입</a>
+      <a class="join" href="./join.html">회원가입</a>
     </div>
   </header>
   <main>
-    <section class="page-hero">
-      <p class="exchange-pill">LOGIN</p>
-      <h1>회원 서비스</h1>
-      <p>이메일 회원가입 / 로그인 / 텔레그램 ID 저장 기능이 연결되었습니다.</p>
-    </section>
+    <section class="auth-shell">
+      <div class="auth-box auth-box-single">
+        <p class="exchange-pill">LOGIN</p>
+        <h1>K-EDGE 로그인</h1>
+        <p class="auth-sub">가입한 이메일과 비밀번호로 로그인하세요.</p>
 
-    <section id="auth" class="section auth-section">
-      <div class="auth-status" id="authStatus"><b>로그인 상태 확인 중...</b></div>
-      <div class="auth-grid">
-        <div class="auth-card"><h3>로그인</h3><input id="loginEmail" placeholder="이메일"><input id="loginPassword" placeholder="비밀번호" type="password"><button onclick="loginUser()">로그인</button><p id="loginMsg"></p></div>
-        <div class="auth-card"><h3>회원가입</h3><input id="signupEmail" placeholder="이메일"><input id="signupPassword" placeholder="비밀번호" type="password"><input id="signupTelegram" placeholder="텔레그램 ID 예: @kedge_user"><button onclick="signupUser()">회원가입</button><p id="signupMsg"></p></div>
-        <div class="auth-card"><h3>내 정보</h3><p>이메일 : <span id="myEmail">-</span></p><p>구독상태 : <span id="myPlan">FREE</span></p><p>텔레그램 : <span id="myTelegram">미등록</span></p><button onclick="logoutUser()">로그아웃</button></div>
+        <label>이메일</label>
+        <input id="loginEmail" type="email" placeholder="example@email.com" autocomplete="email">
+
+        <label>비밀번호</label>
+        <input id="loginPassword" type="password" placeholder="비밀번호" autocomplete="current-password">
+
+        <button class="auth-main-btn" onclick="loginUser()">로그인</button>
+        <p class="auth-msg" id="loginMsg"></p>
+
+        <div class="auth-links">
+          <a href="./join.html">회원이 아니신가요? 회원가입</a>
+          <button type="button" onclick="resetPassword()">비밀번호 찾기</button>
+        </div>
       </div>
     </section>
   </main>

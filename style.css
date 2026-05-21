@@ -263,3 +263,110 @@ footer a{color:#31d5ff;text-decoration:none;font-weight:800}
 
   footer{padding:24px 10px;font-size:13px;}
 }
+
+
+/* ===== K-EDGE 로그인/회원가입 UX 개선 ===== */
+.auth-shell{
+  width:min(520px,92vw);
+  margin:64px auto 40px;
+}
+.auth-box{
+  border:1px solid rgba(145,176,255,.24);
+  background:
+    radial-gradient(circle at 20% 0%,rgba(49,213,255,.16),transparent 34%),
+    linear-gradient(150deg,rgba(12,30,58,.82),rgba(3,9,20,.88));
+  border-radius:22px;
+  padding:34px 28px;
+  box-shadow:0 25px 80px rgba(0,0,0,.32);
+}
+.auth-box h1{
+  margin:18px 0 8px;
+  font-size:34px;
+  letter-spacing:-1px;
+}
+.auth-sub{
+  margin:0 0 24px;
+  color:#b8c4d4;
+  line-height:1.6;
+}
+.auth-box label{
+  display:block;
+  margin:14px 0 7px;
+  color:#dce7f7;
+  font-weight:900;
+}
+.auth-box input{
+  width:100%;
+  height:50px;
+  border:1px solid rgba(145,176,255,.28);
+  background:#061225;
+  color:#fff;
+  border-radius:11px;
+  padding:0 14px;
+  font-size:15px;
+  outline:none;
+}
+.auth-box input:focus{
+  border-color:#31d5ff;
+  box-shadow:0 0 0 3px rgba(49,213,255,.11);
+}
+.auth-main-btn{
+  width:100%;
+  height:52px;
+  border:0;
+  border-radius:12px;
+  margin-top:22px;
+  background:linear-gradient(135deg,#1be4ff,#2376ff 52%,#8a39ff);
+  color:#fff;
+  font-size:17px;
+  font-weight:950;
+}
+.auth-msg{
+  min-height:24px;
+  margin:14px 0 0;
+  font-weight:950;
+  color:#ff7373;
+  line-height:1.5;
+}
+.auth-msg.success{color:#29ff9a}
+.auth-links{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-top:18px;
+  flex-wrap:wrap;
+}
+.auth-links a,
+.auth-links button{
+  color:#31d5ff;
+  font-weight:900;
+  background:none;
+  border:0;
+  padding:0;
+  font-size:14px;
+}
+.auth-links.only-center{justify-content:center}
+.mypage-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+}
+.center-card{
+  max-width:520px;
+  margin:0 auto;
+  text-align:center;
+}
+.profile-card p{
+  font-size:16px;
+  color:#dce7f7;
+  font-weight:800;
+}
+.profile-card span{color:#31d5ff;font-weight:950}
+@media(max-width:700px){
+  .auth-shell{margin:30px auto 24px}
+  .auth-box{padding:24px 18px;border-radius:18px}
+  .auth-box h1{font-size:27px}
+  .auth-links{flex-direction:column;align-items:flex-start}
+  .mypage-grid{grid-template-columns:1fr}
+}
