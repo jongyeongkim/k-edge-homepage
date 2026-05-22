@@ -9,23 +9,17 @@
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#0b1020">
 </head>
-
 <body data-page="admin">
   <div class="bg-grid"></div>
 
   <header class="topbar">
-    <a class="brand" href="./index.html">
-      <span class="kmark">K</span>
-      <b>K-EDGE</b>
-    </a>
-
+    <a class="brand" href="./index.html"><span class="kmark">K</span><b>K-EDGE</b></a>
     <nav>
       <a href="./index.html" data-nav="home">홈</a>
       <a href="./payment.html" data-nav="payment">등록</a>
       <a href="./mypage.html" data-nav="mypage">내정보</a>
       <a href="./admin.html" data-nav="admin">운영자</a>
     </nav>
-
     <div class="top-actions" id="topAuthArea">
       <a class="login" href="./login.html">로그인</a>
       <a class="join" href="./join.html">회원가입</a>
@@ -43,18 +37,14 @@
       <div class="auth-box center-card">
         <p class="exchange-pill">ADMIN LOGIN</p>
         <h1>운영자 인증</h1>
-        <p class="auth-sub">초기 관리자 코드는 <b>0517</b> 입니다.</p>
-
+        <p class="auth-sub">관리자 코드는 <b>0517</b> 입니다.</p>
         <input id="adminPin" type="password" placeholder="관리자 코드 입력" autocomplete="off">
-
-        <button type="button" class="auth-main-btn" onclick="adminLogin()">운영자 로그인</button>
-
+        <button type="button" class="auth-main-btn" onclick="loginAdmin()">운영자 로그인</button>
         <p id="adminLoginMsg" class="auth-msg"></p>
       </div>
     </section>
 
     <section id="adminApp" class="admin-app" style="display:none;">
-
       <div class="admin-top-actions">
         <button type="button" onclick="renderAdminDashboard()">새로고침</button>
         <button type="button" onclick="exportAdminData()">백업 다운로드</button>
@@ -76,7 +66,6 @@
             <h2>가입 신청 대기 / 승인 관리</h2>
             <p>VIP / VIP Lite / VIP Pro 신청을 확인하고 승인 또는 거절합니다.</p>
           </div>
-
           <div class="admin-filters">
             <select id="adminStatusFilter">
               <option value="ALL">전체</option>
@@ -87,11 +76,9 @@
               <option value="SEMI">VIP Lite</option>
               <option value="AUTO">VIP Pro</option>
             </select>
-
             <input id="adminSearch" placeholder="이메일 / 텔레그램 / 입금자명 / TxID 검색">
           </div>
         </div>
-
         <div id="adminRequestList" class="admin-list">
           <div class="admin-empty">신청 내역을 불러오는 중...</div>
         </div>
@@ -103,12 +90,10 @@
             <h2>회원 관리</h2>
             <p>승인된 회원의 등급, 만료일, 연동 정보를 확인합니다.</p>
           </div>
-
           <div class="admin-filters">
             <input id="adminUserSearch" placeholder="회원 검색">
           </div>
         </div>
-
         <div id="adminUserList" class="admin-user-list">
           <div class="admin-empty">회원 데이터를 불러오는 중...</div>
         </div>
@@ -118,19 +103,16 @@
         <div class="admin-panel-head">
           <div>
             <h2>운영 설정</h2>
-            <p>현재 관리자 코드는 프론트 임시 인증입니다. 실제 운영 시 서버 인증으로 교체하는 것을 권장합니다.</p>
+            <p>관리자 코드를 변경합니다.</p>
           </div>
         </div>
-
         <div class="admin-setting-grid">
           <input id="oldAdminPin" type="password" placeholder="기존 관리자 코드">
           <input id="newAdminPin" type="password" placeholder="새 관리자 코드">
           <button type="button" onclick="adminChangePin()">관리자 코드 변경</button>
         </div>
-
         <p id="adminSettingMsg" class="form-msg"></p>
       </section>
-
     </section>
   </main>
 
@@ -141,5 +123,52 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./script.js"></script>
+
+  <script>
+    // 운영자 로그인 긴급 고정 패치: 외부 script.js 함수명 문제와 관계없이 동작
+    window.loginAdmin = function(){
+      const pin = String(document.getElementById("adminPin")?.value || "").replace(/\s/g, "");
+      const saved = localStorage.getItem("kedge_admin_pin") || "0517";
+      const msg = document.getElementById("adminLoginMsg");
+
+      if(pin !== saved){
+        if(msg) msg.textContent = "❌ 관리자 코드가 틀렸습니다.";
+        return;
+      }
+
+      sessionStorage.setItem("kedge_admin_ok", "1");
+      document.getElementById("adminLoginBox").style.display = "none";
+      document.getElementById("adminApp").style.display = "block";
+
+      if(typeof window.renderAdminDashboard === "function"){
+        window.renderAdminDashboard();
+      }
+    };
+
+    window.adminLogin = window.loginAdmin;
+    window.checkAdminPin = window.loginAdmin;
+
+    window.adminLogout = function(){
+      sessionStorage.removeItem("kedge_admin_ok");
+      location.reload();
+    };
+
+    document.addEventListener("DOMContentLoaded", function(){
+      const pin = document.getElementById("adminPin");
+      if(pin){
+        pin.addEventListener("keydown", function(e){
+          if(e.key === "Enter") window.loginAdmin();
+        });
+      }
+
+      if(sessionStorage.getItem("kedge_admin_ok") === "1"){
+        document.getElementById("adminLoginBox").style.display = "none";
+        document.getElementById("adminApp").style.display = "block";
+        if(typeof window.renderAdminDashboard === "function"){
+          window.renderAdminDashboard();
+        }
+      }
+    });
+  </script>
 </body>
 </html>
