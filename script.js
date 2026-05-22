@@ -399,3 +399,101 @@ document.addEventListener("DOMContentLoaded",()=>{
     });
   }
 });
+
+
+/* =========================
+   관리자 로그인 호환 패치
+   - admin.html 버튼 함수명이 loginAdmin / checkAdminPin / adminLogin 중 무엇이어도 작동
+========================= */
+
+function __kedgeAdminLoginCore(){
+  const input =
+    document.getElementById("adminPin") ||
+    document.getElementById("adminCode") ||
+    document.getElementById("adminPassword");
+
+  const code = String(input?.value || "").replace(/\s/g, "");
+  const savedCode = localStorage.getItem("kedge_admin_pin") || KEDGE_ADMIN_CODE || "0517";
+
+  if(code !== savedCode){
+    const m = document.getElementById("adminLoginMsg");
+    if(m) m.textContent = "❌ 관리자 코드가 틀렸습니다.";
+    return;
+  }
+
+  sessionStorage.setItem("kedge_admin_ok", "1");
+
+  const loginBox = document.getElementById("adminLoginBox");
+  const app =
+    document.getElementById("adminApp") ||
+    document.getElementById("adminPanel");
+
+  if(loginBox) loginBox.style.display = "none";
+  if(app) app.style.display = "block";
+
+  if(typeof renderAdminDashboard === "function"){
+    renderAdminDashboard();
+  }
+}
+
+/* admin.html에서 어떤 이름을 호출해도 로그인되게 연결 */
+function loginAdmin(){ __kedgeAdminLoginCore(); }
+function checkAdminPin(){ __kedgeAdminLoginCore(); }
+function adminLogin(){ __kedgeAdminLoginCore(); }
+
+/* 관리자 코드 변경 함수 없을 때 대비 */
+function adminChangePin(){
+  const oldPin = String(document.getElementById("oldAdminPin")?.value || "").replace(/\s/g, "");
+  const newPin = String(document.getElementById("newAdminPin")?.value || "").replace(/\s/g, "");
+  const savedCode = localStorage.getItem("kedge_admin_pin") || KEDGE_ADMIN_CODE || "0517";
+  const msg = document.getElementById("adminSettingMsg");
+
+  if(oldPin !== savedCode){
+    if(msg) msg.textContent = "❌ 기존 관리자 코드가 틀렸습니다.";
+    return;
+  }
+
+  if(!newPin || newPin.length < 4){
+    if(msg) msg.textContent = "❌ 새 관리자 코드는 4자리 이상으로 입력하세요.";
+    return;
+  }
+
+  localStorage.setItem("kedge_admin_pin", newPin);
+  if(msg) msg.textContent = "✅ 관리자 코드가 변경되었습니다.";
+}
+
+/* 백업 함수 없을 때 대비 */
+async function exportAdminData(){
+  try{
+    const requests = typeof dbLoadRequests === "function" ? await dbLoadRequests() : [];
+    const users = typeof dbLoadUsers === "function" ? await dbLoadUsers() : [];
+    const sales = typeof dbLoadSales === "function" ? await dbLoadSales() : [];
+
+    const data = {
+      exported_at: new Date().toISOString(),
+      requests,
+      users,
+      sales
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "kedge_admin_backup.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  }catch(e){
+    alert("백업 다운로드 실패");
+    console.log(e);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", function(){
+  const pin = document.getElementById("adminPin") || document.getElementById("adminCode");
+  if(pin){
+    pin.addEventListener("keydown", function(e){
+      if(e.key === "Enter") __kedgeAdminLoginCore();
+    });
+  }
+});
