@@ -50,7 +50,7 @@
     return product === "SEMI" || product === "AUTO";
   }
 
-  function readApi(prefix, checkboxId, keyId, secretId){
+  function readApi(checkboxId, keyId, secretId){
     return {
       enabled: !!qs(checkboxId)?.checked,
       api_key: val(keyId),
@@ -61,14 +61,14 @@
   function collectApis(){
     return {
       domestic_apis:{
-        upbit: readApi("upbit", "payUpbitUse", "payUpbitApiKey", "payUpbitApiSecret"),
-        bithumb: readApi("bithumb", "payBithumbUse", "payBithumbApiKey", "payBithumbApiSecret")
+        upbit: readApi("payUpbitUse", "payUpbitApiKey", "payUpbitApiSecret"),
+        bithumb: readApi("payBithumbUse", "payBithumbApiKey", "payBithumbApiSecret")
       },
       foreign_apis:{
-        mexc: readApi("mexc", "payMexcUse", "payMexcApiKey", "payMexcApiSecret"),
-        gate: readApi("gate", "payGateUse", "payGateApiKey", "payGateApiSecret"),
-        bitget: readApi("bitget", "payBitgetUse", "payBitgetApiKey", "payBitgetApiSecret"),
-        bingx: readApi("bingx", "payBingxUse", "payBingxApiKey", "payBingxApiSecret")
+        mexc: readApi("payMexcUse", "payMexcApiKey", "payMexcApiSecret"),
+        gate: readApi("payGateUse", "payGateApiKey", "payGateApiSecret"),
+        bitget: readApi("payBitgetUse", "payBitgetApiKey", "payBitgetApiSecret"),
+        bingx: readApi("payBingxUse", "payBingxApiKey", "payBingxApiSecret")
       }
     };
   }
@@ -109,11 +109,9 @@
       bitget:"Bitget",
       bingx:"BingX"
     };
-
     const rows = Object.entries(apiObj || {})
       .filter(([_, v]) => v && v.enabled)
       .map(([k, v]) => `${labels[k] || k}: ${mask(v.api_key)} / ${mask(v.api_secret)}`);
-
     return rows.length ? rows.join("<br>") : "미등록";
   }
 
@@ -194,7 +192,6 @@
       .from("kedge_requests")
       .select("*")
       .order("created_at", { ascending:false });
-
     if(error){
       console.error(error);
       return [];
@@ -389,7 +386,7 @@
   document.addEventListener("DOMContentLoaded", ()=>{
     const page = document.body?.dataset?.page;
     if(page === "admin"){
-      setTimeout(()=>window.renderAdminPage && window.renderAdminPage(), 100);
+      setTimeout(()=>window.renderAdminPage && window.renderAdminPage(), 150);
       qs("adminStatusFilter")?.addEventListener("change", window.renderAdminRequests);
       qs("adminSearch")?.addEventListener("input", window.renderAdminRequests);
       qs("adminUserSearch")?.addEventListener("input", window.renderAdminUsers);
