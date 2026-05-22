@@ -3,8 +3,8 @@
    payment/admin 화면은 유지하고 신청/승인 데이터만 Supabase kedge_requests로 통일합니다.
 */
 (function(){
-  const SUPABASE_URL = "https://ilkkwbnxxzkmqhdoscep.supabase.co";
-  const SUPABASE_ANON_KEY = "sb_publishable_Fegb-Q-M98BReiYp1LV9sQ_7CW7e8T_";
+  const SUPABASE_URL = "https://qakhbihueonefzifrmct.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_XboBFueAITcieSL75B2S5g_qlm4XmOm";
 
   let db = null;
 

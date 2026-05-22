@@ -97,8 +97,8 @@
   </footer>
 
 <script>
-const SUPABASE_URL = "https://ilkkwbnxxzkmqhdoscep.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_Fegb-Q-M98BReiYp1LV9sQ_7CW7e8T_";
+const SUPABASE_URL = "https://qakhbihueonefzifrmct.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_XboBFueAITcieSL75B2S5g_qlm4XmOm";
 const ADMIN_PIN = "0517";
 const ADMIN_SESSION = "kedge_admin_logged_in";
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -148,33 +148,17 @@ function dateText(v){
 }
 
 function apiSummary(apiObj){
-  const labels = {
-    upbit:"업비트",
-    bithumb:"빗썸",
-    mexc:"MEXC",
-    gate:"Gate.io",
-    bitget:"Bitget",
-    bingx:"BingX"
-  };
-
+  const labels = {upbit:"업비트", bithumb:"빗썸", mexc:"MEXC", gate:"Gate.io", bitget:"Bitget", bingx:"BingX"};
   let obj = apiObj || {};
   if(typeof obj === "string"){
     try{ obj = JSON.parse(obj); }catch(e){ obj = {}; }
   }
-
-  const rows = Object.entries(obj)
-    .filter(([_, v]) => v && v.enabled)
-    .map(([k, v]) => `${labels[k] || k}: ${mask(v.api_key)} / ${mask(v.api_secret)}`);
-
+  const rows = Object.entries(obj).filter(([_, v]) => v && v.enabled).map(([k, v]) => `${labels[k] || k}: ${mask(v.api_key)} / ${mask(v.api_secret)}`);
   return rows.length ? rows.join("<br>") : "미등록";
 }
 
 async function fetchRequests(){
-  const { data, error } = await db
-    .from("kedge_requests")
-    .select("*")
-    .order("created_at", { ascending:false });
-
+  const { data, error } = await db.from("kedge_requests").select("*").order("created_at", { ascending:false });
   if(error){
     console.error(error);
     qs("adminRequestList").innerHTML = `<div class="admin-empty">DB 로딩 실패: ${error.message}</div>`;
@@ -198,7 +182,6 @@ function renderAdminStats(){
   const vip = rows.filter(x=>x.status==="APPROVED" && x.product==="VIP").length;
   const semi = rows.filter(x=>x.status==="APPROVED" && x.product==="SEMI").length;
   const auto = rows.filter(x=>x.status==="APPROVED" && x.product==="AUTO").length;
-
   qs("adminStats").innerHTML = `
     <article><b>${pending}</b><span>승인 대기</span></article>
     <article><b>${approved}</b><span>승인 완료</span></article>
@@ -213,16 +196,10 @@ function renderAdminRequests(){
   const wrap = qs("adminRequestList");
   const status = val("adminStatusFilter") || "ALL";
   const keyword = val("adminSearch").toLowerCase();
-
   let rows = requestCache.slice();
 
-  if(status !== "ALL"){
-    rows = rows.filter(x => x.status === status || x.product === status);
-  }
-
-  if(keyword){
-    rows = rows.filter(x => JSON.stringify(x).toLowerCase().includes(keyword));
-  }
+  if(status !== "ALL") rows = rows.filter(x => x.status === status || x.product === status);
+  if(keyword) rows = rows.filter(x => JSON.stringify(x).toLowerCase().includes(keyword));
 
   if(!rows.length){
     wrap.innerHTML = `<div class="admin-empty">신청 내역이 없습니다.</div>`;
@@ -269,12 +246,8 @@ function renderAdminRequests(){
 function renderAdminUsers(){
   const wrap = qs("adminUserList");
   const keyword = val("adminUserSearch").toLowerCase();
-
   let rows = requestCache.filter(x => x.status === "APPROVED");
-
-  if(keyword){
-    rows = rows.filter(x => JSON.stringify(x).toLowerCase().includes(keyword));
-  }
+  if(keyword) rows = rows.filter(x => JSON.stringify(x).toLowerCase().includes(keyword));
 
   if(!rows.length){
     wrap.innerHTML = `<div class="admin-empty">회원 정보가 없습니다.</div>`;
@@ -294,43 +267,35 @@ function renderAdminUsers(){
 
 async function approveRequest(id){
   const note = val("adminNote-" + id);
-  const { error } = await db
-    .from("kedge_requests")
-    .update({
-      status:"APPROVED",
-      approved_at:new Date().toISOString(),
-      rejected_at:null,
-      admin_note:note
-    })
-    .eq("id", id);
+  const { error } = await db.from("kedge_requests").update({
+    status:"APPROVED",
+    approved_at:new Date().toISOString(),
+    rejected_at:null,
+    admin_note:note
+  }).eq("id", id);
 
   if(error){
     console.error(error);
     alert("승인 실패: " + error.message);
     return;
   }
-
   alert("승인 완료");
   await loadAdminDashboard();
 }
 
 async function rejectRequest(id){
   const note = val("adminNote-" + id);
-  const { error } = await db
-    .from("kedge_requests")
-    .update({
-      status:"REJECTED",
-      rejected_at:new Date().toISOString(),
-      admin_note:note
-    })
-    .eq("id", id);
+  const { error } = await db.from("kedge_requests").update({
+    status:"REJECTED",
+    rejected_at:new Date().toISOString(),
+    admin_note:note
+  }).eq("id", id);
 
   if(error){
     console.error(error);
     alert("거절 실패: " + error.message);
     return;
   }
-
   alert("거절 완료");
   await loadAdminDashboard();
 }
