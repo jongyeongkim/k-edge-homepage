@@ -126,7 +126,8 @@ function syncPlanFields(){
   document.querySelectorAll("[data-plan-field='bot']").forEach(el=> el.style.display = isBot ? "block" : "none");
   document.querySelectorAll("[data-plan-field='auto']").forEach(el=> el.style.display = isAuto ? "block" : "none");
   document.querySelectorAll("[data-product-field='bot']").forEach(el=> el.style.display = isBot ? "block" : "none");
-  document.querySelectorAll("[data-product-field='auto']").forEach(el=> el.style.display = isBot ? "block" : "none");
+  document.querySelectorAll("[data-product-field='auto']").forEach(el=> el.style.display = isAuto ? "block" : "none");
+  document.querySelectorAll("[data-product-field='api']").forEach(el=> el.style.display = isBot ? "block" : "none");
 }
 
 async function signupUser(){
@@ -302,8 +303,8 @@ async function updateAuthUI(){
 
 const PRODUCT_INFO = {
   VIP: { title:"🔥 VIP", price:"35,000원", desc:"전체 유료 정보 알림 제공", list:["김프/역프 전체 알림", "양방 후보", "입출금·고래·상장·DEX·BTC Wave"] },
-  SEMI: { title:"🤖 VIP Lite (반자동)", price:"70,000원", desc:"VIP 전체 기능 + 승인형 진입 준비", list:["VIP 전체 기능", "텔레그램 BOT TOKEN 저장", "CHAT ID 저장", "향후 [진입] 버튼 연동"] },
-  AUTO: { title:"🚀 VIP Pro (자동)", price:"100,000원", desc:"VIP 전체 기능 + 자동매매 연동 준비", list:["VIP 전체 기능", "텔레그램 BOT TOKEN 저장", "거래소 API 저장", "자동 진입/청산 연동 준비"] }
+  SEMI: { title:"🤖 VIP Lite (반자동)", price:"70,000원", desc:"VIP 전체 기능 + 승인형 진입 준비", list:["VIP 전체 기능", "텔레그램 BOT TOKEN 저장", "CHAT ID 저장", "국내/해외 API 개별 저장", "향후 [진입] 버튼 연동"] },
+  AUTO: { title:"🚀 VIP Pro (자동)", price:"100,000원", desc:"VIP 전체 기능 + 자동매매 연동 준비", list:["VIP 전체 기능", "텔레그램 BOT TOKEN 저장", "국내/해외 API 개별 저장", "자동 진입/청산 연동 준비"] }
 };
 const PAY_INFO = {
   BANK: `<h4>국내 계좌</h4><p>관리자에게 계좌 안내를 받은 뒤 입금자명을 입력하세요.</p><small>확인 후 수동 승인됩니다.</small>`,
@@ -324,19 +325,6 @@ function changePayInfo(){
   const pay = val("payType") || "USDT";
   const box = qs("payInfo");
   if(box) box.innerHTML = PAY_INFO[pay] || PAY_INFO.USDT;
-}
-
-
-function firstEnabledApiName(apis){
-  const found = Object.entries(apis || {}).find(([_, v]) => v && v.enabled && v.api_key && v.api_secret);
-  return found ? found[0].toUpperCase() : "";
-}
-function firstEnabledApiValue(apis, key){
-  const found = Object.values(apis || {}).find(v => v && v.enabled && v.api_key && v.api_secret);
-  return found ? (found[key] || "") : "";
-}
-function hasValidEnabledApi(apis){
-  return Object.values(apis || {}).some(v => v && v.enabled && v.api_key && v.api_secret);
 }
 
 function collectPaymentExtra(product){
@@ -380,19 +368,20 @@ function collectPaymentExtra(product){
     tg_bot_token: val("payBotToken"),
     tg_chat_id: val("payChatId"),
     domestic_apis,
-    foreign_apis,
-
-    // 구버전 관리자/표시 호환용 대표값
-    domestic_exchange: firstEnabledApiName(domestic_apis) || "",
-    domestic_api_key: firstEnabledApiValue(domestic_apis, "api_key") || "",
-    domestic_api_secret: firstEnabledApiValue(domestic_apis, "api_secret") || "",
-    foreign_exchange: firstEnabledApiName(foreign_apis) || "",
-    exchange: firstEnabledApiName(foreign_apis) || "",
-    foreign_api_key: firstEnabledApiValue(foreign_apis, "api_key") || "",
-    api_key: firstEnabledApiValue(foreign_apis, "api_key") || "",
-    foreign_api_secret: firstEnabledApiValue(foreign_apis, "api_secret") || "",
-    api_secret: firstEnabledApiValue(foreign_apis, "api_secret") || ""
+    foreign_apis
   };
+}
+
+function enabledApiList(apiObj){
+  return Object.entries(apiObj || {}).filter(([_, v]) => v && v.enabled);
+}
+
+function hasValidEnabledApi(apiObj){
+  return enabledApiList(apiObj).some(([_, v]) => v.api_key && v.api_secret);
+}
+
+function hasInvalidEnabledApi(apiObj){
+  return enabledApiList(apiObj).some(([_, v]) => !v.api_key || !v.api_secret);
 }
 
 async function submitVipRequest(){
@@ -408,8 +397,12 @@ async function submitVipRequest(){
   if(!payName) return setMsg("vipRequestMsg", "❌ 입금자명 또는 보내는 사람 이름을 입력해주세요.");
   if(!memo) return setMsg("vipRequestMsg", "❌ TxID / 입금 메모 / 확인용 내용을 입력해주세요.");
   if(isBotPlan(product) && (!extra.tg_bot_token || !extra.tg_chat_id)) return setMsg("vipRequestMsg", "❌ 반자동/자동은 BOT TOKEN과 CHAT ID가 필요합니다.");
-  if(isBotPlan(product) && !hasValidEnabledApi(extra.domestic_apis)) return setMsg("vipRequestMsg", "❌ 반자동/자동은 국내 거래소 API를 1개 이상 입력해야 합니다.");
-  if(isBotPlan(product) && !hasValidEnabledApi(extra.foreign_apis)) return setMsg("vipRequestMsg", "❌ 반자동/자동은 해외 거래소 API를 1개 이상 입력해야 합니다.");
+  if(isBotPlan(product)){
+    if(!hasValidEnabledApi(extra.domestic_apis)) return setMsg("vipRequestMsg", "❌ 국내 거래소 API를 1개 이상 입력해주세요.");
+    if(!hasValidEnabledApi(extra.foreign_apis)) return setMsg("vipRequestMsg", "❌ 해외 거래소 API를 1개 이상 입력해주세요.");
+    if(hasInvalidEnabledApi(extra.domestic_apis)) return setMsg("vipRequestMsg", "❌ 체크된 국내 거래소는 KEY와 SECRET을 모두 입력해야 합니다.");
+    if(hasInvalidEnabledApi(extra.foreign_apis)) return setMsg("vipRequestMsg", "❌ 체크된 해외 거래소는 KEY와 SECRET을 모두 입력해야 합니다.");
+  }
 
   const request = {
     id: "REQ-" + Date.now(),
@@ -586,8 +579,12 @@ async function submitVipRequest(){
   if(!payName) return setMsg("vipRequestMsg", "❌ 입금자명 또는 보내는 사람 이름을 입력해주세요.");
   if(!memo) return setMsg("vipRequestMsg", "❌ TxID / 입금 메모 / 확인용 내용을 입력해주세요.");
   if(isBotPlan(product) && (!extra.tg_bot_token || !extra.tg_chat_id)) return setMsg("vipRequestMsg", "❌ 반자동/자동은 BOT TOKEN과 CHAT ID가 필요합니다.");
-  if(isBotPlan(product) && !hasValidEnabledApi(extra.domestic_apis)) return setMsg("vipRequestMsg", "❌ 반자동/자동은 국내 거래소 API를 1개 이상 입력해야 합니다.");
-  if(isBotPlan(product) && !hasValidEnabledApi(extra.foreign_apis)) return setMsg("vipRequestMsg", "❌ 반자동/자동은 해외 거래소 API를 1개 이상 입력해야 합니다.");
+  if(isBotPlan(product)){
+    if(!hasValidEnabledApi(extra.domestic_apis)) return setMsg("vipRequestMsg", "❌ 국내 거래소 API를 1개 이상 입력해주세요.");
+    if(!hasValidEnabledApi(extra.foreign_apis)) return setMsg("vipRequestMsg", "❌ 해외 거래소 API를 1개 이상 입력해주세요.");
+    if(hasInvalidEnabledApi(extra.domestic_apis)) return setMsg("vipRequestMsg", "❌ 체크된 국내 거래소는 KEY와 SECRET을 모두 입력해야 합니다.");
+    if(hasInvalidEnabledApi(extra.foreign_apis)) return setMsg("vipRequestMsg", "❌ 체크된 해외 거래소는 KEY와 SECRET을 모두 입력해야 합니다.");
+  }
 
   const request = {
     id: "REQ-" + Date.now(),
