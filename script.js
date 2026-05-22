@@ -119,14 +119,30 @@ function getSignupExtra(){
 }
 
 function syncPlanFields(){
-  const plan = val("signupPlan") || val("productSelect") || "FREE";
-  const isBot = isBotPlan(plan);
-  const isAuto = isAutoPlan(plan);
+  const productSelect = qs("productSelect");
+  const signupPlan = qs("signupPlan");
 
-  document.querySelectorAll("[data-plan-field='bot']").forEach(el=> el.style.display = isBot ? "block" : "none");
-  document.querySelectorAll("[data-plan-field='auto']").forEach(el=> el.style.display = isAuto ? "block" : "none");
-  document.querySelectorAll("[data-product-field='bot']").forEach(el=> el.style.display = isBot ? "block" : "none");
-  document.querySelectorAll("[data-product-field='auto']").forEach(el=> el.style.display = isAuto ? "block" : "none");
+  const plan = productSelect
+    ? val("productSelect")
+    : (signupPlan ? val("signupPlan") : "FREE");
+
+  const isBot = plan === "SEMI" || plan === "AUTO";
+  const isAuto = plan === "AUTO";
+
+  document.querySelectorAll("[data-plan-field='bot']")
+    .forEach(el=> el.style.display = isBot ? "block" : "none");
+
+  document.querySelectorAll("[data-plan-field='auto']")
+    .forEach(el=> el.style.display = isAuto ? "block" : "none");
+
+  document.querySelectorAll("[data-product-field='bot']")
+    .forEach(el=> el.style.display = isBot ? "block" : "none");
+
+  document.querySelectorAll("[data-product-field='auto']")
+    .forEach(el=> el.style.display = isAuto ? "block" : "none");
+
+  document.querySelectorAll("[data-product-field='api']")
+    .forEach(el=> el.style.display = isBot ? "block" : "none");
 }
 
 async function signupUser(){
@@ -302,8 +318,8 @@ async function updateAuthUI(){
 
 const PRODUCT_INFO = {
   VIP: { title:"🔥 VIP", price:"35,000원", desc:"전체 유료 정보 알림 제공", list:["김프/역프 전체 알림", "양방 후보", "입출금·고래·상장·DEX·BTC Wave"] },
-  SEMI: { title:"🤖 VIP Lite (반자동)", price:"70,000원", desc:"VIP 전체 기능 + 승인형 진입 준비", list:["VIP 전체 기능", "텔레그램 BOT TOKEN 저장", "CHAT ID 저장", "향후 [진입] 버튼 연동"] },
-  AUTO: { title:"🚀 VIP Pro (자동)", price:"100,000원", desc:"VIP 전체 기능 + 자동매매 연동 준비", list:["VIP 전체 기능", "텔레그램 BOT TOKEN 저장", "거래소 API 저장", "자동 진입/청산 연동 준비"] }
+  SEMI: { title:"🤖 VIP Lite (반자동)", price:"70,000원", desc:"VIP 전체 기능 + 승인형 진입 준비", list:["VIP 전체 기능", "텔레그램 BOT TOKEN 저장", "CHAT ID 저장", "국내/해외 API 개별 저장", "향후 [진입] 버튼 연동"] },
+  AUTO: { title:"🚀 VIP Pro (자동)", price:"100,000원", desc:"VIP 전체 기능 + 자동매매 연동 준비", list:["VIP 전체 기능", "텔레그램 BOT TOKEN 저장", "국내/해외 API 개별 저장", "자동 진입/청산 연동 준비"] }
 };
 const PAY_INFO = {
   BANK: `<h4>국내 계좌</h4><p>관리자에게 계좌 안내를 받은 뒤 입금자명을 입력하세요.</p><small>확인 후 수동 승인됩니다.</small>`,
@@ -327,13 +343,60 @@ function changePayInfo(){
 }
 
 function collectPaymentExtra(product){
+  const domestic_apis = {
+    upbit:{
+      enabled: !!qs("payUpbitUse")?.checked,
+      api_key: val("payUpbitApiKey"),
+      api_secret: val("payUpbitApiSecret")
+    },
+    bithumb:{
+      enabled: !!qs("payBithumbUse")?.checked,
+      api_key: val("payBithumbApiKey"),
+      api_secret: val("payBithumbApiSecret")
+    }
+  };
+
+  const foreign_apis = {
+    mexc:{
+      enabled: !!qs("payMexcUse")?.checked,
+      api_key: val("payMexcApiKey"),
+      api_secret: val("payMexcApiSecret")
+    },
+    gate:{
+      enabled: !!qs("payGateUse")?.checked,
+      api_key: val("payGateApiKey"),
+      api_secret: val("payGateApiSecret")
+    },
+    bitget:{
+      enabled: !!qs("payBitgetUse")?.checked,
+      api_key: val("payBitgetApiKey"),
+      api_secret: val("payBitgetApiSecret")
+    },
+    bingx:{
+      enabled: !!qs("payBingxUse")?.checked,
+      api_key: val("payBingxApiKey"),
+      api_secret: val("payBingxApiSecret")
+    }
+  };
+
   return {
     tg_bot_token: val("payBotToken"),
     tg_chat_id: val("payChatId"),
-    exchange: val("payExchange") || "MEXC",
-    api_key: val("payApiKey"),
-    api_secret: val("payApiSecret")
+    domestic_apis,
+    foreign_apis
   };
+}
+
+function enabledApiList(apiObj){
+  return Object.entries(apiObj || {}).filter(([_, v]) => v && v.enabled);
+}
+
+function hasValidEnabledApi(apiObj){
+  return enabledApiList(apiObj).some(([_, v]) => v.api_key && v.api_secret);
+}
+
+function hasInvalidEnabledApi(apiObj){
+  return enabledApiList(apiObj).some(([_, v]) => !v.api_key || !v.api_secret);
 }
 
 async function submitVipRequest(){
@@ -349,7 +412,12 @@ async function submitVipRequest(){
   if(!payName) return setMsg("vipRequestMsg", "❌ 입금자명 또는 보내는 사람 이름을 입력해주세요.");
   if(!memo) return setMsg("vipRequestMsg", "❌ TxID / 입금 메모 / 확인용 내용을 입력해주세요.");
   if(isBotPlan(product) && (!extra.tg_bot_token || !extra.tg_chat_id)) return setMsg("vipRequestMsg", "❌ 반자동/자동은 BOT TOKEN과 CHAT ID가 필요합니다.");
-  if(isAutoPlan(product) && (!extra.api_key || !extra.api_secret)) return setMsg("vipRequestMsg", "❌ 자동은 거래소 API KEY와 SECRET이 필요합니다.");
+  if(isBotPlan(product)){
+    if(!hasValidEnabledApi(extra.domestic_apis)) return setMsg("vipRequestMsg", "❌ 국내 거래소 API를 1개 이상 입력해주세요.");
+    if(!hasValidEnabledApi(extra.foreign_apis)) return setMsg("vipRequestMsg", "❌ 해외 거래소 API를 1개 이상 입력해주세요.");
+    if(hasInvalidEnabledApi(extra.domestic_apis)) return setMsg("vipRequestMsg", "❌ 체크된 국내 거래소는 KEY와 SECRET을 모두 입력해야 합니다.");
+    if(hasInvalidEnabledApi(extra.foreign_apis)) return setMsg("vipRequestMsg", "❌ 체크된 해외 거래소는 KEY와 SECRET을 모두 입력해야 합니다.");
+  }
 
   const request = {
     id: "REQ-" + Date.now(),
@@ -526,7 +594,12 @@ async function submitVipRequest(){
   if(!payName) return setMsg("vipRequestMsg", "❌ 입금자명 또는 보내는 사람 이름을 입력해주세요.");
   if(!memo) return setMsg("vipRequestMsg", "❌ TxID / 입금 메모 / 확인용 내용을 입력해주세요.");
   if(isBotPlan(product) && (!extra.tg_bot_token || !extra.tg_chat_id)) return setMsg("vipRequestMsg", "❌ 반자동/자동은 BOT TOKEN과 CHAT ID가 필요합니다.");
-  if(isAutoPlan(product) && (!extra.api_key || !extra.api_secret)) return setMsg("vipRequestMsg", "❌ 자동은 거래소 API KEY와 SECRET이 필요합니다.");
+  if(isBotPlan(product)){
+    if(!hasValidEnabledApi(extra.domestic_apis)) return setMsg("vipRequestMsg", "❌ 국내 거래소 API를 1개 이상 입력해주세요.");
+    if(!hasValidEnabledApi(extra.foreign_apis)) return setMsg("vipRequestMsg", "❌ 해외 거래소 API를 1개 이상 입력해주세요.");
+    if(hasInvalidEnabledApi(extra.domestic_apis)) return setMsg("vipRequestMsg", "❌ 체크된 국내 거래소는 KEY와 SECRET을 모두 입력해야 합니다.");
+    if(hasInvalidEnabledApi(extra.foreign_apis)) return setMsg("vipRequestMsg", "❌ 체크된 해외 거래소는 KEY와 SECRET을 모두 입력해야 합니다.");
+  }
 
   const request = {
     id: "REQ-" + Date.now(),
