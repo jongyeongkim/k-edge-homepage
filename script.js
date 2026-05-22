@@ -13,12 +13,12 @@ async function loadLiveDashboard(){
       const live=document.querySelector(".live-edge-card");
       const edgeNum = Number(last.real_edge || 0);
       if(live){
-        live.innerHTML=`<div class="live-head"><span>LIVE EDGE</span><b>+${edgeNum.toFixed(2)}%</b></div>
+        live.innerHTML=`<div class="live-head"><span>실시간 매매 기회</span><b>+${edgeNum.toFixed(2)}%</b></div>
         <h3>🚨 ${last.coin || "-"} 양방 후보</h3>
         <p>국내: ${last.domestic_exchange || last.domestic || "-"} · 해외선물: ${last.foreign_exchange || last.foreign || "-"}</p>
         <div class="live-metrics">
-          <div><small>코인괴리</small><strong>+${Number(last.coin_gap || 0).toFixed(2)}%</strong></div>
-          <div><small>BTC괴리</small><strong>${Number(last.btc_gap || 0).toFixed(2)}%</strong></div>
+          <div><small>가격 차이</small><strong>+${Number(last.coin_gap || 0).toFixed(2)}%</strong></div>
+          <div><small>시장 영향</small><strong>${Number(last.btc_gap || 0).toFixed(2)}%</strong></div>
           <div><small>실체결</small><strong>${Number(last.krw || last.executable_krw || 0).toLocaleString()}원</strong></div>
           <div><small>기준</small><strong>최근 감지</strong></div>
         </div>
