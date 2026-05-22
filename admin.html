@@ -6,24 +6,55 @@
   <link rel="stylesheet" href="./style.css" />
   <link rel="icon" type="image/png" href="./favicon.png" />
   <title>K-EDGE | 운영자 페이지</title>
-  <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#0b1020">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    .admin-app{width:min(1380px,94vw);margin:0 auto 60px}
+    .admin-top-actions{display:flex;justify-content:flex-end;gap:10px;margin:0 0 18px;flex-wrap:wrap}
+    .admin-top-actions button,.admin-actions button{min-height:42px;border:0;border-radius:10px;padding:0 16px;background:linear-gradient(135deg,#1be4ff,#2376ff 52%,#8a39ff);color:#fff;font-weight:950;cursor:pointer}
+    .admin-actions .danger{background:linear-gradient(135deg,#ff4d6d,#b91c1c)}
+    .admin-actions .ghost,.admin-top-actions .ghost-admin{background:rgba(255,255,255,.04);border:1px solid rgba(145,176,255,.28)}
+    .admin-dashboard{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin:0 0 22px}
+    .admin-dashboard article{border:1px solid rgba(145,176,255,.22);background:linear-gradient(150deg,rgba(12,30,58,.76),rgba(3,9,20,.86));border-radius:16px;padding:18px;min-height:116px}
+    .admin-dashboard p{margin:0 0 8px;color:#dce7f7;font-weight:900}
+    .admin-dashboard b{display:block;font-size:26px;color:#31d5ff;margin-bottom:6px}
+    .admin-dashboard small{color:#9fb0c7;font-weight:800}
+    .admin-panel{border:1px solid rgba(145,176,255,.24);background:linear-gradient(150deg,rgba(12,30,58,.66),rgba(3,9,20,.82));border-radius:18px;padding:22px;margin:18px 0}
+    .admin-panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:18px;flex-wrap:wrap}
+    .admin-panel-head h2{margin:0 0 8px;font-size:24px}
+    .admin-panel-head p{margin:0;color:#aeb8c8;font-weight:800}
+    .admin-filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .admin-filters select,.admin-filters input{height:44px;border:1px solid rgba(145,176,255,.28);background:#061225;color:#fff;border-radius:10px;padding:0 13px;font-weight:800}
+    .admin-filters input{min-width:280px;flex:1}
+    .admin-list,.admin-user-list{display:grid;gap:14px}
+    .admin-empty{border:1px dashed rgba(145,176,255,.28);background:rgba(5,14,30,.56);border-radius:14px;padding:24px;text-align:center;color:#aeb8c8;font-weight:900}
+    .admin-row{display:grid;grid-template-columns:1fr 190px;gap:16px;align-items:start;border:1px solid rgba(145,176,255,.18);background:rgba(5,14,30,.68);border-radius:16px;padding:18px}
+    .admin-row h3{margin:0 0 10px;font-size:20px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .admin-row p{margin:7px 0;color:#dce7f7;line-height:1.5;font-weight:800;word-break:break-word}
+    .admin-row p b{color:#31d5ff;margin-right:6px}
+    .admin-actions{display:grid;gap:8px}
+    .admin-status{display:inline-flex;align-items:center;justify-content:center;min-width:58px;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:950;border:1px solid rgba(145,176,255,.24)}
+    .admin-status.pending{color:#ffca38;background:rgba(255,202,56,.10);border-color:rgba(255,202,56,.36)}
+    .admin-status.approved{color:#29ff9a;background:rgba(41,255,154,.10);border-color:rgba(41,255,154,.36)}
+    .admin-status.rejected{color:#ff7373;background:rgba(255,115,115,.10);border-color:rgba(255,115,115,.36)}
+    .admin-notice{border:1px solid rgba(255,202,56,.35);background:rgba(255,202,56,.08);border-radius:14px;padding:14px 18px;margin:0 0 18px;color:#f3df9b;font-weight:900}
+    @media(max-width:1100px){.admin-dashboard{grid-template-columns:repeat(3,1fr)}}
+    @media(max-width:760px){.admin-dashboard{grid-template-columns:1fr 1fr}.admin-row{grid-template-columns:1fr}.admin-actions{grid-template-columns:1fr 1fr}}
+    @media(max-width:520px){.admin-dashboard{grid-template-columns:1fr}.admin-actions{grid-template-columns:1fr}}
+  </style>
 </head>
+
 <body data-page="admin">
   <div class="bg-grid"></div>
 
   <header class="topbar">
     <a class="brand" href="./index.html"><span class="kmark">K</span><b>K-EDGE</b></a>
     <nav>
-      <a href="./index.html" data-nav="home">홈</a>
-      <a href="./payment.html" data-nav="payment">등록</a>
-      <a href="./mypage.html" data-nav="mypage">내정보</a>
-      <a href="./admin.html" data-nav="admin">운영자</a>
+      <a href="./index.html">홈</a>
+      <a href="./payment.html">등록</a>
+      <a href="./mypage.html">내정보</a>
+      <a href="./admin.html">운영자</a>
     </nav>
-    <div class="top-actions" id="topAuthArea">
-      <a class="login" href="./login.html">로그인</a>
-      <a class="join" href="./join.html">회원가입</a>
-    </div>
+    <div class="top-actions"><a class="login" href="./index.html">홈으로</a></div>
   </header>
 
   <main>
@@ -33,22 +64,14 @@
       <p>가입 신청 승인, 회원 등급 관리, 반자동/자동 연동 정보를 한눈에 확인합니다.</p>
     </section>
 
-    <section id="adminLoginBox" class="admin-login-box">
-      <div class="auth-box center-card">
-        <p class="exchange-pill">ADMIN LOGIN</p>
-        <h1>운영자 인증</h1>
-        <p class="auth-sub">관리자 코드는 <b>0517</b> 입니다.</p>
-        <input id="adminPin" type="password" placeholder="관리자 코드 입력" autocomplete="off">
-        <button type="button" class="auth-main-btn" onclick="loginAdmin()">운영자 로그인</button>
-        <p id="adminLoginMsg" class="auth-msg"></p>
+    <section id="adminApp" class="admin-app">
+      <div class="admin-notice">
+        임시 운영 모드: 관리자 비밀번호 없이 바로 접속됩니다. 테스트 완료 후 서버 인증으로 교체 권장.
       </div>
-    </section>
 
-    <section id="adminApp" class="admin-app" style="display:none;">
       <div class="admin-top-actions">
-        <button type="button" onclick="renderAdminDashboard()">새로고침</button>
-        <button type="button" onclick="exportAdminData()">백업 다운로드</button>
-        <button type="button" class="ghost-admin" onclick="adminLogout()">운영자 로그아웃</button>
+        <button type="button" id="refreshBtn">새로고침</button>
+        <button type="button" id="backupBtn">백업 다운로드</button>
       </div>
 
       <div class="admin-dashboard">
@@ -79,9 +102,7 @@
             <input id="adminSearch" placeholder="이메일 / 텔레그램 / 입금자명 / TxID 검색">
           </div>
         </div>
-        <div id="adminRequestList" class="admin-list">
-          <div class="admin-empty">신청 내역을 불러오는 중...</div>
-        </div>
+        <div id="adminRequestList" class="admin-list"><div class="admin-empty">신청 내역을 불러오는 중...</div></div>
       </section>
 
       <section class="admin-panel">
@@ -90,28 +111,9 @@
             <h2>회원 관리</h2>
             <p>승인된 회원의 등급, 만료일, 연동 정보를 확인합니다.</p>
           </div>
-          <div class="admin-filters">
-            <input id="adminUserSearch" placeholder="회원 검색">
-          </div>
+          <div class="admin-filters"><input id="adminUserSearch" placeholder="회원 검색"></div>
         </div>
-        <div id="adminUserList" class="admin-user-list">
-          <div class="admin-empty">회원 데이터를 불러오는 중...</div>
-        </div>
-      </section>
-
-      <section class="admin-panel">
-        <div class="admin-panel-head">
-          <div>
-            <h2>운영 설정</h2>
-            <p>관리자 코드를 변경합니다.</p>
-          </div>
-        </div>
-        <div class="admin-setting-grid">
-          <input id="oldAdminPin" type="password" placeholder="기존 관리자 코드">
-          <input id="newAdminPin" type="password" placeholder="새 관리자 코드">
-          <button type="button" onclick="adminChangePin()">관리자 코드 변경</button>
-        </div>
-        <p id="adminSettingMsg" class="form-msg"></p>
+        <div id="adminUserList" class="admin-user-list"><div class="admin-empty">회원 데이터를 불러오는 중...</div></div>
       </section>
     </section>
   </main>
@@ -121,53 +123,238 @@
     <p>본 페이지는 운영자 전용입니다.</p>
   </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./script.js"></script>
-
   <script>
-    // 운영자 로그인 긴급 고정 패치: 외부 script.js 함수명 문제와 관계없이 동작
-    window.loginAdmin = function(){
-      const pin = String(document.getElementById("adminPin")?.value || "").replace(/\s/g, "");
-      const saved = localStorage.getItem("kedge_admin_pin") || "0517";
-      const msg = document.getElementById("adminLoginMsg");
+    const SUPABASE_URL = "https://qakhbihueonefzifrmct.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_XboBFueAITcieSL75B2S5g_qlm4XmOm";
+    let db = null;
+    let requestCache = [];
+    let userCache = [];
+    let saleCache = [];
 
-      if(pin !== saved){
-        if(msg) msg.textContent = "❌ 관리자 코드가 틀렸습니다.";
+    function $(id){ return document.getElementById(id); }
+    function mask(v){
+      v = String(v || "");
+      if(!v) return "미등록";
+      if(v.length <= 8) return "••••";
+      return v.slice(0,4) + "••••" + v.slice(-4);
+    }
+    function planLabel(p){ return ({FREE:"FREE",VIP:"VIP 👑",SEMI:"VIP Lite 🤖",AUTO:"VIP Pro 🚀"})[p] || p || "FREE"; }
+    function date(v){ if(!v) return "-"; try{return new Date(v).toLocaleString("ko-KR");}catch(e){return v;} }
+    function badge(s){
+      s = s || "PENDING";
+      const label = s==="APPROVED" ? "승인" : s==="REJECTED" ? "거절" : "대기";
+      return `<span class="admin-status ${String(s).toLowerCase()}">${label}</span>`;
+    }
+
+    async function initDb(){
+      if(window.supabase){
+        db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        await loadDashboard();
+        return;
+      }
+      const s = document.createElement("script");
+      s.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+      s.onload = async () => {
+        db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        await loadDashboard();
+      };
+      s.onerror = () => {
+        $("adminRequestList").innerHTML = `<div class="admin-empty">Supabase 라이브러리 로드 실패</div>`;
+      };
+      document.head.appendChild(s);
+    }
+
+    async function loadRequests(){
+      const {data,error} = await db.from("kedge_requests").select("*").order("created_at",{ascending:false});
+      if(error) throw error;
+      return data || [];
+    }
+    async function loadUsers(){
+      const {data,error} = await db.from("kedge_users").select("*").order("created_at",{ascending:false});
+      if(error) throw error;
+      return data || [];
+    }
+    async function loadSales(){
+      const {data,error} = await db.from("kedge_sales").select("*").order("created_at",{ascending:false});
+      if(error) throw error;
+      return data || [];
+    }
+
+    async function loadDashboard(){
+      try{
+        requestCache = await loadRequests();
+        userCache = await loadUsers();
+        saleCache = await loadSales();
+
+        $("adminTodayCount").textContent = requestCache.length + "건";
+        $("adminPendingCount").textContent = requestCache.filter(r=>r.status==="PENDING").length + "건";
+        $("adminActiveCount").textContent = userCache.filter(u=>u.approved || u.plan !== "FREE").length + "명";
+        $("adminSemiCount").textContent = userCache.filter(u=>u.plan==="SEMI").length + "명";
+        $("adminAutoCount").textContent = userCache.filter(u=>u.plan==="AUTO").length + "명";
+        $("adminRevenue").textContent = saleCache.reduce((a,b)=>a+Number(b.amount||0),0).toLocaleString() + "원";
+
+        renderRequests();
+        renderUsers();
+      }catch(e){
+        console.log(e);
+        $("adminRequestList").innerHTML = `<div class="admin-empty">DB 로딩 실패: ${e.message || e}</div>`;
+      }
+    }
+
+    function renderRequests(){
+      const q = String($("adminSearch").value || "").toLowerCase();
+      const f = $("adminStatusFilter").value || "ALL";
+      let list = requestCache.slice();
+
+      if(f !== "ALL") list = list.filter(r=>r.status===f || r.product===f);
+      if(q) list = list.filter(r =>
+        String(r.email||"").toLowerCase().includes(q) ||
+        String(r.telegram||"").toLowerCase().includes(q) ||
+        String(r.pay_name||"").toLowerCase().includes(q) ||
+        String(r.memo||"").toLowerCase().includes(q)
+      );
+
+      if(!list.length){
+        $("adminRequestList").innerHTML = `<div class="admin-empty">신청 내역이 없습니다.</div>`;
         return;
       }
 
-      sessionStorage.setItem("kedge_admin_ok", "1");
-      document.getElementById("adminLoginBox").style.display = "none";
-      document.getElementById("adminApp").style.display = "block";
+      $("adminRequestList").innerHTML = list.map(r=>`
+        <article class="admin-row">
+          <div>
+            <h3>${planLabel(r.product)} ${badge(r.status)}</h3>
+            <p><b>이메일</b> ${r.email || "-"}</p>
+            <p><b>텔레그램</b> ${r.telegram || "-"}</p>
+            <p><b>결제</b> ${r.pay_type || "-"} / ${r.pay_name || "-"}</p>
+            <p><b>메모</b> ${r.memo || "-"}</p>
+            <p><b>신청시간</b> ${date(r.created_at)}</p>
+            ${(r.product==="SEMI"||r.product==="AUTO") ? `<p><b>BOT</b> ${mask(r.tg_bot_token)} / CHAT ${r.tg_chat_id || "-"}</p>` : ""}
+            ${(r.product==="SEMI"||r.product==="AUTO") ? `<p><b>국내 API</b> ${r.domestic_exchange || "-"} / ${mask(r.domestic_api_key)} / ${mask(r.domestic_api_secret)}</p>` : ""}
+            ${(r.product==="SEMI"||r.product==="AUTO") ? `<p><b>해외 API</b> ${r.foreign_exchange || r.exchange || "-"} / ${mask(r.foreign_api_key || r.api_key)} / ${mask(r.foreign_api_secret || r.api_secret)}</p>` : ""}
+          </div>
+          <div class="admin-actions">
+            <button onclick="approveReq('${r.id}')">승인</button>
+            <button class="danger" onclick="rejectReq('${r.id}')">거절</button>
+            <button class="ghost" onclick="copyText('https://t.me/listing0517')">링크 복사</button>
+            ${(r.product==="SEMI"||r.product==="AUTO") ? `<button class="ghost" onclick="testBot('${r.tg_bot_token || ""}','${r.tg_chat_id || ""}')">BOT 테스트</button>` : ""}
+          </div>
+        </article>
+      `).join("");
+    }
 
-      if(typeof window.renderAdminDashboard === "function"){
-        window.renderAdminDashboard();
+    function renderUsers(){
+      const q = String($("adminUserSearch").value || "").toLowerCase();
+      let list = userCache.slice();
+      if(q) list = list.filter(u => String(u.email||"").toLowerCase().includes(q) || String(u.telegram||"").toLowerCase().includes(q));
+
+      if(!list.length){
+        $("adminUserList").innerHTML = `<div class="admin-empty">회원 데이터가 없습니다.</div>`;
+        return;
       }
-    };
 
-    window.adminLogin = window.loginAdmin;
-    window.checkAdminPin = window.loginAdmin;
+      $("adminUserList").innerHTML = list.map(u=>`
+        <article class="admin-row">
+          <div>
+            <h3>${u.email || "-"} <span class="plan-badge">${planLabel(u.plan)}</span></h3>
+            <p><b>텔레그램</b> ${u.telegram || "미등록"}</p>
+            <p><b>승인</b> ${u.approved ? "승인됨" : "미승인"} / <b>만료</b> ${date(u.expire_at)}</p>
+            ${(u.plan==="SEMI"||u.plan==="AUTO") ? `<p><b>BOT</b> ${mask(u.tg_bot_token)} / CHAT ${u.tg_chat_id || "-"}</p>` : ""}
+            ${(u.plan==="SEMI"||u.plan==="AUTO") ? `<p><b>국내 API</b> ${u.domestic_exchange || "-"} / ${mask(u.domestic_api_key)}</p>` : ""}
+            ${(u.plan==="SEMI"||u.plan==="AUTO") ? `<p><b>해외 API</b> ${u.foreign_exchange || u.exchange || "-"} / ${mask(u.foreign_api_key || u.api_key)}</p>` : ""}
+          </div>
+          <div class="admin-actions"><button class="ghost" onclick="copyText('${u.email || ""}')">이메일 복사</button></div>
+        </article>
+      `).join("");
+    }
 
-    window.adminLogout = function(){
-      sessionStorage.removeItem("kedge_admin_ok");
-      location.reload();
-    };
+    async function approveReq(id){
+      const req = requestCache.find(r=>String(r.id)===String(id));
+      if(!req) return alert("신청 정보를 찾을 수 없습니다.");
 
-    document.addEventListener("DOMContentLoaded", function(){
-      const pin = document.getElementById("adminPin");
-      if(pin){
-        pin.addEventListener("keydown", function(e){
-          if(e.key === "Enter") window.loginAdmin();
-        });
+      const expire = new Date();
+      expire.setMonth(expire.getMonth()+1);
+      const plan = req.product || "VIP";
+
+      const userPayload = {
+        email:req.email,
+        telegram:req.telegram || "미등록",
+        plan,
+        tg_bot_token:req.tg_bot_token || "",
+        tg_chat_id:req.tg_chat_id || "",
+        exchange:req.exchange || req.foreign_exchange || "",
+        api_key:req.api_key || req.foreign_api_key || "",
+        api_secret:req.api_secret || req.foreign_api_secret || "",
+        foreign_exchange:req.foreign_exchange || req.exchange || "",
+        foreign_api_key:req.foreign_api_key || req.api_key || "",
+        foreign_api_secret:req.foreign_api_secret || req.api_secret || "",
+        domestic_exchange:req.domestic_exchange || "",
+        domestic_api_key:req.domestic_api_key || "",
+        domestic_api_secret:req.domestic_api_secret || "",
+        approved:true,
+        expire_at:expire.toISOString()
+      };
+
+      try{
+        let res = await db.from("kedge_requests").update({status:"APPROVED"}).eq("id",id);
+        if(res.error) throw res.error;
+        res = await db.from("kedge_users").upsert(userPayload,{onConflict:"email"});
+        if(res.error) throw res.error;
+        const amountMap = {VIP:35000,SEMI:70000,AUTO:100000};
+        await db.from("kedge_sales").insert({email:req.email,product:plan,amount:amountMap[plan]||0});
+        alert("승인 완료");
+        await loadDashboard();
+      }catch(e){
+        console.log(e);
+        alert("승인 실패: " + (e.message || e));
       }
+    }
 
-      if(sessionStorage.getItem("kedge_admin_ok") === "1"){
-        document.getElementById("adminLoginBox").style.display = "none";
-        document.getElementById("adminApp").style.display = "block";
-        if(typeof window.renderAdminDashboard === "function"){
-          window.renderAdminDashboard();
-        }
+    async function rejectReq(id){
+      try{
+        const {error} = await db.from("kedge_requests").update({status:"REJECTED"}).eq("id",id);
+        if(error) throw error;
+        alert("거절 완료");
+        await loadDashboard();
+      }catch(e){
+        alert("거절 실패: " + (e.message || e));
       }
+    }
+
+    function copyText(t){
+      navigator.clipboard.writeText(t || "");
+      alert("복사 완료");
+    }
+
+    async function testBot(token,chatId){
+      if(!token || !chatId) return alert("BOT TOKEN 또는 CHAT ID가 없습니다.");
+      try{
+        const msg = encodeURIComponent("✅ K-EDGE BOT 연결 테스트 성공");
+        const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${msg}`);
+        const data = await res.json();
+        alert(data.ok ? "BOT 테스트 전송 성공" : "BOT 테스트 실패");
+      }catch(e){
+        alert("BOT 테스트 실패");
+      }
+    }
+
+    function backup(){
+      const data = {exported_at:new Date().toISOString(),requests:requestCache,users:userCache,sales:saleCache};
+      const blob = new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href=url;
+      a.download="kedge_admin_backup.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    window.addEventListener("DOMContentLoaded",()=>{
+      $("refreshBtn").addEventListener("click",loadDashboard);
+      $("backupBtn").addEventListener("click",backup);
+      $("adminStatusFilter").addEventListener("change",renderRequests);
+      $("adminSearch").addEventListener("input",renderRequests);
+      $("adminUserSearch").addEventListener("input",renderUsers);
+      initDb();
     });
   </script>
 </body>
