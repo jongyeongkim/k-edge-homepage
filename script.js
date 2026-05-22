@@ -399,3 +399,472 @@ document.addEventListener("DOMContentLoaded",()=>{
     });
   }
 });
+
+
+/* =========================================================
+   K-EDGE 관리자/승인 시스템 v1
+   - 프론트 단독 테스트: localStorage 기반
+   - 실제 운영: Supabase/서버 DB로 교체 권장
+========================================================= */
+
+const KEDGE_ADMIN_SESSION_KEY = "kedge_admin_logged_in";
+const KEDGE_ADMIN_PIN_KEY = "kedge_admin_pin";
+const KEDGE_DEFAULT_ADMIN_PIN = "0517";
+
+/* 승인 후 고객에게 안내할 링크 */
+const KEDGE_LINKS = {
+  VIP: "https://t.me/listing0517",
+  SEMI: "https://t.me/listing0517",
+  AUTO: "https://t.me/listing0517"
+};
+
+function nowText(){
+  try{
+    return new Date().toLocaleString("ko-KR", { hour12:false });
+  }catch(e){
+    return new Date().toISOString();
+  }
+}
+
+function productLabel(product){
+  const map = {
+    VIP: "VIP 👑",
+    SEMI: "VIP Lite 반자동 🤖",
+    AUTO: "VIP Pro 자동 🚀"
+  };
+  return map[product] || product || "-";
+}
+
+function statusLabel(status){
+  const map = {
+    PENDING: "승인대기",
+    APPROVED: "승인완료",
+    REJECTED: "거절"
+  };
+  return map[status] || status || "-";
+}
+
+function maskSecret(v){
+  if(!v) return "미등록";
+  const s = String(v);
+  if(s.length <= 8) return "••••";
+  return s.slice(0,4) + "••••" + s.slice(-4);
+}
+
+function telegramUrl(id){
+  if(!id) return "https://t.me/listing0517";
+  const clean = String(id).replace("@","").trim();
+  if(!clean) return "https://t.me/listing0517";
+  return "https://t.me/" + clean;
+}
+
+function getAdminPin(){
+  return localStorage.getItem(KEDGE_ADMIN_PIN_KEY) || KEDGE_DEFAULT_ADMIN_PIN;
+}
+
+function isAdminLoggedIn(){
+  return sessionStorage.getItem(KEDGE_ADMIN_SESSION_KEY) === "Y";
+}
+
+function adminLogin(){
+  const pin = val("adminPin");
+  const msg = qs("adminLoginMsg");
+  if(pin === getAdminPin()){
+    sessionStorage.setItem(KEDGE_ADMIN_SESSION_KEY, "Y");
+    if(msg) msg.textContent = "✅ 관리자 로그인 완료";
+    renderAdminPage();
+    return;
+  }
+  if(msg) msg.textContent = "❌ 관리자 코드가 틀렸습니다.";
+}
+
+function adminLogout(){
+  sessionStorage.removeItem(KEDGE_ADMIN_SESSION_KEY);
+  renderAdminPage();
+}
+
+function adminChangePin(){
+  const oldPin = val("oldAdminPin");
+  const newPin = val("newAdminPin");
+  const msg = qs("adminSettingMsg");
+  if(oldPin !== getAdminPin()){
+    if(msg) msg.textContent = "❌ 기존 관리자 코드가 틀렸습니다.";
+    return;
+  }
+  if(!newPin || newPin.length < 4){
+    if(msg) msg.textContent = "❌ 새 코드는 4자리 이상 입력하세요.";
+    return;
+  }
+  localStorage.setItem(KEDGE_ADMIN_PIN_KEY, newPin);
+  if(msg) msg.textContent = "✅ 관리자 코드 변경 완료";
+}
+
+function getRequestById(id){
+  return getRequests().find(x => x.id === id);
+}
+
+function updateRequest(id, patch){
+  const rows = getRequests();
+  const idx = rows.findIndex(x => x.id === id);
+  if(idx < 0) return null;
+  rows[idx] = { ...rows[idx], ...patch };
+  saveRequests(rows);
+  return rows[idx];
+}
+
+/* 기존 submitVipRequest 덮어쓰기: 신청만 저장, 승인 전 plan 변경 없음 */
+async function submitVipRequest(){
+  const user = await getCurrentUser();
+  if(!user) return setMsg("vipRequestMsg", "❌ 로그인 후 등록 신청할 수 있습니다.");
+
+  const product = val("productSelect") || "VIP";
+  const payType = val("payType") || "USDT";
+  const payName = val("payName");
+  const memo = val("txidInput");
+  const extra = collectPaymentExtra(product);
+
+  if(!payName) return setMsg("vipRequestMsg", "❌ 입금자명 또는 보내는 사람 이름을 입력해주세요.");
+  if(!memo) return setMsg("vipRequestMsg", "❌ TxID / 입금 메모 / 확인용 내용을 입력해주세요.");
+  if(isBotPlan(product) && (!extra.tg_bot_token || !extra.tg_chat_id)) return setMsg("vipRequestMsg", "❌ 반자동/자동은 BOT TOKEN과 CHAT ID가 필요합니다.");
+  if(isAutoPlan(product) && (!extra.api_key || !extra.api_secret)) return setMsg("vipRequestMsg", "❌ 자동은 거래소 API KEY와 SECRET이 필요합니다.");
+
+  const request = {
+    id: "REQ-" + Date.now(),
+    created_at: new Date().toISOString(),
+    created_text: nowText(),
+    email: user.email,
+    telegram: user.telegram || "미등록",
+    current_plan: user.plan || "FREE",
+    product,
+    payType,
+    payName,
+    memo,
+    status:"PENDING",
+    approved_at:"",
+    rejected_at:"",
+    admin_note:"",
+    ...extra
+  };
+
+  const rows = getRequests();
+  rows.unshift(request);
+  saveRequests(rows);
+
+  setMsg("vipRequestMsg", "✅ 등록 신청 완료. 관리자 승인 후 이용 가능합니다.", "success");
+  if(qs("payName")) qs("payName").value = "";
+  if(qs("txidInput")) qs("txidInput").value = "";
+}
+
+/* 기존 updateAuthUI 덮어쓰기: 승인상태/연동정보 표시 보강 */
+async function updateAuthUI(){
+  const user = await getCurrentUser();
+  const top = qs("topAuthArea");
+  if(top){
+    if(user){
+      const plan = user.plan || "FREE";
+      top.innerHTML = `
+        <div class="user-mini">
+          <span class="user-name">${user.email || "회원"}</span>
+          <span class="plan-badge plan-${plan.toLowerCase()}">${planLabel(plan)}</span>
+          <a class="login" href="./mypage.html">내정보</a>
+          <button onclick="logoutUser()">로그아웃</button>
+        </div>`;
+    }else{
+      top.innerHTML = `<a class="login" href="./login.html">로그인</a><a class="join" href="./join.html">회원가입</a>`;
+    }
+  }
+
+  const status = qs("authStatus");
+  if(status){
+    status.innerHTML = user
+      ? `<b>✅ 로그인 중</b><p>${user.email || "-"} / ${planLabel(user.plan || "FREE")}</p>`
+      : `<b>로그인이 필요합니다.</b><p>회원 기능은 로그인 후 이용할 수 있습니다.</p>`;
+  }
+
+  const rows = getRequests();
+  const myRows = user ? rows.filter(r => r.email === user.email) : [];
+  const pending = myRows.find(r => r.status === "PENDING");
+  const latest = myRows[0];
+
+  if(qs("myEmail")) qs("myEmail").textContent = user?.email || "-";
+  if(qs("myPlan")) qs("myPlan").textContent = planLabel(user?.plan || "FREE");
+  if(qs("myTelegram")) qs("myTelegram").textContent = user?.telegram || "미등록";
+  if(qs("myApproval")) qs("myApproval").textContent = pending ? "승인 대기중" : (latest ? statusLabel(latest.status) : "신청 없음");
+  if(qs("myLastRequest")) qs("myLastRequest").textContent = latest ? `${productLabel(latest.product)} / ${statusLabel(latest.status)}` : "신청 내역 없음";
+  if(qs("myInviteLink")){
+    const link = user && user.plan && user.plan !== "FREE" ? (KEDGE_LINKS[user.plan] || KEDGE_LINKS.VIP) : "";
+    qs("myInviteLink").innerHTML = link ? `<a href="${link}" target="_blank">텔레그램 입장/문의 링크</a>` : "승인 후 표시";
+  }
+
+  if(qs("myBotToken")) qs("myBotToken").textContent = maskValue(user?.tg_bot_token || "");
+  if(qs("myChatId")) qs("myChatId").textContent = user?.tg_chat_id || "미등록";
+  if(qs("myExchange")) qs("myExchange").textContent = user?.exchange || "미등록";
+  if(qs("myApiKey")) qs("myApiKey").textContent = maskValue(user?.api_key || "");
+  if(qs("myApiSecret")) qs("myApiSecret").textContent = maskValue(user?.api_secret || "");
+
+  document.querySelectorAll("[data-my-bot]").forEach(el=> el.style.display = user && isBotPlan(user.plan) ? "block" : "none");
+  document.querySelectorAll("[data-my-auto]").forEach(el=> el.style.display = user && isAutoPlan(user.plan) ? "block" : "none");
+
+  const loggedIn = qs("mypageLoggedIn");
+  const loggedOut = qs("mypageLoggedOut");
+  if(loggedIn && loggedOut){
+    loggedIn.style.display = user ? "grid" : "none";
+    loggedOut.style.display = user ? "none" : "grid";
+  }
+}
+
+function approveRequest(id){
+  const req = getRequestById(id);
+  if(!req) return alert("신청 내역을 찾을 수 없습니다.");
+
+  const users = getLocalUsers();
+  const oldUser = users[req.email] || { email:req.email, password:"", telegram:req.telegram || "미등록" };
+
+  users[req.email] = {
+    ...oldUser,
+    email:req.email,
+    telegram:req.telegram || oldUser.telegram || "미등록",
+    plan:req.product,
+    tg_bot_token:req.tg_bot_token || oldUser.tg_bot_token || "",
+    tg_chat_id:req.tg_chat_id || oldUser.tg_chat_id || "",
+    exchange:req.exchange || oldUser.exchange || "",
+    api_key:req.api_key || oldUser.api_key || "",
+    api_secret:req.api_secret || oldUser.api_secret || "",
+    approved_at:new Date().toISOString(),
+    status:"ACTIVE"
+  };
+  saveLocalUsers(users);
+
+  updateRequest(id, {
+    status:"APPROVED",
+    approved_at:new Date().toISOString(),
+    approved_text:nowText(),
+    admin_note: val("adminNote-" + id)
+  });
+
+  const current = getLocalUser();
+  if(current && current.email === req.email){
+    setLocalUser({
+      ...current,
+      plan:req.product,
+      tg_bot_token:req.tg_bot_token || "",
+      tg_chat_id:req.tg_chat_id || "",
+      exchange:req.exchange || "",
+      api_key:req.api_key || "",
+      api_secret:req.api_secret || ""
+    });
+  }
+
+  renderAdminPage();
+}
+
+function rejectRequest(id){
+  const req = getRequestById(id);
+  if(!req) return alert("신청 내역을 찾을 수 없습니다.");
+
+  updateRequest(id, {
+    status:"REJECTED",
+    rejected_at:new Date().toISOString(),
+    rejected_text:nowText(),
+    admin_note: val("adminNote-" + id)
+  });
+
+  renderAdminPage();
+}
+
+function deleteRequest(id){
+  if(!confirm("이 신청 내역을 삭제할까요?")) return;
+  saveRequests(getRequests().filter(x => x.id !== id));
+  renderAdminPage();
+}
+
+function setUserPlan(email, plan){
+  const users = getLocalUsers();
+  if(!users[email]) return alert("회원 정보를 찾을 수 없습니다.");
+  users[email].plan = plan;
+  saveLocalUsers(users);
+
+  const current = getLocalUser();
+  if(current && current.email === email){
+    setLocalUser({ ...current, plan });
+  }
+  renderAdminPage();
+}
+
+function suspendUser(email){
+  if(!confirm(email + " 회원을 정지 처리할까요?")) return;
+  const users = getLocalUsers();
+  if(!users[email]) return alert("회원 정보를 찾을 수 없습니다.");
+  users[email].plan = "FREE";
+  users[email].status = "SUSPENDED";
+  saveLocalUsers(users);
+  renderAdminPage();
+}
+
+function copyText(text){
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(text).then(()=>alert("복사 완료"));
+  }else{
+    prompt("복사하세요", text);
+  }
+}
+
+function makeApprovalMessage(req){
+  const link = KEDGE_LINKS[req.product] || KEDGE_LINKS.VIP;
+  return `[K-EDGE 승인 완료]\n\n상품: ${productLabel(req.product)}\n텔레그램 링크: ${link}\n\n반자동/자동 회원은 입력하신 BOT/API 정보 기준으로 연동 준비됩니다.\n문의: @listing0517`;
+}
+
+function renderAdminStats(){
+  const rows = getRequests();
+  const users = Object.values(getLocalUsers());
+  const pending = rows.filter(x=>x.status==="PENDING").length;
+  const approved = rows.filter(x=>x.status==="APPROVED").length;
+  const rejected = rows.filter(x=>x.status==="REJECTED").length;
+  const vip = users.filter(x=>x.plan==="VIP").length;
+  const semi = users.filter(x=>x.plan==="SEMI").length;
+  const auto = users.filter(x=>x.plan==="AUTO").length;
+
+  const box = qs("adminStats");
+  if(!box) return;
+  box.innerHTML = `
+    <article><b>${pending}</b><span>승인 대기</span></article>
+    <article><b>${approved}</b><span>승인 완료</span></article>
+    <article><b>${rejected}</b><span>거절</span></article>
+    <article><b>${vip}</b><span>VIP</span></article>
+    <article><b>${semi}</b><span>반자동</span></article>
+    <article><b>${auto}</b><span>자동</span></article>
+  `;
+}
+
+function renderAdminRequests(){
+  const wrap = qs("adminRequestList");
+  if(!wrap) return;
+
+  const status = val("adminStatusFilter") || "ALL";
+  const keyword = val("adminSearch").toLowerCase();
+  let rows = getRequests();
+
+  if(status !== "ALL") rows = rows.filter(x => x.status === status);
+  if(keyword){
+    rows = rows.filter(x => JSON.stringify(x).toLowerCase().includes(keyword));
+  }
+
+  if(!rows.length){
+    wrap.innerHTML = `<div class="admin-empty">신청 내역이 없습니다.</div>`;
+    return;
+  }
+
+  wrap.innerHTML = rows.map(req => {
+    const statusClass = (req.status || "PENDING").toLowerCase();
+    const msg = makeApprovalMessage(req).replaceAll("`","").replaceAll("${","");
+
+    return `
+      <article class="admin-request-card status-${statusClass}">
+        <div class="admin-card-top">
+          <div>
+            <b>${productLabel(req.product)}</b>
+            <p>${req.email || "-"} · ${req.telegram || "미등록"}</p>
+          </div>
+          <span class="admin-status ${statusClass}">${statusLabel(req.status)}</span>
+        </div>
+
+        <div class="admin-detail-grid">
+          <p><small>신청시간</small><strong>${req.created_text || req.created_at || "-"}</strong></p>
+          <p><small>결제방식</small><strong>${req.payType || "-"}</strong></p>
+          <p><small>입금자명</small><strong>${req.payName || "-"}</strong></p>
+          <p><small>TxID/메모</small><strong>${req.memo || "-"}</strong></p>
+          <p><small>BOT TOKEN</small><strong>${maskSecret(req.tg_bot_token)}</strong></p>
+          <p><small>CHAT ID</small><strong>${req.tg_chat_id || "미등록"}</strong></p>
+          <p><small>거래소</small><strong>${req.exchange || "미등록"}</strong></p>
+          <p><small>API KEY</small><strong>${maskSecret(req.api_key)}</strong></p>
+          <p><small>SECRET</small><strong>${maskSecret(req.api_secret)}</strong></p>
+        </div>
+
+        <textarea id="adminNote-${req.id}" class="admin-note" placeholder="관리자 메모">${req.admin_note || ""}</textarea>
+
+        <div class="admin-actions">
+          <button class="ok" onclick="approveRequest('${req.id}')">승인</button>
+          <button class="danger" onclick="rejectRequest('${req.id}')">거절</button>
+          <a class="admin-link" href="${telegramUrl(req.telegram)}" target="_blank">텔레그램 열기</a>
+          <button onclick="copyText(\`${msg}\`)">승인문구 복사</button>
+          <button class="ghost-admin" onclick="deleteRequest('${req.id}')">삭제</button>
+        </div>
+      </article>
+    `;
+  }).join("");
+}
+
+function renderAdminUsers(){
+  const wrap = qs("adminUserList");
+  if(!wrap) return;
+
+  const users = Object.values(getLocalUsers());
+  const keyword = val("adminUserSearch").toLowerCase();
+  let rows = users;
+  if(keyword) rows = rows.filter(x => JSON.stringify(x).toLowerCase().includes(keyword));
+
+  if(!rows.length){
+    wrap.innerHTML = `<div class="admin-empty">회원 정보가 없습니다.</div>`;
+    return;
+  }
+
+  wrap.innerHTML = rows.map(u => `
+    <article class="admin-user-row">
+      <div>
+        <b>${u.email || "-"}</b>
+        <p>${u.telegram || "미등록"} · ${planLabel(u.plan || "FREE")} · ${u.status || "NORMAL"}</p>
+      </div>
+      <select data-user-plan="${u.email}">
+        <option value="FREE" ${u.plan==="FREE"?"selected":""}>FREE</option>
+        <option value="VIP" ${u.plan==="VIP"?"selected":""}>VIP</option>
+        <option value="SEMI" ${u.plan==="SEMI"?"selected":""}>반자동</option>
+        <option value="AUTO" ${u.plan==="AUTO"?"selected":""}>자동</option>
+      </select>
+      <button onclick="setUserPlan('${u.email}', this.parentElement.querySelector('[data-user-plan]').value)">등급변경</button>
+      <button class="danger" onclick="suspendUser('${u.email}')">정지</button>
+    </article>
+  `).join("");
+}
+
+function exportAdminData(){
+  const data = {
+    exported_at:new Date().toISOString(),
+    users:getLocalUsers(),
+    requests:getRequests()
+  };
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "k-edge-admin-backup.json";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function renderAdminPage(){
+  const loginBox = qs("adminLoginBox");
+  const app = qs("adminApp");
+  if(!loginBox || !app) return;
+
+  if(!isAdminLoggedIn()){
+    loginBox.style.display = "block";
+    app.style.display = "none";
+    return;
+  }
+
+  loginBox.style.display = "none";
+  app.style.display = "block";
+  renderAdminStats();
+  renderAdminRequests();
+  renderAdminUsers();
+}
+
+document.addEventListener("DOMContentLoaded",()=>{
+  renderAdminPage();
+
+  qs("adminStatusFilter")?.addEventListener("change", renderAdminRequests);
+  qs("adminSearch")?.addEventListener("input", renderAdminRequests);
+  qs("adminUserSearch")?.addEventListener("input", renderAdminUsers);
+});

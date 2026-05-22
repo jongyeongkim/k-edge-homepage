@@ -449,3 +449,64 @@ footer a{color:#31d5ff;text-decoration:none;font-weight:800}
 .pw-toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#1d3354 0%,#10213b 100%);border:2px solid #31d5ff;color:#fff;font-size:24px;font-weight:900;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 0 18px rgba(49,213,255,.35);transition:.2s;z-index:5}
 .pw-toggle:hover{background:linear-gradient(135deg,#2a4a7e,#18345b);box-shadow:0 0 26px rgba(49,213,255,.65);transform:translateY(-50%) scale(1.06)}
 .pw-toggle.show{background:linear-gradient(135deg,#31d5ff,#2376ff)}
+
+
+/* ===== K-EDGE 운영자 페이지 ===== */
+.admin-hero{border-color:rgba(49,213,255,.28)}
+.admin-login-box{width:min(560px,92vw);margin:0 auto 60px}
+.admin-app{width:100%;margin:0 auto 50px}
+.admin-top-actions{display:flex;justify-content:flex-end;gap:10px;margin:0 0 16px;flex-wrap:wrap}
+.admin-top-actions button,.ghost-admin,.admin-actions button,.admin-user-row button,.admin-setting-grid button{
+  min-height:42px;border:1px solid rgba(145,176,255,.28);border-radius:10px;background:rgba(5,14,30,.8);color:#fff;font-weight:950;padding:0 14px
+}
+.admin-stats{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin:18px 0}
+.admin-stats article{border:1px solid rgba(145,176,255,.22);background:linear-gradient(150deg,rgba(12,30,58,.76),rgba(3,9,20,.82));border-radius:16px;padding:20px;text-align:center}
+.admin-stats b{display:block;font-size:34px;color:#31d5ff}
+.admin-stats span{display:block;margin-top:6px;color:#b8c4d4;font-weight:900}
+.admin-panel{border:1px solid rgba(145,176,255,.22);background:rgba(5,14,30,.58);border-radius:20px;padding:22px;margin:18px 0}
+.admin-panel-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:18px}
+.admin-panel-head h2{margin:0 0 8px;font-size:26px}
+.admin-panel-head p{margin:0;color:#aeb8c8}
+.admin-filters{display:flex;gap:10px;flex-wrap:wrap}
+.admin-filters input,.admin-filters select,.admin-setting-grid input{
+  height:44px;border:1px solid rgba(145,176,255,.28);background:#061225;color:#fff;border-radius:10px;padding:0 13px;font-weight:800
+}
+.admin-list{display:grid;gap:14px}
+.admin-request-card{border:1px solid rgba(145,176,255,.22);background:linear-gradient(150deg,rgba(10,26,52,.86),rgba(2,8,18,.88));border-radius:18px;padding:18px}
+.admin-request-card.status-pending{border-color:rgba(255,202,56,.45)}
+.admin-request-card.status-approved{border-color:rgba(41,255,154,.42)}
+.admin-request-card.status-rejected{border-color:rgba(255,93,93,.42)}
+.admin-card-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.admin-card-top b{font-size:20px}
+.admin-card-top p{margin:6px 0 0;color:#b8c4d4;font-weight:800}
+.admin-status{display:inline-flex;padding:8px 12px;border-radius:999px;font-size:13px;font-weight:950;border:1px solid rgba(255,255,255,.16)}
+.admin-status.pending{background:rgba(255,202,56,.12);color:#ffca38}
+.admin-status.approved{background:rgba(41,255,154,.12);color:#29ff9a}
+.admin-status.rejected{background:rgba(255,93,93,.12);color:#ff7373}
+.admin-detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.admin-detail-grid p{margin:0;border:1px solid rgba(145,176,255,.14);background:rgba(3,9,21,.45);border-radius:12px;padding:12px}
+.admin-detail-grid small{display:block;color:#8fa0b7;margin-bottom:6px;font-weight:900}
+.admin-detail-grid strong{display:block;color:#eaf6ff;word-break:break-all}
+.admin-note{width:100%;min-height:70px;margin:12px 0 0;border:1px solid rgba(145,176,255,.22);background:#061225;color:#fff;border-radius:12px;padding:12px;resize:vertical}
+.admin-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.admin-actions .ok{background:linear-gradient(135deg,#14d990,#18a8ff);border:0}
+.admin-actions .danger,.admin-user-row .danger{background:rgba(255,73,73,.16);border-color:rgba(255,73,73,.45);color:#ff9a9a}
+.admin-link{min-height:42px;border-radius:10px;display:inline-grid;place-items:center;padding:0 14px;background:linear-gradient(135deg,#1be4ff,#2376ff 52%,#8a39ff);font-weight:950}
+.admin-empty{border:1px dashed rgba(145,176,255,.22);border-radius:16px;padding:30px;text-align:center;color:#b8c4d4;font-weight:900}
+.admin-user-list{display:grid;gap:10px}
+.admin-user-row{display:grid;grid-template-columns:1.4fr 180px auto auto;gap:10px;align-items:center;border:1px solid rgba(145,176,255,.18);background:rgba(3,9,21,.45);border-radius:14px;padding:14px}
+.admin-user-row b{font-size:17px}
+.admin-user-row p{margin:6px 0 0;color:#aeb8c8;font-weight:800}
+.admin-user-row select{height:42px;border:1px solid rgba(145,176,255,.28);background:#061225;color:#fff;border-radius:10px;padding:0 10px;font-weight:900}
+.admin-setting-grid{display:grid;grid-template-columns:1fr 1fr auto;gap:10px}
+@media(max-width:1050px){
+  .admin-stats{grid-template-columns:repeat(3,1fr)}
+  .admin-detail-grid{grid-template-columns:1fr 1fr}
+  .admin-user-row{grid-template-columns:1fr}
+  .admin-panel-head{align-items:flex-start;flex-direction:column}
+}
+@media(max-width:640px){
+  .admin-stats{grid-template-columns:1fr 1fr}
+  .admin-detail-grid{grid-template-columns:1fr}
+  .admin-setting-grid{grid-template-columns:1fr}
+}

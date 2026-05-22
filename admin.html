@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="icon" type="image/png" href="./favicon.png" />
+  <title>K-EDGE | 운영자 페이지</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0b1020">
+</head>
+<body data-page="admin">
+  <div class="bg-grid"></div>
+
+  <header class="topbar">
+    <a class="brand" href="./index.html"><span class="kmark">K</span><b>K-EDGE</b></a>
+    <nav>
+      <a href="./index.html" data-nav="home">홈</a>
+      <a href="./payment.html" data-nav="payment">등록</a>
+      <a href="./mypage.html" data-nav="mypage">내정보</a>
+      <a href="./admin.html" data-nav="admin">운영자</a>
+    </nav>
+    <div class="top-actions" id="topAuthArea">
+      <a class="login" href="./login.html">로그인</a>
+      <a class="join" href="./join.html">회원가입</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="page-hero admin-hero">
+      <p class="exchange-pill">ADMIN</p>
+      <h1>K-EDGE 운영자 페이지</h1>
+      <p>가입 신청 승인, 회원 등급 관리, 반자동/자동 연동 정보를 한눈에 확인합니다.</p>
+    </section>
+
+    <section id="adminLoginBox" class="admin-login-box">
+      <div class="auth-box center-card">
+        <p class="exchange-pill">ADMIN LOGIN</p>
+        <h1>운영자 인증</h1>
+        <p class="auth-sub">초기 관리자 코드는 <b>0517</b> 입니다. 로그인 후 변경하세요.</p>
+        <input id="adminPin" type="password" placeholder="관리자 코드 입력">
+        <button class="auth-main-btn" onclick="adminLogin()">운영자 로그인</button>
+        <p id="adminLoginMsg" class="auth-msg"></p>
+      </div>
+    </section>
+
+    <section id="adminApp" class="admin-app" style="display:none;">
+      <div class="admin-top-actions">
+        <button onclick="exportAdminData()">백업 다운로드</button>
+        <button class="ghost-admin" onclick="adminLogout()">운영자 로그아웃</button>
+      </div>
+
+      <div id="adminStats" class="admin-stats"></div>
+
+      <section class="admin-panel">
+        <div class="admin-panel-head">
+          <div>
+            <h2>가입 신청 대기 / 승인 관리</h2>
+            <p>VIP 이상 신청을 확인하고 승인 또는 거절합니다.</p>
+          </div>
+          <div class="admin-filters">
+            <select id="adminStatusFilter">
+              <option value="ALL">전체</option>
+              <option value="PENDING">승인대기</option>
+              <option value="APPROVED">승인완료</option>
+              <option value="REJECTED">거절</option>
+            </select>
+            <input id="adminSearch" placeholder="이메일 / 텔레그램 / TxID 검색">
+          </div>
+        </div>
+        <div id="adminRequestList" class="admin-list"></div>
+      </section>
+
+      <section class="admin-panel">
+        <div class="admin-panel-head">
+          <div>
+            <h2>회원 관리</h2>
+            <p>승인된 회원의 등급을 변경하거나 정지 처리합니다.</p>
+          </div>
+          <div class="admin-filters">
+            <input id="adminUserSearch" placeholder="회원 검색">
+          </div>
+        </div>
+        <div id="adminUserList" class="admin-user-list"></div>
+      </section>
+
+      <section class="admin-panel">
+        <div class="admin-panel-head">
+          <div>
+            <h2>운영 설정</h2>
+            <p>관리자 코드를 변경합니다. 실제 운영 시에는 반드시 서버 인증으로 교체하세요.</p>
+          </div>
+        </div>
+        <div class="admin-setting-grid">
+          <input id="oldAdminPin" type="password" placeholder="기존 관리자 코드">
+          <input id="newAdminPin" type="password" placeholder="새 관리자 코드">
+          <button onclick="adminChangePin()">관리자 코드 변경</button>
+        </div>
+        <p id="adminSettingMsg" class="form-msg"></p>
+      </section>
+    </section>
+  </main>
+
+  <footer>
+    <b>K-EDGE TEAM</b>
+    <p>본 페이지는 운영자 전용입니다.</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./script.js"></script>
+</body>
+</html>
