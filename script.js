@@ -126,7 +126,7 @@ function syncPlanFields(){
   document.querySelectorAll("[data-plan-field='bot']").forEach(el=> el.style.display = isBot ? "block" : "none");
   document.querySelectorAll("[data-plan-field='auto']").forEach(el=> el.style.display = isAuto ? "block" : "none");
   document.querySelectorAll("[data-product-field='bot']").forEach(el=> el.style.display = isBot ? "block" : "none");
-  document.querySelectorAll("[data-product-field='auto']").forEach(el=> el.style.display = isAuto ? "block" : "none");
+  document.querySelectorAll("[data-product-field='auto']").forEach(el=> el.style.display = isBot ? "block" : "none");
 }
 
 async function signupUser(){
@@ -326,13 +326,72 @@ function changePayInfo(){
   if(box) box.innerHTML = PAY_INFO[pay] || PAY_INFO.USDT;
 }
 
+
+function firstEnabledApiName(apis){
+  const found = Object.entries(apis || {}).find(([_, v]) => v && v.enabled && v.api_key && v.api_secret);
+  return found ? found[0].toUpperCase() : "";
+}
+function firstEnabledApiValue(apis, key){
+  const found = Object.values(apis || {}).find(v => v && v.enabled && v.api_key && v.api_secret);
+  return found ? (found[key] || "") : "";
+}
+function hasValidEnabledApi(apis){
+  return Object.values(apis || {}).some(v => v && v.enabled && v.api_key && v.api_secret);
+}
+
 function collectPaymentExtra(product){
+  const domestic_apis = {
+    upbit:{
+      enabled: !!qs("payUpbitUse")?.checked,
+      api_key: val("payUpbitApiKey"),
+      api_secret: val("payUpbitApiSecret")
+    },
+    bithumb:{
+      enabled: !!qs("payBithumbUse")?.checked,
+      api_key: val("payBithumbApiKey"),
+      api_secret: val("payBithumbApiSecret")
+    }
+  };
+
+  const foreign_apis = {
+    mexc:{
+      enabled: !!qs("payMexcUse")?.checked,
+      api_key: val("payMexcApiKey"),
+      api_secret: val("payMexcApiSecret")
+    },
+    gate:{
+      enabled: !!qs("payGateUse")?.checked,
+      api_key: val("payGateApiKey"),
+      api_secret: val("payGateApiSecret")
+    },
+    bitget:{
+      enabled: !!qs("payBitgetUse")?.checked,
+      api_key: val("payBitgetApiKey"),
+      api_secret: val("payBitgetApiSecret")
+    },
+    bingx:{
+      enabled: !!qs("payBingxUse")?.checked,
+      api_key: val("payBingxApiKey"),
+      api_secret: val("payBingxApiSecret")
+    }
+  };
+
   return {
     tg_bot_token: val("payBotToken"),
     tg_chat_id: val("payChatId"),
-    exchange: val("payExchange") || "MEXC",
-    api_key: val("payApiKey"),
-    api_secret: val("payApiSecret")
+    domestic_apis,
+    foreign_apis,
+
+    // 구버전 관리자/표시 호환용 대표값
+    domestic_exchange: firstEnabledApiName(domestic_apis) || "",
+    domestic_api_key: firstEnabledApiValue(domestic_apis, "api_key") || "",
+    domestic_api_secret: firstEnabledApiValue(domestic_apis, "api_secret") || "",
+    foreign_exchange: firstEnabledApiName(foreign_apis) || "",
+    exchange: firstEnabledApiName(foreign_apis) || "",
+    foreign_api_key: firstEnabledApiValue(foreign_apis, "api_key") || "",
+    api_key: firstEnabledApiValue(foreign_apis, "api_key") || "",
+    foreign_api_secret: firstEnabledApiValue(foreign_apis, "api_secret") || "",
+    api_secret: firstEnabledApiValue(foreign_apis, "api_secret") || ""
   };
 }
 
@@ -349,7 +408,8 @@ async function submitVipRequest(){
   if(!payName) return setMsg("vipRequestMsg", "❌ 입금자명 또는 보내는 사람 이름을 입력해주세요.");
   if(!memo) return setMsg("vipRequestMsg", "❌ TxID / 입금 메모 / 확인용 내용을 입력해주세요.");
   if(isBotPlan(product) && (!extra.tg_bot_token || !extra.tg_chat_id)) return setMsg("vipRequestMsg", "❌ 반자동/자동은 BOT TOKEN과 CHAT ID가 필요합니다.");
-  if(isAutoPlan(product) && (!extra.api_key || !extra.api_secret)) return setMsg("vipRequestMsg", "❌ 자동은 거래소 API KEY와 SECRET이 필요합니다.");
+  if(isBotPlan(product) && !hasValidEnabledApi(extra.domestic_apis)) return setMsg("vipRequestMsg", "❌ 반자동/자동은 국내 거래소 API를 1개 이상 입력해야 합니다.");
+  if(isBotPlan(product) && !hasValidEnabledApi(extra.foreign_apis)) return setMsg("vipRequestMsg", "❌ 반자동/자동은 해외 거래소 API를 1개 이상 입력해야 합니다.");
 
   const request = {
     id: "REQ-" + Date.now(),
@@ -526,7 +586,8 @@ async function submitVipRequest(){
   if(!payName) return setMsg("vipRequestMsg", "❌ 입금자명 또는 보내는 사람 이름을 입력해주세요.");
   if(!memo) return setMsg("vipRequestMsg", "❌ TxID / 입금 메모 / 확인용 내용을 입력해주세요.");
   if(isBotPlan(product) && (!extra.tg_bot_token || !extra.tg_chat_id)) return setMsg("vipRequestMsg", "❌ 반자동/자동은 BOT TOKEN과 CHAT ID가 필요합니다.");
-  if(isAutoPlan(product) && (!extra.api_key || !extra.api_secret)) return setMsg("vipRequestMsg", "❌ 자동은 거래소 API KEY와 SECRET이 필요합니다.");
+  if(isBotPlan(product) && !hasValidEnabledApi(extra.domestic_apis)) return setMsg("vipRequestMsg", "❌ 반자동/자동은 국내 거래소 API를 1개 이상 입력해야 합니다.");
+  if(isBotPlan(product) && !hasValidEnabledApi(extra.foreign_apis)) return setMsg("vipRequestMsg", "❌ 반자동/자동은 해외 거래소 API를 1개 이상 입력해야 합니다.");
 
   const request = {
     id: "REQ-" + Date.now(),
