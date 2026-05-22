@@ -588,7 +588,7 @@ const SEMI_GUIDE_LINK="https://t.me/listing0517";
 const AUTO_GUIDE_LINK="https://t.me/listing0517";
 
 function adminLogin(){
-  const code=val("adminCode");
+  const code=String(qs("adminPin")?.value || qs("adminCode")?.value || "").replace(/\s/g,"");
   if(code!==KEDGE_ADMIN_CODE){
     const m=qs("adminLoginMsg");
     if(m) m.textContent="❌ 관리자 코드가 틀렸습니다.";
@@ -608,13 +608,15 @@ function adminBadge(status){
 }
 async function initAdminPage(){
   const loginBox=qs("adminLoginBox");
-  const panel=qs("adminPanel");
+  const panel=qs("adminApp") || qs("adminPanel");
   if(!loginBox && !panel) return;
+
   if(sessionStorage.getItem("kedge_admin_ok")!=="1"){
     if(loginBox) loginBox.style.display="block";
     if(panel) panel.style.display="none";
     return;
   }
+
   if(loginBox) loginBox.style.display="none";
   if(panel) panel.style.display="block";
   await renderAdminDashboard();
@@ -652,7 +654,7 @@ function renderAdminRequests(rows){
   if(!box) return;
 
   const q=(val("adminSearch")||"").toLowerCase();
-  const f=val("adminFilter") || "ALL";
+  const f=val("adminStatusFilter") || val("adminFilter") || "ALL";
 
   let list=rows || [];
   if(f!=="ALL") list=list.filter(r=>r.status===f || r.product===f);
@@ -778,7 +780,9 @@ document.addEventListener("DOMContentLoaded",()=>{
   qs("signupPlan")?.addEventListener("change",syncPlanFields);
   qs("productSelect")?.addEventListener("change",changeProductInfo);
   qs("payType")?.addEventListener("change",changePayInfo);
+  qs("adminPin")?.addEventListener("keydown",(e)=>{ if(e.key==="Enter") adminLogin(); });
   qs("adminSearch")?.addEventListener("input",renderAdminDashboard);
+  qs("adminStatusFilter")?.addEventListener("change",renderAdminDashboard);
   qs("adminFilter")?.addEventListener("change",renderAdminDashboard);
 
   const page=document.body?.dataset?.page;
