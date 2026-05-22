@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="icon" type="image/png" href="./favicon.png" />
+  <title>K-EDGE | BOT / API 연동 가이드</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0b1020">
+</head>
+<body data-page="guide">
+  <div class="bg-grid"></div>
+
+  <header class="topbar">
+    <a class="brand" href="./index.html"><span class="kmark">K</span><b>K-EDGE</b></a>
+    <nav>
+      <a href="./index.html" data-nav="home">홈</a>
+      <a href="./pricing.html" data-nav="pricing">요금제</a>
+      <a href="./guide.html" data-nav="guide">가이드</a>
+      <a href="./payment.html" data-nav="payment">등록</a>
+      <a href="./mypage.html" data-nav="mypage">내정보</a>
+    </nav>
+    <div class="top-actions" id="topAuthArea">
+      <a class="login" href="./login.html">로그인</a>
+      <a class="join" href="./join.html">회원가입</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="page-hero">
+      <p class="exchange-pill">BOT / API GUIDE</p>
+      <h1>반자동 · 자동 연동 가이드</h1>
+      <p>VIP Lite / VIP Pro 신청 전 필요한 텔레그램 BOT TOKEN, CHAT ID, 국내/해외 거래소 API KEY 생성 및 확인 방법입니다.</p>
+    </section>
+
+    <section class="section guide-manual">
+      <div class="guide-warning">
+        <b>보안 주의</b>
+        <p>국내/해외 API KEY 모두 출금 권한은 절대 켜지 마세요. 읽기/거래 권한만 사용하고, IP 제한이 가능하면 반드시 설정하세요.</p>
+      </div>
+
+      <div class="manual-grid">
+        <article class="manual-card">
+          <span class="manual-step">1</span>
+          <h2>텔레그램 BOT TOKEN 만들기</h2>
+          <ol>
+            <li>텔레그램에서 <b>@BotFather</b> 검색</li>
+            <li><b>/newbot</b> 입력</li>
+            <li>봇 이름 입력</li>
+            <li>봇 아이디 입력<br><small>예: kedge_my_bot</small></li>
+            <li>BotFather가 보내주는 <b>BOT TOKEN</b> 복사</li>
+          </ol>
+          <div class="manual-example">
+            <b>예시</b>
+            <p>8982xxxx:AAxxxxxx</p>
+          </div>
+        </article>
+
+        <article class="manual-card">
+          <span class="manual-step">2</span>
+          <h2>CHAT ID 확인하기</h2>
+          <ol>
+            <li>방금 만든 봇에게 아무 메시지 전송</li>
+            <li>아래 주소 형식으로 접속</li>
+            <li><b>chat → id</b> 값 확인</li>
+          </ol>
+          <div class="code-box">https://api.telegram.org/bot내BOT_TOKEN/getUpdates</div>
+          <p class="manual-note">개인 채팅 ID는 숫자 형태, 그룹/채널 ID는 보통 -100으로 시작합니다.</p>
+        </article>
+
+        <article class="manual-card">
+          <span class="manual-step">3</span>
+          <h2>국내 거래소 API 만들기</h2>
+          <ol>
+            <li>업비트 / 빗썸 / 코인원 로그인</li>
+            <li>API 관리 메뉴 이동</li>
+            <li>새 API 생성</li>
+            <li><b>읽기 / 거래</b> 권한만 체크</li>
+            <li><b>출금 권한은 반드시 OFF</b></li>
+            <li>API KEY 또는 Access Key / Secret Key 복사</li>
+          </ol>
+        </article>
+
+        <article class="manual-card">
+          <span class="manual-step">4</span>
+          <h2>해외 거래소 API 만들기</h2>
+          <ol>
+            <li>MEXC / Bitget / BingX / Bybit 등 로그인</li>
+            <li>API Management 이동</li>
+            <li>새 API 생성</li>
+            <li>Futures/Contract 거래 권한 확인</li>
+            <li><b>출금 권한은 반드시 OFF</b></li>
+            <li>API KEY / SECRET KEY 복사</li>
+          </ol>
+        </article>
+
+        <article class="manual-card danger-card">
+          <span class="manual-step">!</span>
+          <h2>API 권한 체크 기준</h2>
+          <ul>
+            <li>읽기 권한: ON</li>
+            <li>거래 권한: ON</li>
+            <li>선물/계약 거래: 해외 선물 사용 시 ON</li>
+            <li>출금 권한: OFF</li>
+            <li>IP 제한: 가능하면 ON</li>
+          </ul>
+        </article>
+
+        <article class="manual-card">
+          <span class="manual-step">5</span>
+          <h2>신청 전 최종 확인</h2>
+          <ol>
+            <li>BOT TOKEN 정상 여부</li>
+            <li>CHAT ID 정상 여부</li>
+            <li>국내 API KEY / SECRET 정상 여부</li>
+            <li>해외 API KEY / SECRET 정상 여부</li>
+            <li>거래소 선택값 확인</li>
+          </ol>
+          <a class="btn primary full" href="./payment.html">등록센터로 이동</a>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <b>K-EDGE TEAM</b>
+    <p>본 가이드는 연동 정보 생성 방법 안내이며, 투자 판단과 책임은 이용자 본인에게 있습니다.</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./script.js"></script>
+</body>
+</html>
