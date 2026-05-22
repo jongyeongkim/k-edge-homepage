@@ -124,8 +124,8 @@
   </footer>
 
   <script>
-    const SUPABASE_URL = "https://qakhbihueonefzifrmct.supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_XboBFueAITcieSL75B2S5g_qlm4XmOm";
+    const SUPABASE_URL = "https://ilkkwbnxxzkmqhdoscep.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_Fegb-Q-M98BReiYp1LV9sQ_7CW7e8T_";
     let db = null;
     let requestCache = [];
     let userCache = [];
@@ -141,7 +141,7 @@
     function planLabel(p){ return ({FREE:"FREE",VIP:"VIP 👑",SEMI:"VIP Lite 🤖",AUTO:"VIP Pro 🚀"})[p] || p || "FREE"; }
     function date(v){ if(!v) return "-"; try{return new Date(v).toLocaleString("ko-KR");}catch(e){return v;} }
     function badge(s){
-      s = String(s || "PENDING").toUpperCase();
+      s = s || "PENDING";
       const label = s==="APPROVED" ? "승인" : s==="REJECTED" ? "거절" : "대기";
       return `<span class="admin-status ${String(s).toLowerCase()}">${label}</span>`;
     }
@@ -182,36 +182,40 @@
 
     async function loadDashboard(){
       try{
-        requestCache = await loadRequests();
+        const reqRes = await db.from("kedge_requests").select("*").order("created_at",{ascending:false});
+        if(reqRes.error) throw reqRes.error;
+        requestCache = reqRes.data || [];
+
+        try{
+          const userRes = await db.from("kedge_users").select("*").order("created_at",{ascending:false});
+          userCache = userRes.error ? [] : (userRes.data || []);
+        }catch(e){
+          console.warn("kedge_users 로딩 실패 - 신청 목록은 계속 표시합니다.", e);
+          userCache = [];
+        }
+
+        try{
+          const saleRes = await db.from("kedge_sales").select("*").order("created_at",{ascending:false});
+          saleCache = saleRes.error ? [] : (saleRes.data || []);
+        }catch(e){
+          console.warn("kedge_sales 로딩 실패 - 신청 목록은 계속 표시합니다.", e);
+          saleCache = [];
+        }
+
+        $("adminTodayCount").textContent = requestCache.length + "건";
+        $("adminPendingCount").textContent = requestCache.filter(r=>String(r.status||"PENDING").toUpperCase()==="PENDING").length + "건";
+        $("adminActiveCount").textContent = requestCache.filter(r=>String(r.status||"").toUpperCase()==="APPROVED" && r.service_enabled === true).length + "명";
+        $("adminSemiCount").textContent = requestCache.filter(r=>String(r.product||"").toUpperCase()==="SEMI" && String(r.status||"").toUpperCase()==="APPROVED").length + "명";
+        $("adminAutoCount").textContent = requestCache.filter(r=>String(r.product||"").toUpperCase()==="AUTO" && String(r.status||"").toUpperCase()==="APPROVED").length + "명";
+        $("adminRevenue").textContent = saleCache.reduce((a,b)=>a+Number(b.amount||0),0).toLocaleString() + "원";
+
+        renderRequests();
+        renderUsers();
       }catch(e){
-        console.log("[kedge_requests 로딩 실패]", e);
-        $("adminRequestList").innerHTML = `<div class="admin-empty">신청 DB 로딩 실패: ${e.message || e}</div>`;
-        requestCache = [];
+        console.log(e);
+        $("adminRequestList").innerHTML = `<div class="admin-empty">DB 로딩 실패: ${e.message || e}</div>`;
+        $("adminUserList").innerHTML = `<div class="admin-empty">회원 데이터 로딩 대기</div>`;
       }
-
-      try{
-        userCache = await loadUsers();
-      }catch(e){
-        console.log("[kedge_users 로딩 실패]", e);
-        userCache = [];
-      }
-
-      try{
-        saleCache = await loadSales();
-      }catch(e){
-        console.log("[kedge_sales 로딩 실패]", e);
-        saleCache = [];
-      }
-
-      $("adminTodayCount").textContent = requestCache.length + "건";
-      $("adminPendingCount").textContent = requestCache.filter(r=>String(r.status||"PENDING").toUpperCase()==="PENDING").length + "건";
-      $("adminActiveCount").textContent = userCache.filter(u=>u.approved || String(u.plan||"FREE").toUpperCase() !== "FREE").length + "명";
-      $("adminSemiCount").textContent = userCache.filter(u=>String(u.plan||"").toUpperCase()==="SEMI").length + "명";
-      $("adminAutoCount").textContent = userCache.filter(u=>String(u.plan||"").toUpperCase()==="AUTO").length + "명";
-      $("adminRevenue").textContent = saleCache.reduce((a,b)=>a+Number(b.amount||0),0).toLocaleString() + "원";
-
-      renderRequests();
-      renderUsers();
     }
 
     function renderRequests(){
@@ -289,70 +293,81 @@
       expire.setMonth(expire.getMonth()+1);
 
       const plan = String(req.product || "VIP").toUpperCase();
+      const isAuto = plan === "AUTO";
+      const isSemi = plan === "SEMI";
 
       const userPayload = {
-        email:req.email,
+        email:req.email || "",
         telegram:req.telegram || "미등록",
         plan,
-
         tg_bot_token:req.tg_bot_token || "",
         tg_chat_id:req.tg_chat_id || "",
-
         exchange:req.exchange || req.foreign_exchange || "",
         api_key:req.api_key || req.foreign_api_key || "",
         api_secret:req.api_secret || req.foreign_api_secret || "",
-
         foreign_exchange:req.foreign_exchange || req.exchange || "",
         foreign_api_key:req.foreign_api_key || req.api_key || "",
         foreign_api_secret:req.foreign_api_secret || req.api_secret || "",
-
         domestic_exchange:req.domestic_exchange || "",
         domestic_api_key:req.domestic_api_key || "",
         domestic_api_secret:req.domestic_api_secret || "",
-
         approved:true,
-        expire_at:expire.toISOString()
+        expire_at:expire.toISOString(),
+        service_enabled:true,
+        approved_at:now.toISOString(),
+        running:false,
+        auto_config_done:isAuto ? false : true,
+        domestic_percent:20,
+        trade_mode:"fixed",
+        stop_loss_percent:4,
+        active_coins:[]
+      };
+
+      const requestPayload = {
+        status:"APPROVED",
+        service_enabled:true,
+        approved_at:now.toISOString(),
+        expires_at:expire.toISOString(),
+        running:false,
+        auto_config_done:isAuto ? false : true,
+        domestic_percent:20,
+        trade_mode:"fixed",
+        stop_loss_percent:4,
+        active_coins:[]
       };
 
       try{
-        let res = await db
-          .from("kedge_requests")
-          .update({
-            status:"APPROVED",
-            service_enabled:true,
-            approved_at:now.toISOString(),
-            expires_at:expire.toISOString(),
-            running:false,
-            auto_config_done: plan === "AUTO" ? false : true
-          })
-          .eq("id",id);
-
+        let res = await db.from("kedge_requests").update(requestPayload).eq("id",id);
         if(res.error) throw res.error;
 
-        res = await db
-          .from("kedge_users")
-          .upsert(userPayload,{onConflict:"email"});
+        try{
+          res = await db.from("kedge_users").upsert(userPayload,{onConflict:"email"});
+          if(res.error) console.warn("kedge_users upsert 실패:", res.error);
+        }catch(userErr){
+          console.warn("kedge_users 저장 실패 - 승인 상태는 kedge_requests에 저장됨:", userErr);
+        }
 
-        if(res.error) throw res.error;
+        try{
+          const amountMap = {VIP:35000,SEMI:70000,AUTO:100000};
+          await db.from("kedge_sales").insert({email:req.email,product:plan,amount:amountMap[plan]||0});
+        }catch(saleErr){
+          console.warn("매출 저장 실패 - 승인은 완료됨:", saleErr);
+        }
 
-        const amountMap = {VIP:35000,SEMI:70000,AUTO:100000};
-        await db
-          .from("kedge_sales")
-          .insert({
-            email:req.email,
-            product:plan,
-            amount:amountMap[plan]||0
-          });
+        if((isSemi || isAuto) && req.tg_bot_token && req.tg_chat_id){
+          const text = isSemi
+            ? `✅ K-EDGE 반자동 승인 완료\n\n반자동 시스템이 활성화되었습니다.\n\n텔레그램 버튼 사용:\n[진입] [청산] [금액설정] [상태확인] [긴급중지]\n\n※ 진입 전 국내/해외 보증금과 동일 코인 보유 여부를 확인합니다.`
+            : `✅ K-EDGE 자동 승인 완료\n\n홈페이지 내정보에서 자동 설정을 완료해주세요.\n설정 완료 후 자동거래가 활성화됩니다.\n\n※ 홈페이지와 텔레그램 모두 긴급중지를 지원합니다.`;
 
-        if((plan==="SEMI" || plan==="AUTO") && req.tg_bot_token && req.tg_chat_id){
-          const text =
-            plan==="SEMI"
-            ? `✅ K-EDGE 반자동 승인 완료\n\n반자동 시스템이 활성화되었습니다.\n\n텔레그램 버튼 사용:\n진입 / 청산 / 금액설정 / 상태확인 / 긴급중지`
-            : `✅ K-EDGE 자동 승인 완료\n\n홈페이지에서 자동 설정을 완료해주세요.\n설정 완료 후 자동거래가 활성화됩니다.`;
-
-          await fetch(
-            `https://api.telegram.org/bot${req.tg_bot_token}/sendMessage?chat_id=${req.tg_chat_id}&text=${encodeURIComponent(text)}`
-          );
+          try{
+            await fetch(`https://api.telegram.org/bot${req.tg_bot_token}/sendMessage`,{
+              method:"POST",
+              headers:{"Content-Type":"application/json"},
+              body:JSON.stringify({chat_id:req.tg_chat_id,text})
+            });
+          }catch(botErr){
+            console.warn("텔레그램 발송 실패 - 승인은 완료됨:", botErr);
+          }
         }
 
         alert("승인 완료");
