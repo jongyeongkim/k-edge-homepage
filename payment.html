@@ -12,6 +12,12 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="K-EDGE">
   <link rel="apple-touch-icon" href="/icon-192.png">
+
+  <style>
+    .multi-api-box{border:1px solid rgba(145,176,255,.22);background:rgba(5,14,30,.46);border-radius:14px;padding:14px;margin:12px 0;display:grid;gap:10px}
+    .multi-api-box label{font-weight:950;color:#dce7f7;display:flex;align-items:center;gap:8px}
+    .multi-api-box input[type=checkbox]{width:18px;height:18px}
+  </style>
 </head>
 <body data-page="payment">
   <div class="bg-grid"></div>
@@ -70,30 +76,48 @@
 
           <div class="product-extra api-extra" data-product-field="api">
             <h3>국내 거래소 API 정보</h3>
-            <p class="mini-desc">반자동/자동 모두 국내 현물 주문 연동에 필요합니다. 출금 권한은 절대 켜지 마세요.</p>
-            <select id="payDomesticExchange">
-              <option value="UPBIT">업비트</option>
-              <option value="BITHUMB">빗썸</option>
-              <option value="COINONE">코인원</option>
-            </select>
-            <input id="payDomesticApiKey" placeholder="국내 거래소 API KEY / ACCESS KEY">
-            <input id="payDomesticApiSecret" placeholder="국내 거래소 SECRET KEY">
+            <p class="mini-desc">반자동/자동 모두 국내 현물 주문 연동에 필요합니다. 필요한 국내 거래소를 각각 체크하고 API를 입력하세요. 출금 권한은 절대 켜지 마세요.</p>
+
+            <div class="multi-api-box">
+              <label><input type="checkbox" id="domesticUpbitEnabled" checked> 업비트 사용</label>
+              <input id="domesticUpbitApiKey" placeholder="업비트 ACCESS KEY">
+              <input id="domesticUpbitApiSecret" placeholder="업비트 SECRET KEY">
+            </div>
+
+            <div class="multi-api-box">
+              <label><input type="checkbox" id="domesticBithumbEnabled" checked> 빗썸 사용</label>
+              <input id="domesticBithumbApiKey" placeholder="빗썸 API KEY / ACCESS KEY">
+              <input id="domesticBithumbApiSecret" placeholder="빗썸 SECRET KEY">
+            </div>
           </div>
 
           <div class="product-extra api-extra" data-product-field="api">
             <h3>해외 거래소 API 정보</h3>
-            <p class="mini-desc">반자동/자동 모두 해외 선물 주문 연동에 필요합니다. 출금 권한은 절대 켜지 마세요.</p>
-            <select id="payForeignExchange">
-              <option value="MEXC">MEXC</option>
-              <option value="BITGET">Bitget</option>
-              <option value="BINGX">BingX</option>
-              <option value="BYBIT">Bybit</option>
-              <option value="GATE">Gate.io</option>
-              <option value="OKX">OKX</option>
-              <option value="BINANCE">Binance</option>
-            </select>
-            <input id="payForeignApiKey" placeholder="해외 거래소 API KEY">
-            <input id="payForeignApiSecret" placeholder="해외 거래소 SECRET KEY">
+            <p class="mini-desc">반자동/자동 모두 해외 선물 헷지 주문 연동에 필요합니다. 사용할 해외 거래소를 각각 체크하고 API를 입력하세요. 출금 권한은 절대 켜지 마세요.</p>
+
+            <div class="multi-api-box">
+              <label><input type="checkbox" id="foreignMexcEnabled" checked> MEXC 사용</label>
+              <input id="foreignMexcApiKey" placeholder="MEXC API KEY">
+              <input id="foreignMexcApiSecret" placeholder="MEXC SECRET KEY">
+            </div>
+
+            <div class="multi-api-box">
+              <label><input type="checkbox" id="foreignGateEnabled" checked> Gate.io 사용</label>
+              <input id="foreignGateApiKey" placeholder="Gate.io API KEY">
+              <input id="foreignGateApiSecret" placeholder="Gate.io SECRET KEY">
+            </div>
+
+            <div class="multi-api-box">
+              <label><input type="checkbox" id="foreignBitgetEnabled" checked> Bitget 사용</label>
+              <input id="foreignBitgetApiKey" placeholder="Bitget API KEY">
+              <input id="foreignBitgetApiSecret" placeholder="Bitget SECRET KEY">
+            </div>
+
+            <div class="multi-api-box">
+              <label><input type="checkbox" id="foreignBingxEnabled" checked> BingX 사용</label>
+              <input id="foreignBingxApiKey" placeholder="BingX API KEY">
+              <input id="foreignBingxApiSecret" placeholder="BingX SECRET KEY">
+            </div>
           </div>
           <button type="button" onclick="submitVipRequest()">등록 신청하기</button>
           <p id="vipRequestMsg" class="form-msg"></p>

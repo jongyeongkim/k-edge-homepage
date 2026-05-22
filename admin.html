@@ -139,6 +139,18 @@
       return v.slice(0,4) + "••••" + v.slice(-4);
     }
     function planLabel(p){ return ({FREE:"FREE",VIP:"VIP 👑",SEMI:"VIP Lite 🤖",AUTO:"VIP Pro 🚀"})[p] || p || "FREE"; }
+    function apiSummary(obj, fallbackExchange, fallbackKey, fallbackSecret){
+      let apis = obj || {};
+      if(typeof apis === 'string'){
+        try{ apis = JSON.parse(apis); }catch(e){ apis = {}; }
+      }
+      const keys = Object.keys(apis || {});
+      if(keys.length){
+        return keys.map(k=>`${k} / ${mask(apis[k].api_key)} / ${mask(apis[k].api_secret)}`).join('<br>');
+      }
+      if(fallbackExchange || fallbackKey || fallbackSecret) return `${fallbackExchange || '-'} / ${mask(fallbackKey)} / ${mask(fallbackSecret)}`;
+      return '-';
+    }
     function date(v){ if(!v) return "-"; try{return new Date(v).toLocaleString("ko-KR");}catch(e){return v;} }
     function badge(s){
       s = s || "PENDING";
@@ -229,8 +241,8 @@
             <p><b>메모</b> ${r.memo || "-"}</p>
             <p><b>신청시간</b> ${date(r.created_at)}</p>
             ${(r.product==="SEMI"||r.product==="AUTO") ? `<p><b>BOT</b> ${mask(r.tg_bot_token)} / CHAT ${r.tg_chat_id || "-"}</p>` : ""}
-            ${(r.product==="SEMI"||r.product==="AUTO") ? `<p><b>국내 API</b> ${r.domestic_exchange || "-"} / ${mask(r.domestic_api_key)} / ${mask(r.domestic_api_secret)}</p>` : ""}
-            ${(r.product==="SEMI"||r.product==="AUTO") ? `<p><b>해외 API</b> ${r.foreign_exchange || r.exchange || "-"} / ${mask(r.foreign_api_key || r.api_key)} / ${mask(r.foreign_api_secret || r.api_secret)}</p>` : ""}
+            ${(r.product==="SEMI"||r.product==="AUTO") ? `<p><b>국내 API</b><br>${apiSummary(r.domestic_apis, r.domestic_exchange, r.domestic_api_key, r.domestic_api_secret)}</p>` : ""}
+            ${(r.product==="SEMI"||r.product==="AUTO") ? `<p><b>해외 API</b><br>${apiSummary(r.foreign_apis, r.foreign_exchange || r.exchange, r.foreign_api_key || r.api_key, r.foreign_api_secret || r.api_secret)}</p>` : ""}
           </div>
           <div class="admin-actions">
             <button onclick="approveReq('${r.id}')">승인</button>

@@ -5,6 +5,35 @@ const supabaseClient = window.supabase ? supabase.createClient(SUPABASE_URL, SUP
 function $(id){ return document.getElementById(id); }
 function setMsg(id, msg) { const el = $(id); if (el) el.textContent = msg; }
 function val(id){ const el = $(id); return el ? String(el.value || '').trim() : ''; }
+function checked(id){ const el = $(id); return !!(el && el.checked); }
+function collectApiGroup(prefix, items){
+  const result = {};
+  for(const item of items){
+    const enabled = checked(prefix + item.id + 'Enabled');
+    if(!enabled) continue;
+    const api_key = val(prefix + item.id + 'ApiKey');
+    const api_secret = val(prefix + item.id + 'ApiSecret');
+    result[item.code] = { exchange:item.code, name:item.name, api_key, api_secret };
+  }
+  return result;
+}
+function enabledApiCount(obj){ return Object.keys(obj || {}).length; }
+function missingApi(obj){
+  for(const k of Object.keys(obj || {})){
+    if(!obj[k].api_key || !obj[k].api_secret) return k;
+  }
+  return '';
+}
+const DOMESTIC_API_ITEMS = [
+  {id:'Upbit', code:'UPBIT', name:'업비트'},
+  {id:'Bithumb', code:'BITHUMB', name:'빗썸'}
+];
+const FOREIGN_API_ITEMS = [
+  {id:'Mexc', code:'MEXC', name:'MEXC'},
+  {id:'Gate', code:'GATE', name:'Gate.io'},
+  {id:'Bitget', code:'BITGET', name:'Bitget'},
+  {id:'Bingx', code:'BINGX', name:'BingX'}
+];
 
 function togglePassword(id, btn){
   const input = $(id);
@@ -178,10 +207,22 @@ async function submitVipRequest(){
 
   if(!payName) return setMsg('vipRequestMsg','입금자명 또는 보내는 사람 이름을 입력하세요.');
   if(!memo) return setMsg('vipRequestMsg','TxID / 입금 메모 / 확인용 내용을 입력하세요.');
+  let domesticApis = {};
+  let foreignApis = {};
   if(needBotApi){
-    const required = ['payBotToken','payChatId','payDomesticApiKey','payDomesticApiSecret','payForeignApiKey','payForeignApiSecret'];
-    for(const id of required){ if(!val(id)) return setMsg('vipRequestMsg','반자동/자동은 BOT TOKEN, CHAT ID, 국내/해외 API를 모두 입력해야 합니다.'); }
+    if(!val('payBotToken') || !val('payChatId')) return setMsg('vipRequestMsg','반자동/자동은 BOT TOKEN과 CHAT ID를 입력해야 합니다.');
+    domesticApis = collectApiGroup('domestic', DOMESTIC_API_ITEMS);
+    foreignApis = collectApiGroup('foreign', FOREIGN_API_ITEMS);
+    if(enabledApiCount(domesticApis) < 1) return setMsg('vipRequestMsg','국내 거래소를 최소 1개 이상 선택하고 API를 입력하세요.');
+    if(enabledApiCount(foreignApis) < 1) return setMsg('vipRequestMsg','해외 거래소를 최소 1개 이상 선택하고 API를 입력하세요.');
+    const md = missingApi(domesticApis);
+    const mf = missingApi(foreignApis);
+    if(md) return setMsg('vipRequestMsg', md + ' 국내 API KEY / SECRET을 모두 입력하세요.');
+    if(mf) return setMsg('vipRequestMsg', mf + ' 해외 API KEY / SECRET을 모두 입력하세요.');
   }
+
+  const domesticFirst = Object.values(domesticApis)[0] || {};
+  const foreignFirst = Object.values(foreignApis)[0] || {};
 
   const payload = {
     email: user.email,
@@ -193,12 +234,14 @@ async function submitVipRequest(){
     status: 'PENDING',
     tg_bot_token: needBotApi ? val('payBotToken') : '',
     tg_chat_id: needBotApi ? val('payChatId') : '',
-    domestic_exchange: needBotApi ? val('payDomesticExchange') : '',
-    domestic_api_key: needBotApi ? val('payDomesticApiKey') : '',
-    domestic_api_secret: needBotApi ? val('payDomesticApiSecret') : '',
-    foreign_exchange: needBotApi ? val('payForeignExchange') : '',
-    foreign_api_key: needBotApi ? val('payForeignApiKey') : '',
-    foreign_api_secret: needBotApi ? val('payForeignApiSecret') : '',
+    domestic_exchange: needBotApi ? (domesticFirst.exchange || '') : '',
+    domestic_api_key: needBotApi ? (domesticFirst.api_key || '') : '',
+    domestic_api_secret: needBotApi ? (domesticFirst.api_secret || '') : '',
+    domestic_apis: needBotApi ? domesticApis : {},
+    foreign_exchange: needBotApi ? (foreignFirst.exchange || '') : '',
+    foreign_api_key: needBotApi ? (foreignFirst.api_key || '') : '',
+    foreign_api_secret: needBotApi ? (foreignFirst.api_secret || '') : '',
+    foreign_apis: needBotApi ? foreignApis : {},
     service_enabled: false,
     running: false,
     auto_config_done: false,

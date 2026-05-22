@@ -3,46 +3,40 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>K-EDGE | 실제 엣지 기반 양방 감지</title>
   <link rel="stylesheet" href="./style.css" />
-  <link rel="icon" type="image/png" href="./favicon.png" />
-  <title>K-EDGE | 예상 추가 수익 기반 양방 감지</title>
-  <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#0b1020">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="K-EDGE">
-  <link rel="apple-touch-icon" href="/icon-192.png">
 </head>
-<body data-page="home">
+<body>
   <div class="bg-grid"></div>
   <header class="topbar">
-    <a class="brand" href="./index.html"><span class="kmark">K</span><b>K-EDGE</b></a>
+    <a class="brand" href="#home"><span class="kmark">K</span><b>K-EDGE</b></a>
     <nav>
-      <a href="./index.html" data-nav="home">홈</a>
-      <a href="./pricing.html" data-nav="pricing">요금제</a>
-      <a href="./guide.html" data-nav="guide">가이드</a>
-      <a href="./referral.html" data-nav="referral">레퍼럴</a>
-      <a href="./payment.html" data-nav="payment">등록</a>
-      <a href="./support.html" data-nav="support">문의</a>
-      <a href="./mypage.html" data-nav="mypage">내정보</a>
+      <a class="active" href="#home">홈</a>
+      <a href="#service">서비스</a>
+      <a href="#signals">실시간 현황</a>
+      <a href="#referral">레퍼럴</a>
+      <a href="#vip">VIP</a>
+      <a href="#guide">가이드</a>
+      <a href="#payment">문의</a>
     </nav>
-    <div class="top-actions" id="topAuthArea">
-      <a class="login" href="./login.html">로그인</a>
-      <a class="join" href="./login.html">회원가입</a>
+    <div class="top-actions">
+      <a class="login" href="#auth">로그인</a>
+      <a class="join" href="#auth">회원가입</a>
     </div>
   </header>
+
   <main id="home">
     <section class="hero-wrap">
       <div class="hero-left">
         <p class="exchange-pill">BITHUMB · BITGET · MEXC · GATE · OKX · BINGX</p>
-        <h1>K-EDGE<br><span>실시간 프리미엄 감지 솔루션</span></h1>
-        <p class="hero-desc">국내 현물 ↔ 해외 선물 괴리를 분석하고,<br>예상 추가 수익 기반 기회를 탐지합니다.</p>
+        <h1>국내 현물 ↔ 해외 선물<br><span>실제 엣지 기반 양방 감지</span></h1>
+        <p class="hero-desc">빗썸 현물과 해외 선물의 괴리율을 실시간 비교하고,<br>BTC 괴리를 제외한 실제 엣지 기준으로 양방 후보를 알려드립니다.</p>
         <div class="hero-buttons">
-          <a class="btn primary" href="https://t.me/KListingRadarFREE" target="_blank">FREE 채널 입장</a>
-          <a class="btn ghost" href="./pricing.html">VIP / BOT 보기</a>
+          <a class="btn primary" href="https://t.me/KListingRadarFREE" target="_blank">텔레그램 FREE</a>
+          <a class="btn ghost" href="#service">VIP / BOT 보기</a>
         </div>
         <div class="feature-line">
-          <span>⚡ 실시간 엣지 감지</span><span>🔍 실체결 가능 금액 계산</span><span>✈️ 텔레그램 알림</span><span>✓ 쉬운 사용</span>
+          <span>⚡ 실시간 엣지 감지</span><span>🧠 AI 기반 분석</span><span>✈️ 텔레그램 알림</span><span>✓ 쉬운 사용</span>
         </div>
       </div>
 
@@ -64,112 +58,81 @@
       </div>
 
       <aside class="live-edge-card">
-        <div class="live-head"><span>실시간 매매 기회</span><b>+2.16%</b></div>
+        <div class="live-head"><span>LIVE EDGE</span><b>+2.16%</b></div>
         <h3>🚨 SOL 양방 후보</h3>
         <p>국내: 빗썸 · 해외선물: Bitget</p>
         <div class="live-metrics">
-          <div><small>가격 차이</small><strong>+3.21%</strong></div>
-          <div><small>시장 영향</small><strong>+1.05%</strong></div>
+          <div><small>코인괴리</small><strong>+3.21%</strong></div>
+          <div><small>BTC괴리</small><strong>+1.05%</strong></div>
           <div><small>실체결</small><strong>140만원</strong></div>
           <div><small>알림</small><strong>VIP 전송</strong></div>
         </div>
-        <a class="btn primary full" href="./payment.html">서비스 시작</a>
+        <a class="btn primary full" href="#service">서비스 시작</a>
       </aside>
     </section>
 
     <section class="stats-panel">
-      <article><div><p>지난 24시간 감지</p><b>23건</b><small>최근 24시간 기준</small></div><span class="icon green">⌁</span></article>
-      <article><div><p>평균 추가 수익</p><b>+2.4%</b><small>최근 24시간 평균</small></div><span class="icon blue">⌁</span></article>
-      <article><div><p>VIP 알림</p><b>188건</b><small>최근 24시간 VIP 전송</small></div><span class="icon purple">♢</span></article>
-      <article><div><p>최대 추가 수익</p><b>+8.3%</b><small>최근 24시간 최고값</small></div><span class="icon gold">◎</span></article>
+      <article><div><p>오늘 감지</p><b>23건</b><small>▲ 15.0% (전일 대비)</small></div><span class="icon green">⌁</span></article>
+      <article><div><p>평균 엣지</p><b>+2.4%</b><small>▲ 0.6% (전일 대비)</small></div><span class="icon blue">⌁</span></article>
+      <article><div><p>VIP 알림</p><b>188건</b><small>▲ 23.2% (전일 대비)</small></div><span class="icon purple">♢</span></article>
+      <article><div><p>최대 엣지</p><b>+8.3%</b><small>▲ 1.2% (전일 대비)</small></div><span class="icon gold">◎</span></article>
     </section>
 
     <section id="service" class="section compact">
       <h2>K-EDGE 서비스</h2>
-      <p class="sub">VIP부터 유료 정보 전체 제공, 반자동/자동은 매매 실행 방식이 추가됩니다.</p>
       <div class="service-cards">
-        <article class="service-card free"><div class="label">무료</div><h3>FREE</h3><div class="radar"></div><ul><li>일부 알림 공개</li><li>5분 지연 제공</li><li>텔레그램 공개방</li></ul><a class="outline green" href="https://t.me/KListingRadarFREE" target="_blank">FREE 채널 입장</a></article>
-        <article class="service-card vip"><div class="label gold-label">월 35,000원</div><h3>🔥 VIP</h3><ul><li>김프/역프 전체 알림</li><li>양방 헤지 후보</li><li>입출금·고래·상장·DEX·BTC Wave</li><li>VIP 전용 채널</li></ul><a class="outline gold" href="./vip.html">VIP 자세히 보기</a></article>
-        <article class="service-card lite"><div class="label blue">월 70,000원</div><h3>🤖 VIP Lite (반자동)</h3><div class="mini-bot">🤖</div><ul><li>VIP 전체 기능 포함</li><li>텔레그램 승인형 진입</li><li>API 연동</li><li>일부 자동 청산 지원</li></ul><a class="outline blue" href="./semi-auto.html">반자동 자세히 보기</a></article>
-        <article class="service-card pro"><div class="label purple">월 100,000원</div><h3>🚀 VIP Pro (자동)</h3><div class="mini-bot purple-bot">🤖</div><ul><li>VIP 전체 기능 포함</li><li>자동 매매 실행</li><li>자동 포지션 청산</li><li>24시간 무인 운영</li></ul><a class="outline purple" href="./auto.html">자동 자세히 보기</a></article>
+        <article class="service-card free"><div class="label">무료</div><h3>FREE</h3><div class="radar"></div><ul><li>실시간 엣지 감지 알림</li><li>기본 알림 제공</li><li>텔레그램 연동</li></ul><a class="outline green" href="https://t.me/KListingRadarFREE" target="_blank">무료로 시작하기</a></article>
+        <article class="service-card lite"><div class="label blue">월 2만원</div><h3>BOT Lite</h3><div class="mini-bot">🤖</div><ul><li>24시간 자동 매매</li><li>중간 엣지 포착</li><li>리스크 관리 포함</li></ul><a class="outline blue" href="#payment">자세히 보기</a></article>
+        <article class="service-card pro"><div class="label purple">월 4만원</div><h3>BOT Pro</h3><div class="mini-bot purple-bot">🤖</div><ul><li>초기 엣지 선점</li><li>고급 알고리즘 적용</li><li>전문가 모드 지원</li></ul><a class="outline purple" href="#payment">자세히 보기</a></article>
+        <article id="vip" class="service-card vip"><h3>👑 VIP 멤버십</h3><ul><li>실시간 엣지 알림 우선 전송</li><li>VIP 전용 텔레그램 채널</li><li>상세 데이터 및 통계 제공</li><li>1:1 맞춤 지원</li></ul><a class="outline gold" href="#payment">VIP 가입하기</a></article>
       </div>
     </section>
 
-
-    
-
     <section id="guide" class="benefits">
-      <article><span>🔍</span><b>실체결 가능 금액 계산</b><p>실제로 빠져나갈 수 있는 금액만 기준으로 알림</p></article>
-      <article><span>📊</span><b>매수벽/매도벽 분석</b><p>유동성 기반 현실적 진입 판단</p></article>
-      <article><span>⚡</span><b>ATR 기반 진입 무효화 기준</b><p>손실 구간을 미리 정리하는 기준 제공</p></article>
-      <article><span>🐋</span><b>고래 입금 추적</b><p>단순 입금 이후 1시간 후속 흐름 추적</p></article>
+      <article><span>✥</span><b>누구나 쉽게 시작</b><p>복잡한 설정 없이 가입 후 바로 사용 가능</p></article>
+      <article><span>⌘</span><b>강력한 AI 기술</b><p>데이터 분석으로 최적의 타이밍 포착</p></article>
+      <article><span>🛡</span><b>철저한 보안</b><p>사용자 자산과 정보 최우선 보호</p></article>
+      <article><span>↗</span><b>24/7 모니터링</b><p>실시간 모니터링으로 지속적인 시스템 관리</p></article>
     </section>
 
     <section id="signals" class="section">
       <h2>실시간 감지 예시</h2><p class="sub">무료방은 일부 공개, VIP는 전체 상세 알림을 제공합니다.</p>
       <div class="signal-table">
-        <div class="row head"><span>시간</span><span>코인</span><span>국내</span><span>해외</span><span>괴리율</span><span>실체결</span><span>상태</span></div>
-        <div class="row"><span>14:32</span><span>SOL</span><span>빗썸</span><span>Bitget</span><span class="up">+3.21%</span><span>140만원</span><span class="edge">VIP 전송</span></div>
-        <div class="row"><span>14:33</span><span>XRP</span><span>빗썸</span><span>MEXC</span><span class="up">+2.78%</span><span>210만원</span><span class="edge">VIP 전송</span></div>
-        <div class="row"><span>14:34</span><span>DOGE</span><span>빗썸</span><span>Gate</span><span class="up">+2.45%</span><span>95만원</span><span class="edge">관찰</span></div>
+        <div class="row head"><span>시간</span><span>코인</span><span>국내</span><span>해외</span><span>코인괴리</span><span>BTC괴리</span><span>실제엣지</span></div>
+        <div class="row"><span>14:32</span><span>SOL</span><span>빗썸</span><span>Bitget</span><span class="up">+3.21%</span><span>+1.05%</span><span class="edge">+2.16%</span></div>
+        <div class="row"><span>14:33</span><span>XRP</span><span>빗썸</span><span>MEXC</span><span class="up">+2.78%</span><span>+0.81%</span><span class="edge">+1.97%</span></div>
+        <div class="row"><span>14:34</span><span>DOGE</span><span>빗썸</span><span>Gate</span><span class="up">+2.45%</span><span>+0.60%</span><span class="edge">+1.85%</span></div>
       </div>
     </section>
 
-<section class="section">
-<h2>K-EDGE 활용 흐름</h2>
-<div class="ref-steps">
-<article><b>1</b><h3>국내 괴리 감지</h3><p>국내 현물 ↔ 해외 선물 비교</p></article>
-<article><b>2</b><h3>예상 추가 수익 계산</h3><p>BTC 괴리 제외</p></article>
-<article><b>3</b><h3>실체결 분석</h3><p>실체결 가능 금액 계산</p></article>
-<article><b>4</b><h3>텔레그램 알림</h3><p>실시간 전송</p></article>
-</div>
-</section>
-
-<section class="section">
-      <h2>요금제 차별화</h2>
-      <p class="sub">FREE는 체험용, VIP부터 전체 정보 제공, 반자동/자동은 실행 기능 추가입니다.</p>
-      <a class="btn primary" href="./pricing.html">요금제 비교표 보기</a>
-    </section>
-
-    <section class="referral-banner" id="referral">
-      <div>
-        <p class="exchange-pill">REFERRAL BENEFIT</p>
-        <h2>🎁 레퍼럴 20% 할인 혜택</h2>
-        <p>거래소 레퍼럴 가입 후 UID 또는 가입 인증을 남기면 VIP / VIP+반자동 / VIP+자동 등록 시 20% 할인 적용</p>
-        <div class="discount-line">
-          <span>VIP 35,000원 → 28,000원</span>
-          <span>반자동 70,000원 → 56,000원</span>
-          <span>자동 100,000원 → 80,000원</span>
-        </div>
-      </div>
-      <div class="referral-actions">
+    <section id="referral" class="section">
+      <h2>레퍼럴 할인</h2><p class="sub">레퍼럴 이용 후 인증 시 VIP/BOT 할인 혜택을 제공합니다.</p>
+      <div class="ref-grid">
         <a href="https://promote.mexc.com/r/b3ByFMpxVi" target="_blank">MEXC</a>
         <a href="https://share.bitget.com/u/95QVB94Q" target="_blank">Bitget</a>
         <a href="https://bingxdao.com/invite/UTKKP6/" target="_blank">BingX</a>
         <a href="https://www.gate.com/referral/earn-together/invite/BVMXAFkL?ref=BVMXAFkL&ref_type=103&utm_cmp=rXJBDjtJ&activity_id=1778642196063" target="_blank">Gate.io</a>
       </div>
-      <a class="btn primary" href="./referral.html">레퍼럴 설명페이지</a>
     </section>
 
+    <section id="payment" class="section payment">
+      <h2>결제 / VIP 문의</h2><p class="sub">결제 후 텔레그램으로 입금자명/TxID를 보내주시면 확인 후 VIP 링크를 안내합니다.</p>
+      <a class="btn primary" href="https://t.me/+SVGXlyw_TXc4NDQ1" target="_blank">VIP 텔레그램 문의</a>
+    </section>
+
+    <section id="auth" class="section auth-section">
+      <h2>회원 서비스</h2><p class="sub">이메일 회원가입 / 로그인 / 텔레그램 ID 저장 기능이 연결되었습니다.</p>
+      <div class="auth-status" id="authStatus"><b>로그인 상태 확인 중...</b></div>
+      <div class="auth-grid">
+        <div class="auth-card"><h3>로그인</h3><input id="loginEmail" placeholder="이메일"><input id="loginPassword" placeholder="비밀번호" type="password"><button onclick="loginUser()">로그인</button><p id="loginMsg"></p></div>
+        <div class="auth-card"><h3>회원가입</h3><input id="signupEmail" placeholder="이메일"><input id="signupPassword" placeholder="비밀번호" type="password"><input id="signupTelegram" placeholder="텔레그램 ID 예: @kedge_user"><button onclick="signupUser()">회원가입</button><p id="signupMsg"></p></div>
+        <div class="auth-card"><h3>내 정보</h3><p>이메일 : <span id="myEmail">-</span></p><p>구독상태 : <span id="myPlan">FREE</span></p><p>텔레그램 : <span id="myTelegram">미등록</span></p><button onclick="logoutUser()">로그아웃</button></div>
+      </div>
+    </section>
   </main>
-  <footer>
-  <b>K-EDGE TEAM</b>
-  <p>Telegram: <a href="https://t.me/listing0517" target="_blank">@listing0517</a></p>
-  <p>본 서비스는 정보 제공 목적이며, 투자 판단과 책임은 이용자 본인에게 있습니다.</p>
-  <p class="footer-note">실시간 데이터는 시장 상황에 따라 변동될 수 있으며 참고용 정보입니다.</p>
-  <p><a href="./referral.html">레퍼럴</a> · <a href="./pricing.html">요금제</a> · <a href="./support.html">문의</a></p>
-</footer>
+
+  <footer><b>K-EDGE</b><p>본 서비스는 정보 제공 목적이며, 투자 판단과 책임은 이용자 본인에게 있습니다.</p></footer>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./script.js"></script>
-
-<script>
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", function () {
-    navigator.serviceWorker.register("/service-worker.js").catch(function (err) {
-      console.log("Service Worker registration failed:", err);
-    });
-  });
-}
-</script>
 </body>
 </html>
