@@ -37,8 +37,10 @@ const KEDGE_AUTH_KEY = "kedge_local_user";
 const KEDGE_USERS_KEY = "kedge_local_users";
 const KEDGE_REQUESTS_KEY = "kedge_vip_requests";
 
-const SUPABASE_URL = window.KEDGE_SUPABASE_URL || "";
-const SUPABASE_ANON_KEY = window.KEDGE_SUPABASE_ANON_KEY || "";
+const SUPABASE_URL = "https://qakhbihueonefzifrmct.supabase.co";
+
+const SUPABASE_ANON_KEY =
+"sb_publishable_XboBFueAITcieSL75B2S5g_qlm4XmOm";
 let kedgeSupabase = null;
 
 try {
