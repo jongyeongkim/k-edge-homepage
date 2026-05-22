@@ -421,3 +421,24 @@ footer a{color:#31d5ff;text-decoration:none;font-weight:800}
   .service-card .label{min-width:auto}
   .discount-line span{font-size:12px;padding:7px 10px}
 }
+/* 추천인 혜택 강조 */
+
+.referral-obvious{
+    border:1px solid rgba(255,200,0,.35);
+    background:linear-gradient(
+        135deg,
+        rgba(255,190,0,.08),
+        rgba(255,120,0,.05)
+    );
+    box-shadow:0 0 25px rgba(255,180,0,.12);
+}
+
+.referral-obvious h3{
+    color:#ffca38;
+    font-size:24px;
+}
+
+.discount-line span{
+    font-size:15px;
+    font-weight:800;
+}
