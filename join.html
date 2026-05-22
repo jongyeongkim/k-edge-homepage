@@ -42,13 +42,51 @@
         <input id="signupEmail" type="email" placeholder="example@email.com" autocomplete="email">
 
         <label>비밀번호</label>
-        <input id="signupPassword" type="password" placeholder="비밀번호 6자리 이상" autocomplete="new-password">
+        <div class="pw-wrap">
+          <input id="signupPassword" type="password" placeholder="비밀번호 6자리 이상" autocomplete="new-password">
+          <button type="button" class="pw-toggle" onclick="togglePassword('signupPassword', this)">👁</button>
+        </div>
 
         <label>비밀번호 확인</label>
-        <input id="signupPasswordConfirm" type="password" placeholder="비밀번호 다시 입력" autocomplete="new-password">
+        <div class="pw-wrap">
+          <input id="signupPasswordConfirm" type="password" placeholder="비밀번호 다시 입력" autocomplete="new-password">
+          <button type="button" class="pw-toggle" onclick="togglePassword('signupPasswordConfirm', this)">👁</button>
+        </div>
 
         <label>텔레그램 ID</label>
         <input id="signupTelegram" placeholder="@kedge_user">
+
+        <label>가입 상품</label>
+        <select id="signupPlan">
+          <option value="FREE">FREE</option>
+          <option value="VIP">VIP</option>
+          <option value="SEMI">VIP Lite (반자동)</option>
+          <option value="AUTO">VIP Pro (자동)</option>
+        </select>
+
+        <div class="plan-extra" data-plan-field="bot">
+          <label>텔레그램 BOT TOKEN</label>
+          <input id="signupBotToken" placeholder="반자동/자동 연동용 봇 토큰">
+
+          <label>텔레그램 CHAT ID</label>
+          <input id="signupChatId" placeholder="예: -1001234567890">
+        </div>
+
+        <div class="plan-extra" data-plan-field="auto">
+          <label>거래소</label>
+          <select id="signupExchange">
+            <option value="MEXC">MEXC</option>
+            <option value="BITGET">Bitget</option>
+            <option value="BINGX">BingX</option>
+            <option value="BYBIT">Bybit</option>
+          </select>
+
+          <label>API KEY</label>
+          <input id="signupApiKey" placeholder="자동매매 연동용 API KEY">
+
+          <label>SECRET KEY</label>
+          <input id="signupApiSecret" placeholder="자동매매 연동용 SECRET KEY">
+        </div>
 
         <button class="auth-main-btn" onclick="signupUser()">회원가입</button>
         <p class="auth-msg" id="signupMsg"></p>

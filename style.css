@@ -442,3 +442,55 @@ footer a{color:#31d5ff;text-decoration:none;font-weight:800}
     font-size:15px;
     font-weight:800;
 }
+/* ===== v10 등록/로그인 활성화 보강 ===== */
+.auth-box select,
+.register-card select{
+  width:100%;
+  height:50px;
+  border:1px solid rgba(145,176,255,.28);
+  background:#061225;
+  color:#fff;
+  border-radius:11px;
+  padding:0 14px;
+  margin:7px 0;
+  font-size:15px;
+  outline:none;
+}
+.pw-wrap{position:relative;width:100%}
+.pw-wrap input{padding-right:54px!important}
+.pw-toggle{
+  position:absolute;
+  right:8px;
+  top:50%;
+  transform:translateY(-50%);
+  width:38px;
+  height:34px;
+  border:1px solid rgba(145,176,255,.24);
+  border-radius:9px;
+  background:rgba(255,255,255,.06);
+  color:#fff;
+  font-size:16px;
+  display:grid;
+  place-items:center;
+}
+.pw-toggle:hover{transform:translateY(-50%)!important;border-color:#31d5ff}
+.plan-extra,.product-extra{
+  margin-top:12px;
+  padding:14px;
+  border:1px solid rgba(49,213,255,.18);
+  border-radius:14px;
+  background:rgba(49,213,255,.045);
+}
+.product-extra h3{font-size:18px;margin:0 0 8px;color:#31d5ff}
+.form-msg.success{color:#29ff9a}.form-msg.error{color:#ff7373}
+.plan-badge.plan-free{background:linear-gradient(90deg,#21c970,#18d4a3)}
+.plan-badge.plan-vip{background:linear-gradient(90deg,#f6bb21,#ffdc6c);color:#191200}
+.plan-badge.plan-semi{background:linear-gradient(90deg,#1be4ff,#2376ff)}
+.plan-badge.plan-auto{background:linear-gradient(90deg,#8a39ff,#c13cff)}
+.profile-card div[data-my-bot],.profile-card div[data-my-auto]{
+  margin:10px 0;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid rgba(145,176,255,.16);
+  background:rgba(255,255,255,.035);
+}

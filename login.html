@@ -42,7 +42,10 @@
         <input id="loginEmail" type="email" placeholder="example@email.com" autocomplete="email">
 
         <label>비밀번호</label>
-        <input id="loginPassword" type="password" placeholder="비밀번호" autocomplete="current-password">
+        <div class="pw-wrap">
+          <input id="loginPassword" type="password" placeholder="비밀번호" autocomplete="current-password">
+          <button type="button" class="pw-toggle" onclick="togglePassword('loginPassword', this)">👁</button>
+        </div>
 
         <button class="auth-main-btn" onclick="loginUser()">로그인</button>
         <p class="auth-msg" id="loginMsg"></p>
