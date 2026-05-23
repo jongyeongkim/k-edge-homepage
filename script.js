@@ -88,6 +88,46 @@ function planLabel(plan){
 function isBotPlan(plan){ return plan === "SEMI" || plan === "AUTO"; }
 function isAutoPlan(plan){ return plan === "AUTO"; }
 
+async function resolveApprovedPlan(user){
+  if(!user || !user.email) return user?.plan || "FREE";
+
+  // 1) Supabase 승인 신청 우선 확인
+  if(kedgeSupabase){
+    try{
+      const { data, error } = await kedgeSupabase
+        .from("kedge_requests")
+        .select("product,status,created_at")
+        .eq("email", user.email)
+        .eq("status", "APPROVED")
+        .order("created_at", { ascending:false })
+        .limit(1);
+
+      if(!error && Array.isArray(data) && data.length){
+        return data[0].product || user.plan || "FREE";
+      }
+    }catch(e){
+      console.log("approved plan supabase skipped", e);
+    }
+  }
+
+  // 2) 프론트 단독/localStorage 승인 신청 확인
+  try{
+    const rows = getRequests() || [];
+    const mine = rows
+      .filter(x => x && x.email === user.email && x.status === "APPROVED")
+      .sort((a,b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+
+    if(mine.length){
+      return mine[0].product || user.plan || "FREE";
+    }
+  }catch(e){
+    console.log("approved plan local skipped", e);
+  }
+
+  return user.plan || "FREE";
+}
+
+
 function friendlyAuthError(err){
   const msg = String((err && err.message) || err || "").toLowerCase();
   if(msg.includes("invalid login") || msg.includes("invalid credentials")) return "❌ 이메일 또는 비밀번호가 틀렸습니다.";
@@ -247,65 +287,6 @@ async function logoutUser(){
   location.href = "./index.html";
 }
 
-
-async function applyApprovedRequestPlan(user){
-  if(!user || !user.email) return user;
-
-  let approved = null;
-
-  // 1) Supabase 운영 DB 우선 조회
-  if(kedgeSupabase){
-    try{
-      const { data, error } = await kedgeSupabase
-        .from("kedge_requests")
-        .select("*")
-        .eq("email", user.email)
-        .eq("status", "APPROVED")
-        .order("approved_at", { ascending:false, nullsFirst:false })
-        .order("created_at", { ascending:false })
-        .limit(1);
-
-      if(!error && Array.isArray(data) && data.length){
-        approved = data[0];
-      }
-    }catch(e){
-      console.log("approved plan sync skipped", e);
-    }
-  }
-
-  // 2) 프론트 단독/localStorage 테스트 모드 보정
-  if(!approved){
-    try{
-      const rows = getRequests();
-      approved = rows
-        .filter(r => String(r.email || "").toLowerCase() === String(user.email || "").toLowerCase())
-        .filter(r => String(r.status || "").toUpperCase() === "APPROVED")
-        .sort((a,b)=> new Date(b.approved_at || b.created_at || 0) - new Date(a.approved_at || a.created_at || 0))[0] || null;
-    }catch(e){}
-  }
-
-  if(!approved) return user;
-
-  const product = approved.product || approved.plan || user.plan || "FREE";
-  const synced = {
-    ...user,
-    plan: product,
-    telegram: approved.telegram || user.telegram || "미등록",
-    tg_bot_token: approved.tg_bot_token || user.tg_bot_token || "",
-    tg_chat_id: approved.tg_chat_id || user.tg_chat_id || "",
-    exchange: approved.exchange || user.exchange || "",
-    api_key: approved.api_key || user.api_key || "",
-    api_secret: approved.api_secret || user.api_secret || "",
-    domestic_apis: approved.domestic_apis || user.domestic_apis || null,
-    foreign_apis: approved.foreign_apis || user.foreign_apis || null,
-    approved_status: approved.status || "APPROVED",
-    approved_at: approved.approved_at || user.approved_at || ""
-  };
-
-  setLocalUser(synced);
-  return synced;
-}
-
 async function getCurrentUser(){
   if(kedgeSupabase){
     try{
@@ -322,24 +303,26 @@ async function getCurrentUser(){
           api_key: meta.api_key || "",
           api_secret: meta.api_secret || ""
         };
-        return await applyApprovedRequestPlan(user);
+        setLocalUser(user);
+        return user;
       }
     }catch(e){}
   }
-
-  const localUser = getLocalUser();
-  return await applyApprovedRequestPlan(localUser);
+  return getLocalUser();
 }
 
 async function updateAuthUI(){
   const user = await getCurrentUser();
+  const approvedPlan = user ? await resolveApprovedPlan(user) : "FREE";
+  const displayUser = user ? { ...user, plan: approvedPlan } : null;
+
   const top = qs("topAuthArea");
   if(top){
-    if(user){
-      const plan = user.plan || "FREE";
+    if(displayUser){
+      const plan = displayUser.plan || "FREE";
       top.innerHTML = `
         <div class="user-mini">
-          <span class="user-name">${user.email || "회원"}</span>
+          <span class="user-name">${displayUser.email || "회원"}</span>
           <span class="plan-badge plan-${plan.toLowerCase()}">${planLabel(plan)}</span>
           <a class="login" href="./mypage.html">내정보</a>
           <button onclick="logoutUser()">로그아웃</button>
@@ -351,28 +334,28 @@ async function updateAuthUI(){
 
   const status = qs("authStatus");
   if(status){
-    status.innerHTML = user
-      ? `<b>✅ 로그인 중</b><p>${user.email || "-"} / ${planLabel(user.plan || "FREE")}</p>`
+    status.innerHTML = displayUser
+      ? `<b>✅ 로그인 중</b><p>${displayUser.email || "-"} / ${planLabel(displayUser.plan || "FREE")}</p>`
       : `<b>로그인이 필요합니다.</b><p>회원 기능은 로그인 후 이용할 수 있습니다.</p>`;
   }
 
-  if(qs("myEmail")) qs("myEmail").textContent = user?.email || "-";
-  if(qs("myPlan")) qs("myPlan").textContent = planLabel(user?.plan || "FREE");
-  if(qs("myTelegram")) qs("myTelegram").textContent = user?.telegram || "미등록";
-  if(qs("myBotToken")) qs("myBotToken").textContent = maskValue(user?.tg_bot_token || "");
-  if(qs("myChatId")) qs("myChatId").textContent = user?.tg_chat_id || "미등록";
-  if(qs("myExchange")) qs("myExchange").textContent = user?.exchange || "미등록";
-  if(qs("myApiKey")) qs("myApiKey").textContent = maskValue(user?.api_key || "");
-  if(qs("myApiSecret")) qs("myApiSecret").textContent = maskValue(user?.api_secret || "");
+  if(qs("myEmail")) qs("myEmail").textContent = displayUser?.email || "-";
+  if(qs("myPlan")) qs("myPlan").textContent = planLabel(displayUser?.plan || "FREE");
+  if(qs("myTelegram")) qs("myTelegram").textContent = displayUser?.telegram || "미등록";
+  if(qs("myBotToken")) qs("myBotToken").textContent = maskValue(displayUser?.tg_bot_token || "");
+  if(qs("myChatId")) qs("myChatId").textContent = displayUser?.tg_chat_id || "미등록";
+  if(qs("myExchange")) qs("myExchange").textContent = displayUser?.exchange || "미등록";
+  if(qs("myApiKey")) qs("myApiKey").textContent = maskValue(displayUser?.api_key || "");
+  if(qs("myApiSecret")) qs("myApiSecret").textContent = maskValue(displayUser?.api_secret || "");
 
-  document.querySelectorAll("[data-my-bot]").forEach(el=> el.style.display = user && isBotPlan(user.plan) ? "block" : "none");
-  document.querySelectorAll("[data-my-auto]").forEach(el=> el.style.display = user && isAutoPlan(user.plan) ? "block" : "none");
+  document.querySelectorAll("[data-my-bot]").forEach(el=> el.style.display = displayUser && isBotPlan(displayUser.plan) ? "block" : "none");
+  document.querySelectorAll("[data-my-auto]").forEach(el=> el.style.display = displayUser && isAutoPlan(displayUser.plan) ? "block" : "none");
 
   const loggedIn = qs("mypageLoggedIn");
   const loggedOut = qs("mypageLoggedOut");
   if(loggedIn && loggedOut){
-    loggedIn.style.display = user ? "grid" : "none";
-    loggedOut.style.display = user ? "none" : "grid";
+    loggedIn.style.display = displayUser ? "grid" : "none";
+    loggedOut.style.display = displayUser ? "none" : "grid";
   }
 }
 
