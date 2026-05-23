@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="./style.css" />
   <link rel="icon" type="image/png" href="./favicon.png" />
-  <title>K-EDGE | 기능 가이드</title>
+  <title>K-EDGE | 사용 가이드</title>
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#0b1020">
   <meta name="mobile-web-app-capable" content="yes">
@@ -31,42 +31,151 @@
       <a class="join" href="./login.html">회원가입</a>
     </div>
   </header>
+
   <main>
-    <section class="page-hero">
-      <p class="exchange-pill">GUIDE</p>
-      <h1>기능 가이드</h1>
-      <p>추상적인 AI 문구 대신, 실제로 어떤 데이터를 보는지 기준을 나눠 설명합니다.</p>
+    <section class="guide-hero">
+      <p class="exchange-pill">K-EDGE USER GUIDE</p>
+      <h1>반자동·VIP 알림 사용 가이드</h1>
+      <p>텔레그램 알림을 처음 보는 사용자도 이해할 수 있도록, 실제 VIP 알림 화면 기준으로 용어와 안전장치를 정리했습니다.</p>
+      <div class="guide-alert-box">
+        <span>🤖 @Kedge0203bot /start 필수</span>
+        <span>🛡 진입 직전 재검사</span>
+        <span>🧱 0.5% 실체결벽 기준</span>
+        <span>⚖️ 현물 매수 + 선물 숏</span>
+      </div>
     </section>
 
-    <section class="guide-grid">
-      <article><span>🔍</span><h3>실체결 가능 금액 계산</h3><p>호가창에서 실제로 빠져나갈 수 있는 금액을 기준으로 알림합니다. 단순 괴리율이 아니라 체결 가능성을 같이 봅니다.</p></article>
-      <article><span>📊</span><h3>매수벽 / 매도벽 분석</h3><p>국내 현물과 해외 선물의 1% 벽을 확인해 유동성 기반으로 현실적인 진입 가능성을 판단합니다.</p></article>
-      <article><span>⚖️</span><h3>실제 엣지 계산</h3><p>코인 괴리에서 BTC 괴리를 제외해 시장 전체 프리미엄을 제거한 실제 기회만 따로 봅니다.</p></article>
-      <article><span>🚨</span><h3>초고속 입출금 공지</h3><p>업비트·빗썸·코인원 입출금 재개/정지 공지를 빠르게 감지하고 후속 시장 변화를 추적합니다.</p></article>
-      <article><span>🐋</span><h3>고래 입금 후속효과</h3><p>대형 입금, 거래소 이동, 핫월렛 변화를 감지하고 1시간 후속 흐름까지 추적하는 구조입니다.</p></article>
-      <article><span>🚀</span><h3>상장 기대감 탐지</h3><p>재단 공지, 마이그레이션, 메인넷, 브릿지, 지갑 활성화 같은 상장 전조 신호를 분리합니다.</p></article>
-      <article><span>🧬</span><h3>DEX 선행 매집 / 생존 추적</h3><p>신규 토큰 유동성, 거래량, 생존 가능성을 A/B/C 등급으로 나눠 단순 밈펌프와 구분합니다.</p></article>
-      <article><span>📈</span><h3>BTC Wave 분석</h3><p>엘리엇, 다이버전스, ATR, 무효가, 목표가를 기준으로 BTC 방향성 브리핑을 제공합니다.</p></article>
+    <section class="guide-section">
+      <div class="guide-start-grid">
+        <article class="guide-card">
+          <h3>🤖 반자동 사용 전 필수</h3>
+          <ul>
+            <li>텔레그램에서 <b>@Kedge0203bot</b> 검색</li>
+            <li>봇 채팅방에서 <b>/start</b> 입력</li>
+            <li>홈페이지에서 반자동 신청</li>
+            <li>관리자 승인 후 개인 알림과 버튼 사용</li>
+          </ul>
+          <div class="guide-btn-row">
+            <a class="btn primary" href="https://t.me/Kedge0203bot" target="_blank">🤖 Kedge0203bot 연결</a>
+            <a class="btn ghost" href="./payment.html">등록 신청</a>
+          </div>
+        </article>
+        <article class="guide-card">
+          <h3>⚠️ /start가 필요한 이유</h3>
+          <p>텔레그램 봇은 사용자가 먼저 대화를 시작해야 개인 DM을 보낼 수 있습니다. /start를 하지 않으면 개인 알림, 반자동 버튼, 진입/청산 알림이 작동하지 않습니다.</p>
+          <div class="guide-note">/start 미입력 시 개인 알림 / 반자동 / 버튼 기능이 작동하지 않습니다.</div>
+        </article>
+      </div>
+    </section>
+
+    <section class="guide-section">
+      <h2>📱 실제 VIP 텔레그램 알림 읽는 법</h2>
+      <p class="sub-left">아래 화면은 실제 VIP방에 전송되는 현물·선물 양방 후보 알림 예시입니다.</p>
+      <div class="telegram-guide-layout">
+        <div class="phone-shot-grid">
+          <div class="phone-shot"><img src="./guide-alert-full.jpg" alt="K-EDGE VIP 알림 전체 예시"><small>알림 상단: 코인, 전략, 현물/선물 거래소와 기준가</small></div>
+          <div class="phone-shot"><img src="./guide-alert-metrics.jpg" alt="K-EDGE VIP 알림 수익 지표"><small>중간 지표: 괴리율, BTC 기준 프리미엄, 예상 수익구간, 벽</small></div>
+          <div class="phone-shot"><img src="./guide-alert-risk.jpg" alt="K-EDGE VIP 알림 실체결 및 리스크"><small>하단 지표: 실체결 가능금액, 권장 레버리지, 손절 기준</small></div>
+        </div>
+
+        <div class="term-list">
+          <article class="term-card">
+            <b>① BTC 기준 프리미엄</b>
+            <p>현재 시장 전체의 프리미엄 기준입니다. BTC가 이미 +1% 비싸다면, 다른 코인의 +3% 괴리는 실제로 +2% 정도만 의미가 있습니다.</p>
+            <span class="formula">실제엣지 = 코인 괴리율 - BTC 기준 프리미엄</span>
+          </article>
+          <article class="term-card">
+            <b>② 코인 괴리율</b>
+            <p>해당 코인의 국내 현물 가격과 해외 선물 가격 차이입니다. 예: 현물보다 선물이 높으면 현물 매수 + 선물 숏 후보가 됩니다.</p>
+          </article>
+          <article class="term-card">
+            <b>③ 예상 수익구간</b>
+            <p>수수료, 슬리피지, 시장 변동을 감안한 예상 구간입니다. 확정 수익이 아니라 실시간으로 변하는 참고 구간입니다.</p>
+          </article>
+          <article class="term-card">
+            <b>④ 현물벽 / 선물벽 0.5%</b>
+            <p>현재 가격 기준 0.5% 범위 안에 쌓여 있는 매수·매도 물량입니다. 즉, 실제로 체결될 가능성이 있는 금액을 의미합니다.</p>
+          </article>
+          <article class="term-card">
+            <b>⑤ 최종 진입 가능금액</b>
+            <p>현물벽, 선물벽, 거래소 최대 진입금액 중 가장 작은 값으로 계산합니다. 많이 보이는 기회라도 실제 체결 가능금액이 작으면 작게 표시됩니다.</p>
+            <span class="formula">최종 진입 가능 = MIN(현물벽, 선물벽, 거래소 최대)</span>
+          </article>
+          <article class="term-card">
+            <b>⑥ 펀딩비</b>
+            <p>선물 숏 포지션 유지 비용 또는 수령 금액입니다. 음수(-)는 시간마다 비용이 차감될 수 있고, 양수(+)는 수령 가능성이 있습니다.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="guide-section">
+      <h2>🛡 K-EDGE 진입 안전장치</h2>
+      <p class="sub-left">반자동/자동은 신호 발생 즉시 무조건 진입하지 않습니다. 사용자가 진입을 누르는 순간 다시 검사합니다.</p>
+      <div class="safety-grid">
+        <article class="safety-card"><span>📊</span><h3>실제엣지 2% 이상</h3><p>알림 당시 조건이 좋아도 클릭 순간 실제엣지가 2% 미만이면 진입하지 않습니다.</p></article>
+        <article class="safety-card"><span>🧱</span><h3>슬리피지 0.5% 이하</h3><p>진입 직전 현물벽과 선물벽을 다시 확인해 0.5% 범위 안에서 체결 가능한지 검사합니다.</p></article>
+        <article class="safety-card"><span>👥</span><h3>동시 진입 방어</h3><p>여러 명이 동시에 눌러도 먼저 체결된 금액을 제외하고 남은 금액 기준으로 판단합니다.</p></article>
+        <article class="safety-card"><span>💰</span><h3>잔고 확인</h3><p>국내 KRW 잔고와 해외 USDT 잔고가 부족하면 진입하지 않고 사유를 표시합니다.</p></article>
+        <article class="safety-card"><span>🔑</span><h3>API 등록 확인</h3><p>국내/해외 API가 없거나 잘못 등록된 경우 진입하지 않습니다.</p></article>
+        <article class="safety-card"><span>🚫</span><h3>중복 진입 제한</h3><p>이미 해당 코인 포지션이 있는 유저에게는 신규 진입 알림 대신 청산/경고 알림만 전송됩니다.</p></article>
+      </div>
+    </section>
+
+    <section class="guide-section">
+      <h2>🤖 반자동 사용 흐름</h2>
+      <div class="flow-box">
+        <article><b>1</b><h3>개인 DM 수신</h3><p>승인회원에게만 Kedge0203bot 개인 DM으로 후보가 전송됩니다.</p></article>
+        <article><b>2</b><h3>금액 버튼 선택</h3><p>+1만, +5만, +10만, +50만, +100만, +500만 버튼으로 빠르게 금액을 누적합니다.</p></article>
+        <article><b>3</b><h3>진입 실행</h3><p>진입 버튼을 누르면 실제엣지, 슬리피지, 잔고, 남은금액을 재검사합니다.</p></article>
+        <article><b>4</b><h3>청산 감시</h3><p>진입 성공 후 자동익절, 경고, 손절감시가 작동합니다.</p></article>
+      </div>
+    </section>
+
+    <section class="guide-section">
+      <h2>✅ 실패 사유는 이렇게 표시됩니다</h2>
+      <table class="guide-table">
+        <thead><tr><th>상황</th><th>표시되는 안내</th><th>의미</th></tr></thead>
+        <tbody>
+          <tr><td>실제엣지 부족</td><td>❌ 현재 실제엣지 부족</td><td>알림 후 시간이 지나 수익 가능 구간이 줄어든 상태</td></tr>
+          <tr><td>슬리피지 초과</td><td>❌ 현재 0.5% 벽 부족</td><td>실제 체결 가능한 물량이 줄어든 상태</td></tr>
+          <tr><td>남은금액 부족</td><td>❌ 남은 진입 가능금액 부족</td><td>다른 유저가 먼저 진입해 남은 금액이 부족한 상태</td></tr>
+          <tr><td>API 없음</td><td>❌ 국내/해외 API 미등록</td><td>거래소 API가 등록되지 않아 진입 불가</td></tr>
+          <tr><td>잔고 부족</td><td>❌ 국내 KRW 또는 해외 USDT 부족</td><td>선택금액 대비 잔고가 부족한 상태</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="guide-section">
+      <h2>📉 자동청산 / 손절감시 기준</h2>
+      <div class="safety-grid">
+        <article class="term-card"><b>익절</b><p>실제엣지가 +0.5% ~ +0.3% 구간으로 회귀하면 유연하게 청산을 시도합니다. 익절은 정확한 한 지점보다 체결 우선으로 관리합니다.</p></article>
+        <article class="term-card warning"><b>1차 경고 / 2차 강경고</b><p>진입엣지 대비 +4% 악화 시 1차 경고, +6% 악화 시 강경고를 전송합니다.</p></article>
+        <article class="term-card danger"><b>자동손절</b><p>진입엣지 대비 +8% 이상 악화가 15분 동안 계속 유지되면 자동손절 기준으로 판단합니다. 중간에 +8% 아래로 회귀하면 손절감시는 해제됩니다.</p></article>
+      </div>
+    </section>
+
+    <section class="guide-section">
+      <h2>🔐 API 보안 안내</h2>
+      <div class="guide-card">
+        <ul>
+          <li>거래소 API는 <b>출금 권한 OFF</b> 상태로 등록하세요.</li>
+          <li>가능하면 <b>거래 권한만 허용</b>하고, 출금/이체 권한은 사용하지 마세요.</li>
+          <li>거래소에서 제공하는 경우 <b>IP 제한</b>을 설정하는 것을 권장합니다.</li>
+          <li>K-EDGE는 진입 전 조건 재검사 후 조건 미충족 시 진입하지 않도록 설계되어 있습니다.</li>
+        </ul>
+        <div class="guide-cta">
+          <a class="btn primary" href="./payment.html">등록 신청하기</a>
+          <a class="btn ghost" href="./support.html">문의하기</a>
+        </div>
+      </div>
     </section>
   </main>
-  <footer>
-  <b>K-EDGE TEAM</b>
-  <p>Telegram: <a href="https://t.me/listing0517" target="_blank">@listing0517</a></p>
-  <p>본 서비스는 정보 제공 목적이며, 투자 판단과 책임은 이용자 본인에게 있습니다.</p>
-  <p class="footer-note">실시간 데이터는 시장 상황에 따라 변동될 수 있으며 참고용 정보입니다.</p>
-  <p><a href="./referral.html">레퍼럴</a> · <a href="./pricing.html">요금제</a> · <a href="./support.html">문의</a></p>
-</footer>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./script.js"></script>
 
-<script>
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", function () {
-    navigator.serviceWorker.register("/service-worker.js").catch(function (err) {
-      console.log("Service Worker registration failed:", err);
-    });
-  });
-}
-</script>
+  <footer>
+    <p>© K-EDGE. All rights reserved.</p>
+  </footer>
+
+  <script src="./script.js"></script>
 </body>
 </html>
