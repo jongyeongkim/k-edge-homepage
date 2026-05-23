@@ -121,7 +121,7 @@ ALERT_COOLDOWN_SEC = 60 * 10
 SYMBOL_ALERT_COOLDOWN_SEC = 60 * 30
 
 # 너무 많은 검사 방지
-MAX_SPOT_ITEMS = 90
+MAX_SPOT_ITEMS = 160
 
 # 0.5% 벽 기준: 현물/선물 각각 100만원 이상이어야 알림
 MIN_SPOT_WALL_KRW = 1_000_000
@@ -144,8 +144,8 @@ BAD_SYMBOL_PARTS = [
 ENABLE_FOREIGN_SPOT_SCAN = False
 
 # 국내 거래소별 최대 후보 수
-MAX_UPBIT_ITEMS = 70
-MAX_BITHUMB_ITEMS = 20
+MAX_UPBIT_ITEMS = 140
+MAX_BITHUMB_ITEMS = 80
 MAX_GOPAX_ITEMS = 40
 MAX_COINONE_ITEMS = 0
 MAX_KORBIT_ITEMS = 40
@@ -204,7 +204,7 @@ SEMI_AUTO_BOT_TOKEN = (os.getenv("KEDGE_USER_DM_BOT_TOKEN", "").strip() or USER_
 AMOUNT_BUTTONS_KRW = [10_000, 50_000, 100_000, 500_000, 1_000_000, 5_000_000]
 
 # 유저 1회 최대 진입금액. 선물MAX/벽금액보다 커도 여기서 한 번 더 컷.
-MAX_USER_ENTRY_KRW = int(os.getenv("MAX_USER_ENTRY_KRW", "3000000"))
+MAX_USER_ENTRY_KRW = int(os.getenv("MAX_USER_ENTRY_KRW", "0"))  # 0이면 고정 상한 없음. 최종금액은 벽/선물한도/유저잔고로 동적 계산
 
 # 예상구간: 최고 이론 엣지에서 1%p 차감해서 하단 표시
 EXPECTED_PROFIT_DISCOUNT_PERCENT = 1.0
@@ -650,7 +650,14 @@ def build_support_message(
 """
 
 
-def active_lock_check(symbol: str, current_percent: float, funding_rate_percent: Optional[float] = None) -> bool:
+def make_active_lock_key(symbol: str, spot_source: str, future_source: str) -> str:
+    """같은 코인이라도 국내거래소/해외선물 조합별로 따로 잠금.
+    예: EDEN_UPBIT_GATE 와 EDEN_BITHUMB_GATE 는 각각 별도 기회로 본다.
+    """
+    return f"{normalize_symbol(symbol)}_{str(spot_source or '').upper()}_{str(future_source or '').upper()}"
+
+
+def active_lock_check(symbol: str, spot_source: str, future_source: str, current_percent: float, funding_rate_percent: Optional[float] = None) -> bool:
     """
     알림 발생 = 진입했다고 가정.
     이후에는 시간 단위가 아니라 이벤트 발생 시에만 서포트 알림을 보낸다.
@@ -664,7 +671,8 @@ def active_lock_check(symbol: str, current_percent: float, funding_rate_percent:
     return False -> 잠금 없음 또는 종료/손절로 해제됨
     """
     symbol = normalize_symbol(symbol)
-    locked = active_symbol_locks.get(symbol)
+    lock_key = make_active_lock_key(symbol, spot_source, future_source)
+    locked = active_symbol_locks.get(lock_key)
     if not locked:
         return False
 
@@ -676,14 +684,14 @@ def active_lock_check(symbol: str, current_percent: float, funding_rate_percent:
         print(msg)
         telegram_send(msg)
         # FREE에는 종료/청산 알림을 보내지 않는다. 종료/회귀/손절은 VIP 전용.
-        active_symbol_locks.pop(symbol, None)
+        active_symbol_locks.pop(lock_key, None)
         return False
 
     if current_percent >= stop_edge:
         msg = build_support_message("STOP_LOSS", symbol, locked, current_percent, funding_rate_percent)
         print(msg)
         telegram_send(msg)
-        active_symbol_locks.pop(symbol, None)
+        active_symbol_locks.pop(lock_key, None)
         return False
 
     if (
@@ -697,7 +705,7 @@ def active_lock_check(symbol: str, current_percent: float, funding_rate_percent:
         locked["funding_warn_sent"] = True
 
     print(
-        f"[진입가정 잠금중] {symbol} "
+        f"[진입가정 잠금중] {lock_key} "
         f"현재={current_percent:.2f}% / 청산={POSITION_RELEASE_PERCENT:.2f}% "
         f"/ 손절={stop_edge:.2f}% / 진입={entry_edge:.2f}%"
     )
@@ -705,9 +713,10 @@ def active_lock_check(symbol: str, current_percent: float, funding_rate_percent:
 
 
 def mark_active_lock(symbol: str, current_percent: float, spot_source: str, future_source: str) -> None:
-    """알림을 보낸 코인은 청산/손절 이벤트 전까지 재알림 금지."""
+    """알림을 보낸 조합은 청산/손절 이벤트 전까지 재알림 금지."""
     symbol = normalize_symbol(symbol)
-    active_symbol_locks[symbol] = {
+    lock_key = make_active_lock_key(symbol, spot_source, future_source)
+    active_symbol_locks[lock_key] = {
         "entry_percent": current_percent,
         "stop_edge": current_percent + STOP_EDGE_ADD_PERCENT,
         "spot_source": spot_source,
@@ -717,16 +726,17 @@ def mark_active_lock(symbol: str, current_percent: float, spot_source: str, futu
     }
 
 
-def symbol_cooldown_ok(symbol: str) -> bool:
+def symbol_cooldown_ok(symbol: str, spot_source: str = "", future_source: str = "") -> bool:
     """
-    같은 코인이 여러 해외 선물 거래소에서 동시에 잡히는 도배 방지.
-    예: HIGH가 MEXC/GATE/BINANCE에 동시에 잡혀도 30분에 1회만 전송.
+    같은 조합이 너무 자주 울리는 것만 방지.
+    코인 단독 쿨다운이 아니라 국내거래소+해외선물 조합별 쿨다운이라
+    빗썸 알림이 와도 업비트 알림은 따로 살아난다.
     """
     t = time.time()
-    symbol = normalize_symbol(symbol)
-    old = last_symbol_alert_at.get(symbol, 0)
+    cooldown_key = make_active_lock_key(symbol, spot_source, future_source)
+    old = last_symbol_alert_at.get(cooldown_key, 0)
     if t - old >= SYMBOL_ALERT_COOLDOWN_SEC:
-        last_symbol_alert_at[symbol] = t
+        last_symbol_alert_at[cooldown_key] = t
         return True
     return False
 
@@ -2969,11 +2979,11 @@ def scan_once(spot_exs: Dict[str, Any], future_exs: Dict[str, Any]) -> None:
 
                 # 기존 진입 코인은 신규 알림 기준과 무관하게 청산/손절/펀딩 이벤트를 먼저 체크
                 # 단, 최초 알림이 발생한 동일 국내거래소 + 동일 해외선물 거래소 조합만 추적한다.
-                locked = active_symbol_locks.get(normalize_symbol(base))
+                lock_key = make_active_lock_key(base, spot.get("source", ""), future_ex_name)
+                locked = active_symbol_locks.get(lock_key)
                 if locked:
-                    if locked.get("spot_source") == spot.get("source") and locked.get("future_source") == future_ex_name:
-                        active_lock_check(base, edge, funding_rate_percent)
-                    # 잠금 중인 코인은 다른 거래소 조합으로 신규 알림을 내지 않는다.
+                    active_lock_check(base, spot.get("source", ""), future_ex_name, edge, funding_rate_percent)
+                    # 동일 조합만 잠금. 다른 국내거래소/해외선물 조합은 신규 알림 허용.
                     continue
 
                 if edge < MIN_EDGE_PERCENT:
@@ -3006,7 +3016,9 @@ def scan_once(spot_exs: Dict[str, Any], future_exs: Dict[str, Any]) -> None:
                 )
 
                 real_fill_krw = min(spot_wall_krw, future_wall_krw)
-                final_entry_krw = min(real_fill_krw, futures_position_limit_krw, MAX_USER_ENTRY_KRW)
+                final_entry_krw = min(real_fill_krw, futures_position_limit_krw)
+                if MAX_USER_ENTRY_KRW > 0:
+                    final_entry_krw = min(final_entry_krw, MAX_USER_ENTRY_KRW)
 
                 # 0.5% 벽 기준: 양쪽 각각 100만원 이상이어야 수익금 측정이 의미 있음
                 if spot_wall_krw < MIN_SPOT_WALL_KRW:
@@ -3026,8 +3038,8 @@ def scan_once(spot_exs: Dict[str, Any], future_exs: Dict[str, Any]) -> None:
                 if not cooldown_ok(key):
                     continue
 
-                if not symbol_cooldown_ok(base):
-                    print(f"[동일코인 쿨다운 제외] {base} / {spot['source']} -> {future_ex_name}")
+                if not symbol_cooldown_ok(base, spot.get("source", ""), future_ex_name):
+                    print(f"[동일조합 쿨다운 제외] {base} / {spot['source']} -> {future_ex_name}")
                     continue
 
                 expected_min, expected_max = calc_expected_profit_range(edge)
@@ -3057,7 +3069,7 @@ def scan_once(spot_exs: Dict[str, Any], future_exs: Dict[str, Any]) -> None:
                     "real_fill_krw": round(real_fill_krw),
                     "futures_position_limit_krw": round(futures_position_limit_krw),
                     "futures_position_limit_source": limit_source,
-                    "max_user_entry_krw": MAX_USER_ENTRY_KRW,
+                    "max_user_entry_krw": MAX_USER_ENTRY_KRW if MAX_USER_ENTRY_KRW > 0 else None,
                     "max_entry_krw": round(final_entry_krw),
                     "final_entry_krw": round(final_entry_krw),
                     "used_entry_krw": 0,
