@@ -311,6 +311,43 @@
       "usd_krw": 1517.0388,
       "entry_status": "READY",
       "status": "VIP 전송"
+    },
+    "SAHARA_BITHUMB_MEXC_1779523642": {
+      "signal_id": "SAHARA_BITHUMB_MEXC_1779523642",
+      "ts": 1779523642.1771533,
+      "time": "17:07",
+      "created_at": "2026-05-23 17:07:22",
+      "coin": "SAHARA",
+      "domestic": "BITHUMB",
+      "domestic_exchange": "BITHUMB",
+      "domestic_market": "SAHARA_KRW",
+      "foreign": "MEXC",
+      "foreign_exchange": "MEXC",
+      "foreign_market": "SAHARA/USDT:USDT",
+      "coin_gap": 3.13,
+      "btc_gap": 0.82,
+      "real_edge": 2.31,
+      "expected_profit_min": 1.31,
+      "expected_profit_max": 2.31,
+      "funding_rate": 0.005,
+      "recommended_leverage": "x1 기본 / x2 최대 권장",
+      "stop_edge": 4.31,
+      "spot_wall_krw": 58791289,
+      "futures_wall_krw": 10924462,
+      "real_fill_krw": 10924462,
+      "futures_position_limit_krw": 40765867,
+      "futures_position_limit_source": "ccxt_market_limits",
+      "max_user_entry_krw": 3000000,
+      "max_entry_krw": 3000000,
+      "final_entry_krw": 3000000,
+      "used_entry_krw": 0,
+      "remaining_entry_krw": 3000000,
+      "wall_range_percent": 0.5,
+      "executable_krw": 3000000,
+      "krw": 3000000,
+      "usd_krw": 1517.0388,
+      "entry_status": "READY",
+      "status": "VIP 전송"
     }
   },
   "users": {
@@ -325,6 +362,10 @@
     "654270878:IN_BITHUMB_MEXC_1779519531": {
       "selected_krw": 1560000,
       "updated_at": "2026-05-23 16:54:14"
+    },
+    "654270878:SAHARA_BITHUMB_MEXC_1779523642": {
+      "selected_krw": 8000000,
+      "updated_at": "2026-05-23 17:08:04"
     }
   },
   "connected_members": {
