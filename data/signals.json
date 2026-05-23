@@ -1,5 +1,42 @@
 [
   {
+    "signal_id": "INJ_BITHUMB_BINGX_1779550447",
+    "ts": 1779550447.032376,
+    "time": "00:34",
+    "created_at": "2026-05-24 00:34:07",
+    "coin": "INJ",
+    "domestic": "BITHUMB",
+    "domestic_exchange": "BITHUMB",
+    "domestic_market": "INJ_KRW",
+    "foreign": "BINGX",
+    "foreign_exchange": "BINGX",
+    "foreign_market": "INJ/USDT:USDT",
+    "coin_gap": 3.45,
+    "btc_gap": 1.09,
+    "real_edge": 2.35,
+    "expected_profit_min": 1.35,
+    "expected_profit_max": 2.35,
+    "funding_rate": 0.0046,
+    "recommended_leverage": "x1 기본 / x2 최대 권장",
+    "stop_edge": 4.35,
+    "spot_wall_krw": 29513731,
+    "futures_wall_krw": 462864008,
+    "real_fill_krw": 29513731,
+    "futures_position_limit_krw": 1517039,
+    "futures_position_limit_source": "default_safe_limit",
+    "max_user_entry_krw": 0,
+    "max_entry_krw": 1517039,
+    "final_entry_krw": 1517039,
+    "used_entry_krw": 0,
+    "remaining_entry_krw": 1517039,
+    "wall_range_percent": 0.5,
+    "executable_krw": 1517039,
+    "krw": 1517039,
+    "usd_krw": 1517.0388,
+    "entry_status": "READY",
+    "status": "VIP 전송"
+  },
+  {
     "signal_id": "INJ_BITHUMB_BITGET_1779550441",
     "ts": 1779550441.288725,
     "time": "00:34",
@@ -3341,11 +3378,5 @@
     "executable_krw": 1076821,
     "krw": 1076821,
     "status": "VIP 전송"
-  },
-  {
-    "coin": "NIL",
-    "domestic_exchange": "BITHUMB",
-    "foreign_exchange": "MEXC",
-    "real_edge": 2.12
   }
 ]
