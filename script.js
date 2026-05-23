@@ -247,6 +247,65 @@ async function logoutUser(){
   location.href = "./index.html";
 }
 
+
+async function applyApprovedRequestPlan(user){
+  if(!user || !user.email) return user;
+
+  let approved = null;
+
+  // 1) Supabase 운영 DB 우선 조회
+  if(kedgeSupabase){
+    try{
+      const { data, error } = await kedgeSupabase
+        .from("kedge_requests")
+        .select("*")
+        .eq("email", user.email)
+        .eq("status", "APPROVED")
+        .order("approved_at", { ascending:false, nullsFirst:false })
+        .order("created_at", { ascending:false })
+        .limit(1);
+
+      if(!error && Array.isArray(data) && data.length){
+        approved = data[0];
+      }
+    }catch(e){
+      console.log("approved plan sync skipped", e);
+    }
+  }
+
+  // 2) 프론트 단독/localStorage 테스트 모드 보정
+  if(!approved){
+    try{
+      const rows = getRequests();
+      approved = rows
+        .filter(r => String(r.email || "").toLowerCase() === String(user.email || "").toLowerCase())
+        .filter(r => String(r.status || "").toUpperCase() === "APPROVED")
+        .sort((a,b)=> new Date(b.approved_at || b.created_at || 0) - new Date(a.approved_at || a.created_at || 0))[0] || null;
+    }catch(e){}
+  }
+
+  if(!approved) return user;
+
+  const product = approved.product || approved.plan || user.plan || "FREE";
+  const synced = {
+    ...user,
+    plan: product,
+    telegram: approved.telegram || user.telegram || "미등록",
+    tg_bot_token: approved.tg_bot_token || user.tg_bot_token || "",
+    tg_chat_id: approved.tg_chat_id || user.tg_chat_id || "",
+    exchange: approved.exchange || user.exchange || "",
+    api_key: approved.api_key || user.api_key || "",
+    api_secret: approved.api_secret || user.api_secret || "",
+    domestic_apis: approved.domestic_apis || user.domestic_apis || null,
+    foreign_apis: approved.foreign_apis || user.foreign_apis || null,
+    approved_status: approved.status || "APPROVED",
+    approved_at: approved.approved_at || user.approved_at || ""
+  };
+
+  setLocalUser(synced);
+  return synced;
+}
+
 async function getCurrentUser(){
   if(kedgeSupabase){
     try{
@@ -263,12 +322,13 @@ async function getCurrentUser(){
           api_key: meta.api_key || "",
           api_secret: meta.api_secret || ""
         };
-        setLocalUser(user);
-        return user;
+        return await applyApprovedRequestPlan(user);
       }
     }catch(e){}
   }
-  return getLocalUser();
+
+  const localUser = getLocalUser();
+  return await applyApprovedRequestPlan(localUser);
 }
 
 async function updateAuthUI(){
