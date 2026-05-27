@@ -38,7 +38,7 @@
     <section class="page-hero">
       <p class="exchange-pill">AUTO SETTINGS</p>
       <h1>K-EDGE AUTO 설정</h1>
-      <p>승인 후 알람은 기본 ON 상태입니다. 자동매매를 시작하려면 운용방식, 금액, 분할 수를 설정하고 자동매매를 ON으로 전환하세요.</p>
+      <p>승인 후 알람은 기본 ON 상태입니다. 자동매매 시작 전 빗썸 총자산 기준 운용금액과 분할 수를 설정하세요.</p>
     </section>
 
     <section class="section auth-section">
@@ -53,15 +53,30 @@
       </div>
 
       <div id="autoSettingForm" class="auto-setting-wrap" style="display:none;">
-        <div class="auto-setting-grid">
+        <article class="auto-setting-card auto-standard-box">
+          <h3>📌 K-EDGE AUTO 기본 운용 기준</h3>
+          <div class="auto-standard-grid">
+            <div><small>실제 엣지</small><strong>+1.5% 이상 자동 진입</strong></div>
+            <div><small>목표 수익</small><strong>+0.3% 자동 익절</strong></div>
+            <div><small>국내 기준</small><strong>빗썸 총자산 기준 운용</strong><p>자동매매 금액 계산 기준</p></div>
+            <div><small>분할</small><strong>유저 직접 설정</strong></div>
+            <div><small>운용 방식</small><strong>고정금액 / 총자산 복리 선택 가능</strong></div>
+          </div>
+          <div class="warning-note" style="margin-top:16px">
+            ※ 진입 / 청산 / 손절 / 필터는 K-EDGE 시스템 기준으로 자동 처리됩니다.
+          </div>
+        </article>
+
+        <div class="auto-setting-grid auto-setting-simple">
           <article class="auto-setting-card">
             <h3>1. 운용 방식</h3>
-            <p class="mini-desc">실제 진입금액 계산 기준입니다. 복리는 총 운용금액을 분할 수로 나눠 매 진입 시 다시 계산합니다.</p>
+            <p class="mini-desc">고정금액은 설정한 1회 진입금액을 유지하고, 총자산 복리는 빗썸 총자산을 분할 수로 나눠 매번 다시 계산합니다.</p>
             <label class="auto-radio"><input type="radio" name="capitalMode" value="fixed" checked> 고정금액</label>
             <label class="auto-radio"><input type="radio" name="capitalMode" value="compound"> 총자산 복리</label>
 
-            <label>총 운용금액</label>
+            <label>총 운용금액 <span class="field-note">(빗썸 총자산 기준)</span></label>
             <input id="autoCapitalKrw" type="number" min="0" step="10000" value="2000000" oninput="calcAutoEntryAmount()">
+            <p class="mini-desc">※ 빗썸 총자산 기준으로 계산됩니다.</p>
 
             <label>분할 수</label>
             <input id="autoSplitCount" type="number" min="1" max="100" step="1" value="20" oninput="calcAutoEntryAmount()">
@@ -73,74 +88,22 @@
           </article>
 
           <article class="auto-setting-card">
-            <h3>2. 자동매매 상태</h3>
-            <p class="mini-desc">승인 직후에는 알람 ON / 자동매매 OFF가 기본입니다.</p>
+            <h3>2. 자동매매</h3>
+            <p class="mini-desc">승인 직후 알람은 ON이며, 자동매매는 사용자가 직접 ON으로 전환해야 합니다.</p>
 
             <label class="auto-switch-line">
-              <span>알람 수신</span>
-              <select id="autoAlertEnabled">
-                <option value="ON">ON</option>
-                <option value="OFF">OFF</option>
-              </select>
-            </label>
-
-            <label class="auto-switch-line">
-              <span>자동 진입</span>
+              <span>자동매매</span>
               <select id="autoEntryEnabled">
                 <option value="OFF">OFF</option>
                 <option value="ON">ON</option>
               </select>
             </label>
 
-            <label class="auto-switch-line">
-              <span>자동 청산</span>
-              <select id="autoExitEnabled">
-                <option value="ON">ON</option>
-                <option value="OFF">OFF</option>
-              </select>
-            </label>
-
-            <label>최대 동시 포지션</label>
-            <input id="autoMaxPositions" type="number" min="1" max="20" value="3">
-
-            <label>1일 최대 진입 횟수</label>
-            <input id="autoMaxDailyEntries" type="number" min="1" max="100" value="10">
-          </article>
-
-          <article class="auto-setting-card">
-            <h3>3. 진입 / 청산 기준</h3>
-            <p class="mini-desc">자동 진입 기준과 익절/손절 감시 기준입니다.</p>
-
-            <label>최소 실제엣지 (%)</label>
-            <input id="autoMinEdge" type="number" min="0" step="0.1" value="1.5">
-
-            <label>익절 목표 (%)</label>
-            <input id="autoTakeProfit" type="number" min="0" step="0.1" value="0.3">
-
-            <label>손절 감시 (%)</label>
-            <input id="autoStopLoss" type="number" min="0" step="0.1" value="8">
-
-            <label class="auto-switch-line">
-              <span>자동 재진입</span>
-              <select id="autoReentryEnabled">
-                <option value="OFF">OFF</option>
-                <option value="ON">ON</option>
-              </select>
-            </label>
-          </article>
-
-          <article class="auto-setting-card">
-            <h3>4. 거래소 사용 설정</h3>
-            <p class="mini-desc">등록한 API 중 사용할 거래소만 ON으로 두세요.</p>
-
-            <h4>국내 현물</h4>
-            <label class="auto-check"><input type="checkbox" id="autoUseBithumb" checked> 빗썸</label>
-
-            <h4>해외 선물</h4>
-            <label class="auto-check"><input type="checkbox" id="autoUseMexc" checked> MEXC</label>
-            <label class="auto-check"><input type="checkbox" id="autoUseGate" checked> Gate.io</label>
-            <label class="auto-check"><input type="checkbox" id="autoUseBitget" checked> Bitget</label>
-            <label class="auto-check"><input type="checkbox" id="autoUseBingx" checked> BingX</label>
+            <div class="auto-example-box">
+              <h4>예시</h4>
+              <p>빗썸 총자산 200만원 / 20분할 = 1회 10만원</p>
+              <p>총자산 220만원 증가 시 / 20분할 = 1회 11만원</p>
+            </div>
           </article>
         </div>
 

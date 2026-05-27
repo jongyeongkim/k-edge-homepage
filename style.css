@@ -63,7 +63,7 @@ button:hover, .btn:hover, .login:hover, .join:hover, .outline:hover, .register-c
 
 
 
-/* 추천인 배너 / 페이지 */
+/* 레퍼럴 배너 / 페이지 */
 .referral-banner{
   width:92vw;max-width:1380px;margin:36px auto;
   border:1px solid rgba(49,213,255,.26);
@@ -107,7 +107,7 @@ button:hover, .btn:hover, .login:hover, .join:hover, .outline:hover, .register-c
   .referral-actions,.referral-grid,.ref-steps{grid-template-columns:1fr}
 }
 
-/* v4: 추천인 배너 강제 표시 보강 */
+/* v4: 레퍼럴 배너 강제 표시 보강 */
 .referral-banner{
   width:92vw!important;
   max-width:1380px!important;
@@ -143,7 +143,7 @@ footer a{color:#31d5ff;text-decoration:none;font-weight:800}
 @media(max-width:1000px){.referral-banner{grid-template-columns:1fr!important}.referral-actions{grid-template-columns:1fr 1fr!important}}
 @media(max-width:640px){.referral-actions{grid-template-columns:1fr!important}}
 
-/* v5: 메인 추천인 섹션 확실히 노출 */
+/* v5: 메인 레퍼럴 섹션 확실히 노출 */
 .referral-obvious{
   width:92vw;
   max-width:1380px;
@@ -372,7 +372,7 @@ footer a{color:#31d5ff;text-decoration:none;font-weight:800}
 }
 
 
-/* ===== 가격/카드 정렬/추천인 할인 원화 표기 보강 ===== */
+/* ===== 가격/카드 정렬/레퍼럴 할인 원화 표기 보강 ===== */
 .service-card{
   display:flex;
   flex-direction:column;
@@ -528,91 +528,60 @@ footer a{color:#31d5ff;text-decoration:none;font-weight:800}
 @media(max-width:1000px){.guide-two,.guide-three,.term-grid,.safe-list,.flow-steps{grid-template-columns:1fr}.guide-alert-top{flex-direction:column;align-items:flex-start}.guide-shot{max-width:270px}.guide-shot.land{max-width:320px}}
 
 
-/* 추천인 할인 가격 라인 */
-.discount-price-line span{
-  border-color:rgba(49,213,255,.38)!important;
-  background:rgba(49,213,255,.08)!important;
-  color:#31d5ff!important;
+/* ===== AUTO 설정 심플 버전 보강 ===== */
+.auto-standard-box{
+  margin-bottom:18px;
+  border-color:rgba(49,213,255,.34)!important;
 }
-
-
-/* ===== K-EDGE AUTO 설정 페이지 ===== */
-.auto-setting-wrap{width:100%}
-.auto-setting-grid{
+.auto-standard-grid{
   display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:18px;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
 }
-.auto-setting-card{
-  border:1px solid rgba(145,176,255,.24);
-  background:linear-gradient(150deg,rgba(12,30,58,.74),rgba(3,9,20,.78));
-  border-radius:18px;
-  padding:22px;
-  box-shadow:0 18px 55px rgba(0,0,0,.22);
-}
-.auto-setting-card h3{margin:0 0 10px;font-size:22px}
-.auto-setting-card h4{margin:18px 0 8px;color:#31d5ff}
-.auto-setting-card label{
-  display:block;
-  margin:13px 0 7px;
-  color:#dce7f7;
-  font-weight:900;
-}
-.auto-setting-card input,
-.auto-setting-card select{
-  width:100%;
-  height:46px;
-  border:1px solid rgba(145,176,255,.28);
-  background:#061225;
-  color:#fff;
-  border-radius:10px;
-  padding:0 13px;
-  font-weight:800;
-}
-.auto-radio,.auto-check{
-  display:flex!important;
-  align-items:center;
-  gap:10px;
+.auto-standard-grid div{
   border:1px solid rgba(145,176,255,.18);
-  background:rgba(3,9,21,.42);
-  border-radius:12px;
-  padding:12px;
+  background:rgba(3,9,21,.45);
+  border-radius:14px;
+  padding:14px;
 }
-.auto-radio input,.auto-check input{
-  width:auto!important;
-  height:auto!important;
-  margin:0!important;
+.auto-standard-grid small{
+  display:block;
+  color:#9fb0c7;
+  font-weight:900;
+  margin-bottom:7px;
 }
-.auto-switch-line{
-  display:grid!important;
-  grid-template-columns:1fr 140px;
-  gap:10px;
-  align-items:center;
+.auto-standard-grid strong{
+  display:block;
+  color:#31d5ff;
+  font-size:17px;
 }
-.auto-result-box{
+.auto-standard-grid p{
+  margin:6px 0 0;
+  color:#cbd5e1;
+  font-size:13px;
+}
+.auto-setting-simple{
+  grid-template-columns:1fr 1fr;
+}
+.field-note{
+  color:#31d5ff;
+  font-size:13px;
+}
+.auto-example-box{
   margin-top:16px;
-  border:1px solid rgba(49,213,255,.35);
-  background:rgba(49,213,255,.08);
+  border:1px solid rgba(255,202,56,.32);
+  background:rgba(255,202,56,.07);
   border-radius:14px;
   padding:16px;
 }
-.auto-result-box small{display:block;color:#aeb8c8;font-weight:900;margin-bottom:6px}
-.auto-result-box strong{display:block;color:#31d5ff;font-size:26px}
-.auto-setting-save{
-  margin-top:18px;
-  border:1px solid rgba(41,255,154,.28);
-  background:rgba(41,255,154,.06);
-  border-radius:18px;
-  padding:20px;
-  display:flex;
-  justify-content:space-between;
-  gap:16px;
-  align-items:center;
+.auto-example-box h4{margin:0 0 10px;color:#ffca38}
+.auto-example-box p{
+  margin:7px 0;
+  color:#fff0bf;
+  font-weight:850;
+  line-height:1.55;
 }
-.auto-setting-save h3{margin:0 0 8px}
-.auto-setting-save p{margin:0;color:#cbd5e1;line-height:1.5}
 @media(max-width:900px){
-  .auto-setting-grid{grid-template-columns:1fr}
-  .auto-setting-save{flex-direction:column;align-items:stretch}
-  .auto-switch-line{grid-template-columns:1fr}
+  .auto-standard-grid,
+  .auto-setting-simple{grid-template-columns:1fr}
 }
