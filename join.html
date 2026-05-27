@@ -21,7 +21,7 @@
       <a href="./index.html" data-nav="home">홈</a>
       <a href="./pricing.html" data-nav="pricing">요금제</a>
       <a href="./guide.html" data-nav="guide">가이드</a>
-      <a href="./referral.html" data-nav="referral">레퍼럴</a>
+      <a href="./referral.html" data-nav="referral">추천인</a>
       <a href="./payment.html" data-nav="payment">등록</a>
       <a href="./support.html" data-nav="support">문의</a>
       <a href="./mypage.html" data-nav="mypage">내정보</a>
@@ -36,7 +36,7 @@
       <div class="auth-box auth-box-single">
         <p class="exchange-pill">JOIN</p>
         <h1>K-EDGE 회원가입</h1>
-        <p class="auth-sub">서비스 이용을 위한 계정을 생성하세요.</p>
+        <p class="auth-sub">K-EDGE AUTO 서비스 이용을 위한 계정을 생성하세요.</p>
 
         <label>이메일</label>
         <input id="signupEmail" type="email" placeholder="example@email.com" autocomplete="email">
@@ -55,40 +55,8 @@
 
         <label>텔레그램 ID</label>
         <input id="signupTelegram" placeholder="@kedge_user">
-
-        <label>가입 상품</label>
-        <select id="signupPlan">
-          <option value="FREE">FREE</option>
-          <option value="VIP">VIP</option>
-          <option value="SEMI">VIP Lite (반자동)</option>
-          <option value="AUTO">VIP Pro (자동)</option>
-        </select>
-
-        <div class="plan-extra" data-plan-field="bot">
-          <label>텔레그램 BOT TOKEN</label>
-          <input id="signupBotToken" placeholder="반자동/자동 연동용 봇 토큰">
-
-          <label>텔레그램 CHAT ID</label>
-          <input id="signupChatId" placeholder="예: -1001234567890">
-        </div>
-
-        <div class="plan-extra" data-plan-field="auto">
-          <label>거래소</label>
-          <select id="signupExchange">
-            <option value="MEXC">MEXC</option>
-            <option value="BITGET">Bitget</option>
-            <option value="BINGX">BingX</option>
-            <option value="BYBIT">Bybit</option>
-          </select>
-
-          <label>API KEY</label>
-          <input id="signupApiKey" placeholder="자동매매 연동용 API KEY">
-
-          <label>SECRET KEY</label>
-          <input id="signupApiSecret" placeholder="자동매매 연동용 SECRET KEY">
-        </div>
-
-        <button class="auth-main-btn" onclick="signupUser()">회원가입</button>
+        <input id="signupPlan" type="hidden" value="AUTO">
+<button class="auth-main-btn" onclick="signupUser()">회원가입</button>
         <p class="auth-msg" id="signupMsg"></p>
 
         <div class="auth-links only-center">
@@ -102,7 +70,7 @@
   <p>Telegram: <a href="https://t.me/listing0517" target="_blank">@listing0517</a></p>
   <p>본 서비스는 정보 제공 목적이며, 투자 판단과 책임은 이용자 본인에게 있습니다.</p>
   <p class="footer-note">실시간 데이터는 시장 상황에 따라 변동될 수 있으며 참고용 정보입니다.</p>
-  <p><a href="./referral.html">레퍼럴</a> · <a href="./pricing.html">요금제</a> · <a href="./support.html">문의</a></p>
+  <p><a href="./referral.html">추천인</a> · <a href="./pricing.html">요금제</a> · <a href="./support.html">문의</a></p>
 </footer>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./script.js"></script>

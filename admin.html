@@ -31,7 +31,7 @@
     <section class="page-hero admin-hero">
       <p class="exchange-pill">ADMIN</p>
       <h1>K-EDGE 운영자 페이지</h1>
-      <p>Supabase 신청 DB 기준으로 승인 대기 / 승인 완료 / 반자동 / 자동 회원을 관리합니다.</p>
+      <p>Supabase 신청 DB 기준으로 승인 대기 / 승인 완료 / AUTO 회원을 관리합니다.</p>
     </section>
 
     <section id="adminLoginBox" class="admin-login-box">
@@ -66,9 +66,7 @@
               <option value="PENDING">승인대기</option>
               <option value="APPROVED">승인완료</option>
               <option value="REJECTED">거절</option>
-              <option value="VIP">VIP</option>
-              <option value="SEMI">반자동</option>
-              <option value="AUTO">자동</option>
+              <option value="AUTO">AUTO</option>
             </select>
             <input id="adminSearch" placeholder="이메일 / 텔레그램 / TxID 검색">
           </div>
@@ -128,7 +126,7 @@ function isAdminLoggedIn(){
 }
 
 function productLabel(p){
-  return ({VIP:"VIP 👑",SEMI:"VIP Lite 반자동 🤖",AUTO:"VIP Pro 자동 🚀"})[p] || p || "-";
+  return ({AUTO:"K-EDGE AUTO 🚀"})[p] || p || "-";
 }
 
 function statusLabel(s){
@@ -186,9 +184,7 @@ function renderAdminStats(){
     <article><b>${pending}</b><span>승인 대기</span></article>
     <article><b>${approved}</b><span>승인 완료</span></article>
     <article><b>${rejected}</b><span>거절</span></article>
-    <article><b>${vip}</b><span>VIP</span></article>
-    <article><b>${semi}</b><span>반자동</span></article>
-    <article><b>${auto}</b><span>자동</span></article>
+    <article><b>${vip}</b><span>AUTO</span></article>
   `;
 }
 
