@@ -1162,3 +1162,5 @@ document.addEventListener("DOMContentLoaded",()=>{
     }
   });
 })();
+
+window.addEventListener('load',async()=>{if(document.body?.dataset?.page==='mypage'){const u=await getCurrentUser();if(u&&!localStorage.getItem('auto_popup_'+u.email)){document.getElementById('autoApprovePopup').style.display='block';localStorage.setItem('auto_popup_'+u.email,'Y')}}});
