@@ -1,0 +1,24 @@
+K-EDGE AUTO V9.4.1 COMMON BOT PATCH
+
+수정 핵심
+1) 유저별 BOT TOKEN 사용 중지
+2) 공용봇 @Kedge0203bot 토큰만 사용
+3) Supabase 승인유저는 tg_chat_id만 읽어서 개인 DM 발송
+4) 정지/재시작 버튼도 공용봇 기준으로 유지
+5) 기존 OPEN 감시/복구/저장 워커 구조 유지
+
+실행 파일
+- start_kedge_auto_v941_COMMONBOT.bat
+
+실행 구조
+- storage_worker 1개
+- BITHUMB -> BINGX AUTO
+- BITHUMB -> BITGET AUTO
+- BITHUMB -> GATE AUTO
+- BITHUMB -> MEXC AUTO + callback poller
+
+주의
+- 유저는 @Kedge0203bot 에 /start 후 chat_id만 홈페이지에 등록하면 됨
+- 홈페이지의 tg_bot_token 컬럼은 더 이상 봇에서 사용하지 않음
+- KEDGE_COMMON_BOT_TOKEN 환경변수가 있으면 그 토큰을 우선 사용함
+- 환경변수가 없으면 코드 내 공용봇 기본 토큰을 사용함

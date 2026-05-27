@@ -1163,20 +1163,6 @@ document.addEventListener("DOMContentLoaded",()=>{
     const rejected = latest && latest.status === "REJECTED";
     const plan = approved ? "AUTO" : "FREE";
 
-    // K-EDGE AUTO 1차 패치: 승인 완료 시 mypage 승인 팝업 1회 자동 표시
-    if(approved){
-      try{
-        const popup = document.getElementById("autoApprovePopup");
-        const popupKey = "kedge_auto_approved_popup_" + (latest?.id || latest?.created_at || user?.email || "default");
-        if(popup && sessionStorage.getItem(popupKey) !== "Y"){
-          popup.style.display = "flex";
-          sessionStorage.setItem(popupKey, "Y");
-        }
-      }catch(e){
-        console.log("auto approve popup skipped", e);
-      }
-    }
-
     const top = $id("topAuthArea");
     if(top){
       if(user){
@@ -1240,11 +1226,6 @@ document.addEventListener("DOMContentLoaded",()=>{
     document.querySelectorAll("[data-plan-field='bot'],[data-plan-field='auto']").forEach(el=> el.style.display = "none");
   };
 
-  window.closeAutoApprovePopup = function(){
-    const popup = document.getElementById("autoApprovePopup");
-    if(popup) popup.style.display = "none";
-  };
-
   document.addEventListener("DOMContentLoaded", function(){
     try{
       // 예전 테스트 회원 저장소 때문에 다른 PC와 상태가 달라지는 문제 방지
@@ -1254,13 +1235,6 @@ document.addEventListener("DOMContentLoaded",()=>{
     }catch(e){}
 
     window.updateAuthUI && window.updateAuthUI();
-
-    const popup = document.getElementById("autoApprovePopup");
-    if(popup){
-      popup.addEventListener("click", function(e){
-        if(e.target === popup) window.closeAutoApprovePopup();
-      });
-    }
 
     const page = document.body?.dataset?.page;
     if(page){

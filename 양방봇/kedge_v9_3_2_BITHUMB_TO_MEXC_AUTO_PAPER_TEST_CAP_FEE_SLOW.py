@@ -259,18 +259,16 @@ SUPABASE_MEMBER_TELEGRAM_ID_COLUMN = os.getenv("SUPABASE_MEMBER_TELEGRAM_ID_COLU
 SUPABASE_AUTO_SETTINGS_TABLE = os.getenv("SUPABASE_AUTO_SETTINGS_TABLE", "auto_settings").strip()
 AUTO_SETTINGS_CACHE_TTL_SEC = int(os.getenv("AUTO_SETTINGS_CACHE_TTL_SEC", "60"))
 
-# 승인회원 개인 DM/버튼은 기본적으로 VIP 메인 봇 토큰을 사용한다.
-# 예전에 SEMI_AUTO_BOT_TOKEN 환경변수가 다른 봇으로 잡혀 있으면 403이 나므로 무시한다.
-# 정말 별도 개인봇을 쓸 때만 KEDGE_USER_DM_BOT_TOKEN 환경변수로 지정한다.
-# AUTO 개인 DM/정지버튼 전용 봇
-# 유료방 알림봇과 분리해서 사용한다.
-USER_DM_BOT_TOKEN_DEFAULT = "8055440671:AAHz8G1xtJh5dWzRzraxuyT61PqhxXweuVI"
+# 승인회원 개인 DM/정지·재시작 버튼은 공용봇 1개(@Kedge0203bot)로만 발송한다.
+# 유저별 BOT TOKEN은 더 이상 사용하지 않는다.
+# 필요하면 환경변수 KEDGE_COMMON_BOT_TOKEN으로만 공용봇 토큰을 교체한다.
+KEDGE_COMMON_BOT_TOKEN_DEFAULT = "8055440671:AAHz8G1xtJh5dWzRzraxuyT61PqhxXweuVI"
 
 # 테스트 중에는 이 chat_id로 강제 전송한다.
 # 실제 유저 오픈 전에는 빈 문자열로 바꾸면 DB의 tg_chat_id를 사용한다.
 FORCE_TEST_USER_DM_CHAT_ID = ""
 
-SEMI_AUTO_BOT_TOKEN = (os.getenv("KEDGE_USER_DM_BOT_TOKEN", "").strip() or USER_DM_BOT_TOKEN_DEFAULT).strip()
+SEMI_AUTO_BOT_TOKEN = (os.getenv("KEDGE_COMMON_BOT_TOKEN", "").strip() or KEDGE_COMMON_BOT_TOKEN_DEFAULT).strip()
 
 # 과거 반자동 금액 버튼 - AUTO 전용에서는 사용하지 않음
 AMOUNT_BUTTONS_KRW = [10_000, 50_000, 100_000, 500_000, 1_000_000, 5_000_000]
@@ -1578,11 +1576,10 @@ def _telegram_get_me(token: str, label: str = "BOT") -> str:
 def telegram_send_private(chat_id: str, text: str) -> bool:
     """승인회원 개인 DM 전송.
 
-    핵심 수정:
-    - 기본 DM 토큰을 VIP 메인봇 TELEGRAM_BOT_TOKEN으로 고정
-    - KEDGE_USER_DM_BOT_TOKEN을 따로 넣은 경우에만 별도 봇 사용
-    - 403 발생 시 실제 사용한 봇 getMe 결과를 찍어서 /start 한 봇과 같은지 확인
-    - 혹시 별도봇 실패 시 메인봇으로 1회 fallback
+    V9.4.1 공용봇 패치:
+    - 유저별 tg_bot_token / bot_token은 사용하지 않는다.
+    - @Kedge0203bot 공용봇 토큰(SEMI_AUTO_BOT_TOKEN)으로만 전송한다.
+    - Supabase에서는 유저별 tg_chat_id만 읽는다.
     """
     chat_id = str(chat_id or "").strip()
 
@@ -1596,34 +1593,18 @@ def telegram_send_private(chat_id: str, text: str) -> bool:
         print("[승인회원DM] chat_id 없음")
         return False
 
-    tokens = []
-    labels = []
+    if not SEMI_AUTO_BOT_TOKEN:
+        print("[공용봇DM] KEDGE_COMMON_BOT_TOKEN 없음")
+        return False
 
-    # 1순위: 현재 반자동 DM 토큰. 기본값은 VIP 메인봇.
-    if SEMI_AUTO_BOT_TOKEN:
-        tokens.append(SEMI_AUTO_BOT_TOKEN)
-        labels.append("승인회원DM")
-
-    # 2순위 fallback: VIP 메인봇. 중복 토큰이면 추가하지 않음.
-    if TELEGRAM_BOT_TOKEN and TELEGRAM_BOT_TOKEN not in tokens:
-        tokens.append(TELEGRAM_BOT_TOKEN)
-        labels.append("승인회원DM-VIPFallback")
-
-    print("[승인회원DM 설정]", {
+    print("[공용봇DM 설정]", {
         "chat_id": chat_id,
-        "semi_auto_token": _mask_token(SEMI_AUTO_BOT_TOKEN),
-        "vip_token": _mask_token(TELEGRAM_BOT_TOKEN),
-        "same_token": SEMI_AUTO_BOT_TOKEN == TELEGRAM_BOT_TOKEN,
+        "common_bot_token": _mask_token(SEMI_AUTO_BOT_TOKEN),
         "force_test_chat_id": FORCE_TEST_USER_DM_CHAT_ID,
     })
 
-    for token, label in zip(tokens, labels):
-        _telegram_get_me(token, label)
-        ok = _telegram_send_to(token, chat_id, text, label)
-        if ok:
-            return True
-
-    return False
+    _telegram_get_me(SEMI_AUTO_BOT_TOKEN, "공용봇DM")
+    return _telegram_send_to(SEMI_AUTO_BOT_TOKEN, chat_id, text, "공용봇DM")
 
 
 def fmt_man_krw(v: float) -> str:

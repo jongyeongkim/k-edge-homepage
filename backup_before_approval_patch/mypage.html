@@ -12,54 +12,6 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="K-EDGE">
   <link rel="apple-touch-icon" href="/icon-192.png">
-
-<style>
-.auto-approve-popup{
-  position:fixed;
-  inset:0;
-  z-index:999999;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  padding:18px;
-  background:rgba(0,0,0,.72);
-  backdrop-filter:blur(5px);
-}
-.auto-approve-box{
-  width:min(440px,94vw);
-  border:1px solid rgba(49,213,255,.38);
-  background:linear-gradient(150deg,rgba(12,30,58,.98),rgba(3,9,20,.98));
-  border-radius:22px;
-  padding:26px;
-  color:#dce7f7;
-  box-shadow:0 24px 90px rgba(0,0,0,.58);
-  text-align:center;
-}
-.auto-approve-box h3{
-  margin:0 0 12px;
-  color:#31d5ff;
-  font-size:24px;
-}
-.auto-approve-box p{
-  line-height:1.65;
-  font-weight:850;
-}
-.auto-approve-actions{
-  display:grid;
-  gap:10px;
-  margin-top:16px;
-}
-.auto-approve-close{
-  width:100%;
-  min-height:44px;
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,.16);
-  background:rgba(255,255,255,.06);
-  color:#fff;
-  font-weight:950;
-  cursor:pointer;
-}
-</style>
 </head>
 <body data-page="mypage">
   <div class="bg-grid"></div>
@@ -131,12 +83,9 @@
 <div id="autoApprovePopup" class="auto-approve-popup" style="display:none;">
   <div class="auto-approve-box">
     <h3>🎉 K-EDGE AUTO 승인 완료</h3>
-    <p>텔레그램 알람이 활성화되었습니다.<br>자동매매 시작 전 AUTO 설정을 완료해주세요.</p>
+    <p>알람 수신이 활성화되었습니다.<br>자동매매 시작 전 AUTO 설정을 완료해주세요.</p>
     <p><b>알람 : ON</b><br><b>자동매매 : OFF</b></p>
-    <div class="auto-approve-actions">
-      <a class="btn primary full" href="./auto-settings.html">AUTO 설정하기</a>
-      <button type="button" class="auto-approve-close" onclick="closeAutoApprovePopup()">나중에 설정하기</button>
-    </div>
+    <a class="btn primary full" href="./auto-settings.html">AUTO 설정하기</a>
   </div>
 </div>
 

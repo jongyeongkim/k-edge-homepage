@@ -12,3 +12,10 @@
 2026-05-28 07:07:48,MEXC,IRYS/USDT:USDT,15.0757,True,
 2026-05-28 07:13:20,MEXC,INIT/USDT:USDT,0.2362,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
 2026-05-28 07:13:35,MEXC,AUDIO/USDT:USDT,15.0708,True,
+2026-05-28 07:21:00,MEXC,MEGA/USDT:USDT,0.2322,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-05-28 07:21:15,MEXC,INIT/USDT:USDT,15.0982,True,
+2026-05-28 07:28:36,MEXC,MEGA/USDT:USDT,0.2351,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-05-28 07:29:25,BINGX,WLD/USDT:USDT,1.5238,True,
+2026-05-28 07:29:25,BINGX,ETH/USDT:USDT,1.647,True,
+2026-05-28 07:32:26,MEXC,XAN/USDT:USDT,0.2319,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-05-28 07:32:41,MEXC,IP/USDT:USDT,15.0705,True,
