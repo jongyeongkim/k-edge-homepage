@@ -73,11 +73,14 @@
         </div>
         <div class="auth-card">
           <h3>빠른 이동</h3>
-          <a class="btn primary full" href="./auto-settings.html" id="myAutoSettingLink" style="display:block;">AUTO 설정</a>
-          <br><br>
-          <a class="btn ghost full" href="./payment.html">등록 센터</a>
+          <a class="btn primary full" href="./payment.html">등록 센터</a>
           <br><br>
           <a class="btn ghost full" href="./support.html">문의센터</a>
+          <div id="myAutoSettingsBox" class="my-auto-settings-box" style="display:none;">
+            <h3>AUTO 설정</h3>
+            <p>승인 완료된 회원은 운용금액 / 분할 / 자동매매 ON·OFF를 설정할 수 있습니다.</p>
+            <a class="btn primary full my-auto-settings-btn" href="./auto-settings.html">AUTO 설정하기</a>
+          </div>
         </div>
       </div>
     </section>
@@ -88,8 +91,6 @@
     <p>알람 수신이 활성화되었습니다.<br>자동매매 시작 전 AUTO 설정을 완료해주세요.</p>
     <p><b>알람 : ON</b><br><b>자동매매 : OFF</b></p>
     <a class="btn primary full" href="./auto-settings.html">AUTO 설정하기</a>
-    <br><br>
-    <button class="btn ghost full" type="button" onclick="closeAutoApprovePopup()">나중에 설정하기</button>
   </div>
 </div>
 
@@ -109,16 +110,9 @@ window.KEDGE_SUPABASE_URL = "https://qakhbihueonefzifrmct.supabase.co";
 window.KEDGE_SUPABASE_ANON_KEY = "sb_publishable_XboBFueAITcieSL75B2S5g_qlm4XmOm";
 </script>
 
-<script src="./script.js?v=20260528_auto_popup_v5"></script>
+<script src="./script.js?v=20260528_autoalign1"></script>
 <script src="./kedge-supabase-db.js?v=20260523"></script>
 
-
-<script>
-window.closeAutoApprovePopup = function(){
-  const popup = document.getElementById("autoApprovePopup");
-  if(popup) popup.style.display = "none";
-};
-</script>
 
 <script>
 if ("serviceWorker" in navigator) {

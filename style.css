@@ -611,3 +611,42 @@ footer a{color:#31d5ff;text-decoration:none;font-weight:800}
   font-weight:950;
   line-height:1.6;
 }
+
+
+/* ===== MY PAGE AUTO 설정 버튼 정렬 FIX ===== */
+.my-auto-settings-box{
+  width:100%;
+  margin:18px auto 0;
+  padding:18px;
+  border:1px solid rgba(49,213,255,.28);
+  background:linear-gradient(150deg,rgba(49,213,255,.08),rgba(139,92,246,.08));
+  border-radius:16px;
+  text-align:center;
+}
+.my-auto-settings-box h3{
+  margin:0 0 8px;
+  color:#31d5ff;
+  font-size:22px;
+}
+.my-auto-settings-box p{
+  margin:0 0 14px;
+  color:#cbd5e1;
+  line-height:1.6;
+  font-weight:800;
+}
+.my-auto-settings-box .my-auto-settings-btn{
+  width:100%;
+  max-width:360px;
+  margin:0 auto;
+  display:grid;
+  place-items:center;
+  text-align:center;
+}
+[data-my-auto]{
+  width:100%;
+  text-align:left;
+}
+@media(max-width:700px){
+  .my-auto-settings-box{padding:16px;}
+  .my-auto-settings-box h3{font-size:20px;}
+}
