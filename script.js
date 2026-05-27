@@ -1206,20 +1206,6 @@ document.addEventListener("DOMContentLoaded",()=>{
     if($id("myApiKey")) $id("myApiKey").textContent = latest?.domestic_apis ? "등록됨" : "미등록";
     if($id("myApiSecret")) $id("myApiSecret").textContent = latest?.foreign_apis ? "등록됨" : "미등록";
 
-    // K-EDGE 승인 팝업: 승인건 ID별 1회만 표시
-    try{
-      const isMypage = document.body?.dataset?.page === "mypage";
-      const popup = document.getElementById("autoApprovePopup");
-      const requestId = latest?.id || latest?.created_at || user?.email || "unknown";
-      const popupKey = "kedge_auto_popup_shown_" + String(requestId);
-      if(isMypage && approved && popup && !localStorage.getItem(popupKey)){
-        popup.style.display = "flex";
-        localStorage.setItem(popupKey, "Y");
-      }
-    }catch(e){
-      console.log("auto approve popup skipped", e);
-    }
-
     document.querySelectorAll("[data-my-bot]").forEach(el=> el.style.display = approved ? "block" : "none");
     document.querySelectorAll("[data-my-auto]").forEach(el=> el.style.display = approved ? "block" : "none");
 
@@ -1250,15 +1236,6 @@ document.addEventListener("DOMContentLoaded",()=>{
 
     window.updateAuthUI && window.updateAuthUI();
 
-    // 승인 팝업 닫기 / 나중에 설정하기
-    document.addEventListener("click", function(e){
-      const popup = document.getElementById("autoApprovePopup");
-      if(!popup) return;
-      if(e.target === popup || e.target?.dataset?.closeAutoApprove === "Y"){
-        popup.style.display = "none";
-      }
-    });
-
     const page = document.body?.dataset?.page;
     if(page){
       document.querySelectorAll("[data-nav]").forEach(a=>{
@@ -1267,3 +1244,262 @@ document.addEventListener("DOMContentLoaded",()=>{
     }
   });
 })();
+
+
+/* =========================================================
+   K-EDGE AUTO SETTINGS ACCESS FIX v2 REAL
+   - APPROVED 유저 AUTO 설정 접근 허용
+   - auto-settings.html 승인 확인중 무한 대기 방지
+   - mypage 재접속 후에도 AUTO 설정 버튼 유지
+   - auto_settings 저장/불러오기 지원
+========================================================= */
+(function(){
+  const SUPABASE_URL_AUTO = window.KEDGE_SUPABASE_URL || "https://qakhbihueonefzifrmct.supabase.co";
+  const SUPABASE_ANON_KEY_AUTO = window.KEDGE_SUPABASE_ANON_KEY || "sb_publishable_XboBFueAITcieSL75B2S5g_qlm4XmOm";
+  let autoDb = null;
+
+  function $id(id){ return document.getElementById(id); }
+  function $val(id){ return ($id(id)?.value || "").trim(); }
+  function db(){
+    if(autoDb) return autoDb;
+    if(!window.supabase) return null;
+    autoDb = window.supabase.createClient(SUPABASE_URL_AUTO, SUPABASE_ANON_KEY_AUTO);
+    return autoDb;
+  }
+  function setText(id, text){ const el=$id(id); if(el) el.textContent=text; }
+  function setHtml(id, html){ const el=$id(id); if(el) el.innerHTML=html; }
+  function show(id, yes, display){ const el=$id(id); if(el) el.style.display = yes ? (display || "block") : "none"; }
+  function num(v, def){ const n=Number(v); return Number.isFinite(n) ? n : def; }
+  function fmtWon(v){ return Math.floor(num(v,0)).toLocaleString("ko-KR") + "원"; }
+
+  async function getUser(){
+    if(window.getCurrentUser){
+      try{ const u = await window.getCurrentUser(); if(u && u.email) return u; }catch(e){}
+    }
+    const d = db();
+    if(!d) return null;
+    try{
+      const {data,error}=await d.auth.getUser();
+      if(error || !data || !data.user) return null;
+      const meta=data.user.user_metadata||{};
+      return { id:data.user.id, email:data.user.email, telegram:meta.telegram || "미등록" };
+    }catch(e){ return null; }
+  }
+
+  async function latestApprovedRequest(email){
+    const d=db();
+    if(!d || !email) return null;
+    try{
+      const {data,error}=await d
+        .from("kedge_requests")
+        .select("*")
+        .eq("email", email)
+        .eq("status", "APPROVED")
+        .order("approved_at", {ascending:false, nullsFirst:false})
+        .order("created_at", {ascending:false})
+        .limit(1);
+      if(error || !Array.isArray(data) || !data.length) return null;
+      return data[0];
+    }catch(e){
+      console.log("approved request lookup failed", e);
+      return null;
+    }
+  }
+
+  async function latestAnyRequest(email){
+    const d=db();
+    if(!d || !email) return null;
+    try{
+      const {data,error}=await d
+        .from("kedge_requests")
+        .select("*")
+        .eq("email", email)
+        .order("created_at", {ascending:false})
+        .limit(1);
+      if(error || !Array.isArray(data) || !data.length) return null;
+      return data[0];
+    }catch(e){ return null; }
+  }
+
+  async function getApprovalState(){
+    const user = await getUser();
+    if(!user || !user.email) return { user:null, approved:false, latest:null, approvedReq:null };
+    const approvedReq = await latestApprovedRequest(user.email);
+    const latest = approvedReq || await latestAnyRequest(user.email);
+    return { user, approved:!!approvedReq, latest, approvedReq };
+  }
+
+  async function loadExistingAutoSettings(user){
+    const d=db();
+    if(!d || !user || !user.email) return null;
+    try{
+      let query = d.from("auto_settings").select("*").eq("email", user.email).limit(1);
+      const {data,error}=await query;
+      if(error || !Array.isArray(data) || !data.length) return null;
+      return data[0];
+    }catch(e){
+      console.log("auto_settings read skipped", e);
+      return null;
+    }
+  }
+
+  window.calcAutoEntryAmount = function(){
+    const capital = num($val("autoCapitalKrw"), 0);
+    const split = Math.max(1, Math.floor(num($val("autoSplitCount"), 1)));
+    const entry = split > 0 ? Math.floor(capital / split) : 0;
+    setText("autoEntryAmountText", fmtWon(entry));
+    return entry;
+  };
+
+  async function fillAutoSettingForm(user){
+    const saved = await loadExistingAutoSettings(user);
+    if(saved){
+      if($id("autoCapitalKrw")) $id("autoCapitalKrw").value = saved.capital_krw || saved.total_capital_krw || 2000000;
+      if($id("autoSplitCount")) $id("autoSplitCount").value = saved.split_count || 20;
+      const mode = saved.capital_mode || "fixed";
+      document.querySelectorAll("input[name='capitalMode']").forEach(r=>{ r.checked = r.value === mode; });
+      if($id("autoEntryEnabled")) $id("autoEntryEnabled").value = (saved.auto_enabled === true || saved.auto_enabled === "ON") ? "ON" : "OFF";
+    }
+    window.calcAutoEntryAmount();
+  }
+
+  window.initAutoSettingsPage = async function(){
+    const statusBox = $id("autoSettingStatus");
+    if(!statusBox) return;
+
+    setHtml("autoSettingStatus", "<b>승인 상태 확인 중...</b>");
+    show("autoSettingLocked", false);
+    show("autoSettingForm", false);
+
+    const state = await getApprovalState();
+    if(!state.user){
+      setHtml("autoSettingStatus", "<b>로그인이 필요합니다.</b><p>AUTO 설정은 로그인 후 이용할 수 있습니다.</p>");
+      show("autoSettingLocked", true);
+      return;
+    }
+
+    if(!state.approved){
+      const txt = state.latest ? (state.latest.status || "PENDING") : "신청 없음";
+      setHtml("autoSettingStatus", `<b>🔒 승인 전입니다.</b><p>현재 상태: ${txt}</p>`);
+      show("autoSettingLocked", true);
+      return;
+    }
+
+    setHtml("autoSettingStatus", `<b>✅ K-EDGE AUTO 승인완료</b><p>${state.user.email} / 알람 ON / 자동매매 기본 OFF</p>`);
+    show("autoSettingLocked", false);
+    show("autoSettingForm", true);
+    await fillAutoSettingForm(state.user);
+  };
+
+  window.saveAutoSettings = async function(){
+    const msgEl = $id("autoSettingMsg");
+    function msg(t, type){ if(msgEl){ msgEl.textContent=t; msgEl.className="form-msg "+(type||"error"); }else alert(t); }
+
+    const state = await getApprovalState();
+    if(!state.user) return msg("❌ 로그인 후 이용해주세요.");
+    if(!state.approved) return msg("❌ 관리자 승인 후 AUTO 설정을 저장할 수 있습니다.");
+
+    const d=db();
+    if(!d) return msg("❌ Supabase 연결 실패");
+
+    const mode = document.querySelector("input[name='capitalMode']:checked")?.value || "fixed";
+    const capital = Math.max(0, Math.floor(num($val("autoCapitalKrw"), 0)));
+    const split = Math.max(1, Math.floor(num($val("autoSplitCount"), 1)));
+    const entryAmount = Math.floor(capital / split);
+    const autoEnabled = $val("autoEntryEnabled") === "ON";
+    const chatId = state.approvedReq?.tg_chat_id || state.latest?.tg_chat_id || "";
+
+    if(capital <= 0) return msg("❌ 총 운용금액을 입력해주세요.");
+    if(split <= 0) return msg("❌ 분할 수를 입력해주세요.");
+
+    const payload = {
+      email: state.user.email,
+      user_id: state.user.id || null,
+      tg_chat_id: chatId,
+      service_enabled: true,
+      alert_enabled: true,
+      auto_enabled: autoEnabled,
+      capital_mode: mode,
+      capital_krw: capital,
+      split_count: split,
+      entry_amount_krw: entryAmount,
+      updated_at: new Date().toISOString()
+    };
+
+    try{
+      // 1차: email 기준 upsert 시도
+      let res = await d.from("auto_settings").upsert(payload, { onConflict:"email" });
+      if(res.error){
+        // 2차: 기존 row update 후 없으면 insert
+        const found = await d.from("auto_settings").select("id").eq("email", state.user.email).limit(1);
+        if(!found.error && Array.isArray(found.data) && found.data.length){
+          res = await d.from("auto_settings").update(payload).eq("id", found.data[0].id);
+        }else{
+          res = await d.from("auto_settings").insert({ ...payload, created_at:new Date().toISOString() });
+        }
+      }
+      if(res.error) throw res.error;
+      window.calcAutoEntryAmount();
+      msg(`✅ AUTO 설정 저장 완료. 1회 진입금액: ${fmtWon(entryAmount)} / 자동매매: ${autoEnabled ? "ON" : "OFF"}`, "success");
+    }catch(e){
+      console.error(e);
+      msg("❌ AUTO 설정 저장 실패: " + (e.message || e));
+    }
+  };
+
+  async function refreshMypageApprovalUi(){
+    if(!$id("myApproval") && !$id("autoApprovePopup")) return;
+    const state = await getApprovalState();
+    if(!state.user) return;
+    const approved = state.approved;
+
+    if($id("myPlan")) $id("myPlan").textContent = approved ? "K-EDGE AUTO 🚀" : "FREE";
+    if($id("myApproval")) $id("myApproval").textContent = approved ? "승인완료" : (state.latest ? (state.latest.status || "확인중") : "신청 없음");
+    if($id("myLastRequest")) $id("myLastRequest").textContent = state.latest ? `K-EDGE AUTO / ${state.latest.status || "-"}` : "신청 내역 없음";
+    if($id("myInviteLink")){
+      $id("myInviteLink").innerHTML = approved ? `<a href="./auto-settings.html">AUTO 설정하기</a>` : "승인 후 표시";
+    }
+    if($id("myChatId")) $id("myChatId").textContent = state.latest?.tg_chat_id || "미등록";
+    if($id("myAutoSettingLink")){
+      $id("myAutoSettingLink").style.display = approved ? "block" : "none";
+    }
+
+    document.querySelectorAll("[data-my-bot],[data-my-auto]").forEach(el=>{ el.style.display = approved ? "block" : "none"; });
+
+    const popup = $id("autoApprovePopup");
+    if(approved && popup){
+      const requestId = state.latest?.id || state.latest?.created_at || state.user?.email || "unknown";
+      const popupKey = "kedge_auto_popup_shown_" + String(requestId);
+      if(!localStorage.getItem(popupKey)){
+        popup.style.display = "flex";
+        localStorage.setItem(popupKey, "Y");
+      }
+    }
+  }
+
+  window.closeAutoApprovePopup = function(){
+    const popup=$id("autoApprovePopup");
+    if(popup) popup.style.display="none";
+  };
+
+  document.addEventListener("DOMContentLoaded", function(){
+    window.calcAutoEntryAmount && window.calcAutoEntryAmount();
+    window.initAutoSettingsPage && window.initAutoSettingsPage();
+    // 기존 updateAuthUI 실행 후 상태를 한 번 더 안정화
+    setTimeout(refreshMypageApprovalUi, 450);
+    setTimeout(refreshMypageApprovalUi, 1400);
+  });
+})();
+
+
+/* KEDGE_V5_CACHEFIX_FORCE_AUTO_LINK */
+document.addEventListener("DOMContentLoaded", function(){
+  setTimeout(function(){
+    var link = document.getElementById("myAutoSettingLink");
+    if(link) link.style.display = "block";
+  }, 300);
+  setTimeout(function(){
+    var link = document.getElementById("myAutoSettingLink");
+    if(link) link.style.display = "block";
+  }, 1600);
+});
