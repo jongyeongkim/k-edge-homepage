@@ -29,3 +29,7 @@
 2026-05-28 07:55:31,MEXC,WET/USDT:USDT,15.0855,True,
 2026-05-28 08:02:53,MEXC,INIT/USDT:USDT,0.2486,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
 2026-05-28 08:03:08,MEXC,MEGA/USDT:USDT,15.0781,True,
+2026-05-28 08:12:25,MEXC,AGI/USDT:USDT,0.2481,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-05-28 08:12:40,MEXC,SHIB/USDT:USDT,15.0943,True,
+2026-05-28 08:16:14,MEXC,MEGA/USDT:USDT,0.2676,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-05-28 08:16:29,MEXC,MANTRA/USDT:USDT,15.0664,True,

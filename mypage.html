@@ -73,9 +73,7 @@
         </div>
         <div class="auth-card">
           <h3>빠른 이동</h3>
-          <a class="btn primary full" href="./auto-settings.html" id="myAutoSettingLink">AUTO 설정</a>
-          <br><br>
-          <a class="btn ghost full" href="./payment.html">등록 센터</a>
+          <a class="btn primary full" href="./payment.html">등록 센터</a>
           <br><br>
           <a class="btn ghost full" href="./support.html">문의센터</a>
         </div>
@@ -89,7 +87,7 @@
     <p><b>알람 : ON</b><br><b>자동매매 : OFF</b></p>
     <a class="btn primary full" href="./auto-settings.html">AUTO 설정하기</a>
     <br><br>
-    <button class="btn ghost full" type="button" onclick="closeAutoApprovePopup()">나중에 설정하기</button>
+    <button type="button" class="btn ghost full" data-close-auto-approve="Y">나중에 설정하기</button>
   </div>
 </div>
 
@@ -112,13 +110,6 @@ window.KEDGE_SUPABASE_ANON_KEY = "sb_publishable_XboBFueAITcieSL75B2S5g_qlm4XmOm
 <script src="./script.js?v=20260523_2"></script>
 <script src="./kedge-supabase-db.js?v=20260523"></script>
 
-
-<script>
-window.closeAutoApprovePopup = function(){
-  const popup = document.getElementById("autoApprovePopup");
-  if(popup) popup.style.display = "none";
-};
-</script>
 
 <script>
 if ("serviceWorker" in navigator) {
