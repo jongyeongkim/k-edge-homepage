@@ -21,7 +21,7 @@
       <a href="./index.html" data-nav="home">홈</a>
       <a href="./pricing.html" data-nav="pricing">요금제</a>
       <a href="./guide.html" data-nav="guide">가이드</a>
-      <a href="./referral.html" data-nav="referral">레퍼럴</a>
+      <a href="./referral.html" data-nav="referral">추천인</a>
       <a href="./payment.html" data-nav="payment">등록</a>
       <a href="./support.html" data-nav="support">문의</a>
       <a href="./mypage.html" data-nav="mypage">내정보</a>
@@ -35,21 +35,25 @@
     <section class="page-hero">
       <p class="exchange-pill">SUPPORT</p>
       <h1>문의센터</h1>
-      <p>VIP, 반자동, 자동매매, 결제, 오류 문의를 남길 수 있습니다.</p>
+      <p>AUTO 서비스, 추천인 UID, 결제, API 연동, 오류 문의를 남길 수 있습니다.</p>
     </section>
 
     <section class="section payment">
       <div class="register-grid single-wide">
         <article class="register-card">
           <h3>문의 등록</h3>
-          <select id="ticketCategory">
-            <option value="VIP">VIP 문의</option>
-            <option value="SEMI">VIP + 반자동 문의</option>
-            <option value="AUTO">VIP + 자동 문의</option>
-            <option value="PAYMENT">결제 확인</option>
-            <option value="ERROR">오류 / 접속 문제</option>
-            <option value="ETC">기타 문의</option>
-          </select>
+          
+<select id="ticketCategory">
+<option value="AUTO">AUTO 서비스 문의</option>
+<option value="REFERRAL">추천인 UID 인증 문의</option>
+<option value="PAYMENT">결제 확인 문의</option>
+<option value="API">API 등록 문의</option>
+<option value="TELEGRAM">텔레그램 연결 문의</option>
+<option value="APPROVAL">AUTO 승인 문의</option>
+<option value="ERROR">오류 / 실행 문의</option>
+<option value="ETC">기타 문의</option>
+</select>
+
           <input id="ticketTelegram" placeholder="텔레그램 ID 예: @listing0517">
           <textarea id="ticketMessage" placeholder="문의 내용을 입력하세요"></textarea>
           <button type="button" onclick="submitSupportTicket()">문의 등록하기</button>
@@ -69,7 +73,7 @@
   <p>Telegram: <a href="https://t.me/listing0517" target="_blank">@listing0517</a></p>
   <p>본 서비스는 정보 제공 목적이며, 투자 판단과 책임은 이용자 본인에게 있습니다.</p>
   <p class="footer-note">실시간 데이터는 시장 상황에 따라 변동될 수 있으며 참고용 정보입니다.</p>
-  <p><a href="./referral.html">레퍼럴</a> · <a href="./pricing.html">요금제</a> · <a href="./support.html">문의</a></p>
+  <p><a href="./referral.html">추천인</a> · <a href="./pricing.html">요금제</a> · <a href="./support.html">문의</a></p>
 </footer>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./script.js"></script>
