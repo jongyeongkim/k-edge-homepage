@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="./style.css" />
   <link rel="icon" type="image/png" href="./favicon.png" />
-  <title>K-EDGE | 이용 가이드</title>
+  <title>K-EDGE | AUTO 이용 가이드</title>
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#0b1020">
 </head>
@@ -17,41 +17,41 @@
       <a href="./index.html" data-nav="home">홈</a>
       <a href="./pricing.html" data-nav="pricing">요금제</a>
       <a href="./guide.html" data-nav="guide">가이드</a>
-      <a href="./referral.html" data-nav="referral">레퍼럴</a>
+      <a href="./referral.html" data-nav="referral">추천인</a>
       <a href="./payment.html" data-nav="payment">등록</a>
       <a href="./support.html" data-nav="support">문의</a>
       <a href="./mypage.html" data-nav="mypage">내정보</a>
     </nav>
     <div class="top-actions" id="topAuthArea">
       <a class="login" href="./login.html">로그인</a>
-      <a class="join" href="./join.html">회원가입</a>
+      <a class="join" href="./login.html">회원가입</a>
     </div>
   </header>
 
   <section class="page-hero">
-    <p class="exchange-pill">K-EDGE GUIDE</p>
-    <h1>반자동·양방 알림<br>초보자용 이용 가이드</h1>
-    <p>텔레그램 알림을 어떻게 읽고, 반자동 버튼을 어떻게 사용하는지 실제 화면 기준으로 설명합니다.</p>
+    <p class="exchange-pill">K-EDGE AUTO GUIDE</p>
+    <h1>자동 양방매매<br>초보자용 이용 가이드</h1>
+    <p>국내 현물 ↔ 해외 선물 괴리차 감지부터 자동 진입, 자동 청산, 텔레그램 결과 알림까지 한 번에 이해할 수 있도록 정리했습니다.</p>
   </section>
 
   <section class="guide-alert-top">
     <div>
-      <b>🤖 반자동 사용 전 필수</b>
-      <p>텔레그램에서 <b>@Kedge0203bot</b> 검색 후 <b>/start</b>를 먼저 입력해야 개인 알림과 반자동 버튼이 작동합니다.</p>
+      <b>🤖 AUTO 사용 전 필수</b>
+      <p>텔레그램에서 <b>@Kedge0203bot</b> 검색 후 <b>/start</b>를 먼저 입력해야 자동 진입/청산 결과 알림을 개인 DM으로 받을 수 있습니다.</p>
     </div>
     <a class="btn primary" href="https://t.me/Kedge0203bot" target="_blank">Kedge0203bot 연결하기</a>
   </section>
 
   <section class="guide-section">
     <h2>1. 시작 순서</h2>
-    <p class="lead">반자동은 유저마다 새 봇을 만드는 구조가 아닙니다. 모든 사용자가 K-EDGE 전용 봇 1개를 개인 DM으로 사용하는 방식입니다.</p>
+    <p class="lead">K-EDGE AUTO는 사용자가 직접 버튼을 눌러 진입하는 방식이 아니라, 설정과 승인이 완료되면 봇이 조건을 감시하고 자동으로 진입/청산하는 구조입니다.</p>
     <div class="flow-steps">
       <article><b>1</b><h3>봇 검색</h3><p>텔레그램에서 @Kedge0203bot 검색</p></article>
       <article><b>2</b><h3>/start 입력</h3><p>개인 DM 연결을 활성화합니다.</p></article>
-      <article><b>3</b><h3>반자동 신청</h3><p>홈페이지에서 API와 정보를 등록합니다.</p></article>
-      <article><b>4</b><h3>승인 후 사용</h3><p>승인 완료 후 개인 알림이 전송됩니다.</p></article>
+      <article><b>3</b><h3>AUTO 신청</h3><p>홈페이지에서 API와 정보를 등록합니다.</p></article>
+      <article><b>4</b><h3>승인 후 자동감시</h3><p>승인 완료 후 봇이 자동으로 시장을 감시합니다.</p></article>
     </div>
-    <div class="warning-note" style="margin-top:16px">※ /start를 하지 않으면 개인 알림, 금액 버튼, 진입 실행 기능이 작동하지 않습니다.</div>
+    <div class="warning-note" style="margin-top:16px">※ /start를 하지 않으면 자동 진입 완료, 자동 청산, 오류/실패 사유 알림을 개인 DM으로 받을 수 없습니다.</div>
   </section>
 
   <section class="guide-section">
@@ -71,8 +71,8 @@
       <div class="term"><b>코인 괴리</b><p>해당 코인의 국내 현물과 해외 선물 사이의 가격 차이입니다.</p></div>
       <div class="term"><b>실제엣지</b><p>코인 괴리에서 BTC 기준 프리미엄을 뺀 값입니다. K-EDGE는 이 값을 기준으로 판단합니다.</p></div>
       <div class="term"><b>예상 수익구간</b><p>수수료·슬리피지·시장 변동을 감안한 유동적 예상 구간입니다. 확정 수익이 아닙니다.</p></div>
-      <div class="term"><b>현물벽 / 선물벽 0.5%</b><p>현재 가격에서 0.5% 범위 안에 쌓인 매수·매도 물량입니다. 실체결 가능한 금액을 보는 기준입니다.</p></div>
-      <div class="term"><b>최종 진입 가능</b><p>현물벽, 선물벽, 거래소 최대 진입금액 중 가장 작은 값입니다.</p></div>
+      <div class="term"><b>현물벽 / 선물벽</b><p>현재 가격 주변에 쌓인 매수·매도 물량입니다. 실제로 진입 가능한 금액을 판단하는 기준입니다.</p></div>
+      <div class="term"><b>최종 진입 가능</b><p>현물벽, 선물벽, 거래소 최대 진입금액, 남은 가능금액 중 가장 작은 값입니다.</p></div>
       <div class="term"><b>펀딩비</b><p>선물 숏 포지션을 유지할 때 발생하는 비용 또는 수령 금액입니다. 음수는 비용 차감, 양수는 수령 가능성을 의미합니다.</p></div>
       <div class="term"><b>거래소 최대</b><p>거래소가 해당 코인 선물 포지션에 허용하는 최대 진입 한도입니다.</p></div>
     </div>
@@ -80,44 +80,44 @@
   </section>
 
   <section class="guide-section">
-    <h2>4. 반자동 진입 화면</h2>
-    <p class="lead">반자동 개인 DM에서는 금액 버튼을 누르면 현재 선택금액이 즉시 누적됩니다. 검사는 금액 버튼 단계가 아니라 [진입 실행]을 누를 때 진행됩니다.</p>
+    <h2>4. 자동 진입 완료 화면</h2>
+    <p class="lead">AUTO 서비스는 조건이 충족되면 봇이 국내 현물과 해외 선물을 동시에 계산해 자동 진입합니다. 진입 후에는 아래와 같은 완료 알림이 텔레그램으로 전송됩니다.</p>
     <div class="guide-two">
-      <div class="guide-shot-wrap"><img class="guide-shot small" src="./guide-semiauto.jpg" alt="반자동 진입 금액 버튼 화면"><p class="guide-caption">반자동 실제 금액 버튼 화면</p></div>
+      <div class="guide-shot-wrap"><img class="guide-shot land" src="./guide-auto-entry.jpg" alt="자동 진입 완료 텔레그램 알림 화면"><p class="guide-caption">실전가상 자동진입 완료 알림 예시</p></div>
       <div>
         <div class="guide-card">
-          <h3>금액 버튼</h3>
-          <p>+1만, +5만, +10만, +50만, +100만, +500만 버튼을 누르면 현재 선택금액이 즉시 증가합니다.</p>
-          <div class="button-demo"><span>+1만</span><span>+5만</span><span>+10만</span><span>+50만</span><span>+100만</span><span>+500만</span></div>
-          <p style="margin-top:14px">예: +100만 +50만 +5만 +1만 = 현재 선택 156만</p>
+          <h3>자동 진입 알림에서 확인할 내용</h3>
+          <ul>
+            <li><b>코인 / 경로</b>: 어떤 코인을 어느 국내·해외 거래소 조합으로 진입했는지 표시합니다.</li>
+            <li><b>국내 진입 / 해외 선물 명목</b>: 국내 현물 매수 금액과 해외 선물 숏 명목금액을 표시합니다.</li>
+            <li><b>해외 증거금</b>: 레버리지 기준 실제 필요한 해외 증거금을 표시합니다.</li>
+            <li><b>진입 실제엣지</b>: 자동 진입 당시 기준 실제 엣지를 표시합니다.</li>
+            <li><b>최종벽 / 거래소MAX / 남은 가능금액</b>: 진입 가능 금액 계산 근거를 표시합니다.</li>
+          </ul>
         </div>
         <div class="guide-card" style="margin-top:14px">
-          <h3>초기화 / 최대 / 진입 실행</h3>
-          <ul>
-            <li><b>초기화</b>: 현재 선택금액을 0원으로 되돌립니다.</li>
-            <li><b>최대</b>: 신호 기준 최종 진입 가능금액으로 설정합니다.</li>
-            <li><b>진입 실행</b>: API, 잔고, 실제엣지, 슬리피지, 남은금액을 다시 검사합니다.</li>
-          </ul>
+          <h3>중복 실행 방지</h3>
+          <p>자동진입은 신호별 1회 LOCK 처리되어 같은 신호가 중복 실행되지 않도록 차단합니다.</p>
         </div>
       </div>
     </div>
   </section>
 
   <section class="guide-section">
-    <h2>5. 진입 직전 안전장치</h2>
-    <p class="lead">K-EDGE 반자동은 알림이 왔다고 바로 진입하지 않습니다. 사용자가 [진입 실행]을 누르는 순간 조건을 다시 검사합니다.</p>
+    <h2>5. 자동 진입 직전 안전장치</h2>
+    <p class="lead">K-EDGE AUTO는 알림이 떴다고 무조건 진입하지 않습니다. 자동 진입 시점에 조건을 다시 검사하고, 기준 미달이면 진입하지 않습니다.</p>
     <div class="safe-list">
-      <div>☑ 실제엣지 2% 이상 유지</div>
-      <div>☑ 슬리피지 0.5% 이하 유지</div>
+      <div>☑ 실제엣지 1.5% 이상 유지</div>
+      <div>☑ 허용 슬리피지 자동 계산</div>
       <div>☑ 남은 진입 가능금액 확인</div>
       <div>☑ 거래소 최대 진입금액 확인</div>
       <div>☑ 국내/해외 API 등록 확인</div>
       <div>☑ 국내/해외 잔고 확인</div>
       <div>☑ 동시 진입 시 남은금액 재계산</div>
-      <div>☑ 기존 포지션 보유자는 신규 알림 제외</div>
+      <div>☑ 신호별 1회 LOCK 처리</div>
       <div>☑ 실패 사유 텔레그램 코멘트 출력</div>
     </div>
-    <div class="warning-note" style="margin-top:16px">예: 알림 당시 실제엣지 +2.4% → 5초 후 클릭 시 +1.8%라면 진입 취소됩니다.</div>
+    <div class="warning-note" style="margin-top:16px">예: 감지 당시 실제엣지가 충분해도 자동 진입 시 실제엣지가 1.5% 미만으로 내려가면 진입이 취소됩니다.</div>
   </section>
 
   <section class="guide-section">
@@ -145,15 +145,15 @@
     <h2>7. API 보안 안내</h2>
     <div class="guide-three">
       <div class="guide-card"><h3>출금 권한 OFF</h3><p>거래소 API 생성 시 출금 권한은 절대 켜지 않습니다.</p></div>
-      <div class="guide-card"><h3>거래 권한만 사용</h3><p>반자동/자동은 매수·매도 실행 권한만 사용합니다.</p></div>
+      <div class="guide-card"><h3>거래 권한만 사용</h3><p>AUTO 서비스는 국내 현물 매수/매도, 해외 선물 진입/청산 권한만 사용합니다.</p></div>
       <div class="guide-card"><h3>IP 제한 권장</h3><p>VPS 운영 시 지정 IP만 API 사용 가능하게 제한하는 것을 권장합니다.</p></div>
     </div>
   </section>
 
   <section class="section payment">
-    <h2>반자동 신청하기</h2>
-    <p class="sub">가이드를 확인했다면 등록 페이지에서 신청할 수 있습니다.</p>
-    <a class="btn primary" href="./payment.html">등록 페이지로 이동</a>
+    <h2>자동 신청하기</h2>
+    <p class="sub">가이드를 확인했다면 등록 페이지에서 AUTO 서비스를 신청할 수 있습니다.</p>
+    <a class="btn primary" href="./payment.html?product=AUTO">자동 신청하기</a>
   </section>
 
   <footer>© K-EDGE. Information is for reference only. Trading involves risk.</footer>
