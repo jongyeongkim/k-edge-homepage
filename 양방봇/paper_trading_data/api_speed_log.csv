@@ -19,3 +19,7 @@
 2026-05-28 07:29:25,BINGX,ETH/USDT:USDT,1.647,True,
 2026-05-28 07:32:26,MEXC,XAN/USDT:USDT,0.2319,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
 2026-05-28 07:32:41,MEXC,IP/USDT:USDT,15.0705,True,
+2026-05-28 07:38:08,MEXC,DRIFT/USDT:USDT,0.2332,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-05-28 07:38:23,MEXC,IP/USDT:USDT,15.128,True,
+2026-05-28 07:43:51,MEXC,ENA/USDT:USDT,0.2612,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-05-28 07:44:07,MEXC,RON/USDT:USDT,15.0787,True,
