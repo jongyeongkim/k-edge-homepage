@@ -74,7 +74,7 @@
 
           <div id="productInfo" class="product-info">
             <h4>🚀 K-EDGE AUTO</h4>
-            <strong>월 200,000원</strong>
+            <strong>월 100,000원 / 월 200,000원</strong>
             <p>국내 현물 매수 + 해외 선물 숏 진입/청산을 자동으로 처리하는 괴리차 양방 자동매매 서비스입니다.</p>
             <ul>
               <li>국내 현물 ↔ 해외 선물 괴리차 자동 감지</li>
@@ -145,23 +145,12 @@
             <p class="mini-desc">국내 현물 주문 연동에 필요합니다. 출금 권한은 절대 켜지 마세요.</p>
 
             <div class="api-exchange-box">
-              <label class="api-check"><input type="checkbox" id="payUpbitUse" checked> 업비트 사용</label>
-              <input id="payUpbitApiKey" placeholder="업비트 ACCESS KEY">
-              <input id="payUpbitApiSecret" placeholder="업비트 SECRET KEY">
-            </div>
-
-            <div class="api-exchange-box">
               <label class="api-check"><input type="checkbox" id="payBithumbUse" checked> 빗썸 사용</label>
               <input id="payBithumbApiKey" placeholder="빗썸 API KEY / CONNECT KEY">
               <input id="payBithumbApiSecret" placeholder="빗썸 SECRET KEY">
             </div>
 
-            <div class="api-exchange-box">
-              <label class="api-check"><input type="checkbox" id="payCoinoneUse"> 코인원 사용</label>
-              <input id="payCoinoneApiKey" placeholder="코인원 API KEY">
-              <input id="payCoinoneApiSecret" placeholder="코인원 SECRET KEY">
             </div>
-          </div>
 
           <div class="product-extra api-extra">
             <h3>해외 거래소 API 정보</h3>
@@ -232,7 +221,7 @@
             <h3>BOT / API 설정이 처음이신가요?</h3>
             <p>
               텔레그램 BOT TOKEN 생성, CHAT ID 찾기,
-              업비트 / 빗썸 / 코인원 / MEXC / Bitget / BingX / Gate.io API 생성 방법을
+              빗썸 / MEXC / Bitget / BingX / Gate.io API 생성 방법을
               가이드에서 확인하세요.
             </p>
             <a class="btn ghost full" href="./bot-api-guide.html" target="_blank">
@@ -263,7 +252,7 @@
   <script src="./kedge-supabase-db.js?v=20260523"></script>
 
 <script>
-const AUTO_BASE_PRICE = 200000;
+const AUTO_BASE_PRICE = 100000;
 
 function syncRefCheck(checkId, inputId){
   const chk = document.getElementById(checkId);
@@ -322,11 +311,7 @@ function collectPaymentExtra(product){
       api_key: (document.getElementById("payBithumbApiKey")?.value || "").trim(),
       api_secret: (document.getElementById("payBithumbApiSecret")?.value || "").trim()
     },
-    coinone:{
-      enabled: !!document.getElementById("payCoinoneUse")?.checked,
-      api_key: (document.getElementById("payCoinoneApiKey")?.value || "").trim(),
-      api_secret: (document.getElementById("payCoinoneApiSecret")?.value || "").trim()
-    }
+    
   };
 
   const foreign_apis = {
