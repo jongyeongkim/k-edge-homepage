@@ -1,0 +1,14 @@
+﻿time,exchange,market,elapsed_sec,ok,error
+2026-05-28 06:55:53,BITGET,XRP/USDT:USDT,1.5657,True,
+2026-05-28 06:55:53,GATEIO,BTC/USDT:USDT,1.504,True,
+2026-05-28 06:55:53,BITGET,ETH/USDT:USDT,1.622,True,
+2026-05-28 06:55:53,GATEIO,ETH/USDT:USDT,1.6481,True,
+2026-05-28 06:55:53,GATEIO,XRP/USDT:USDT,1.6499,True,
+2026-05-28 06:56:06,MEXC,SHIB/USDT:USDT,0.2492,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-05-28 06:56:21,MEXC,USDC/USDT:USDT,15.0711,True,
+2026-05-28 07:01:48,MEXC,ICP/USDT:USDT,0.3184,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-05-28 07:02:03,MEXC,TRX/USDT:USDT,15.0836,True,
+2026-05-28 07:07:33,MEXC,PRL/USDT:USDT,0.244,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-05-28 07:07:48,MEXC,IRYS/USDT:USDT,15.0757,True,
+2026-05-28 07:13:20,MEXC,INIT/USDT:USDT,0.2362,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-05-28 07:13:35,MEXC,AUDIO/USDT:USDT,15.0708,True,

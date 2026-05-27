@@ -140,11 +140,9 @@
 
           <div class="product-extra">
             <h3>텔레그램 연결 정보</h3>
-            <p class="mini-desc">자동 진입/청산 결과 알림을 받을 텔레그램 정보를 입력하세요.</p>
+            <p class="mini-desc">자동 진입/청산 결과 알림은 공용봇 <b>@Kedge0203bot</b> 개인 DM으로 발송됩니다. 먼저 @Kedge0203bot에서 <b>/start</b>를 입력한 뒤 CHAT ID를 등록하세요.</p>
             <input id="payTelegramId" placeholder="텔레그램 ID 예: @listing0517">
-            <input id="payBotToken" placeholder="텔레그램 BOT TOKEN">
-<button type="button" class="mini-guide-btn" onclick="openKedgeGuide('bot')">📘 BOT TOKEN 가이드</button>
-            <input id="payChatId" placeholder="텔레그램 CHAT ID">
+            <input id="payChatId" placeholder="텔레그램 CHAT ID 숫자 입력">
 <button type="button" class="mini-guide-btn" onclick="openKedgeGuide('chat')">📘 CHAT ID 가이드</button>
           </div>
 
@@ -213,7 +211,7 @@
               <li>회원가입 또는 로그인</li>
               <li>추천인 가입 거래소 UID 입력</li>
               <li>결제수단 선택 및 입금 정보 입력</li>
-              <li>텔레그램 BOT / CHAT ID 등록</li>
+              <li>@Kedge0203bot /start 후 CHAT ID 등록</li>
               <li>국내/해외 거래소 API 등록</li>
               <li>관리자 확인 후 AUTO 승인</li>
               <li>승인 후 자동 감시 및 자동매매 시작</li>
@@ -231,14 +229,14 @@
           </div>
 
           <div class="guide-box">
-            <h3>BOT / API 설정이 처음이신가요?</h3>
+            <h3>텔레그램 / API 설정이 처음이신가요?</h3>
             <p>
-              텔레그램 BOT TOKEN 생성, CHAT ID 찾기,
+              @Kedge0203bot /start, CHAT ID 확인,
               빗썸 / MEXC / Bitget / BingX / Gate.io API 생성 방법을
               가이드에서 확인하세요.
             </p>
             <a class="btn ghost full" href="./bot-api-guide.html" target="_blank">
-              📘 BOT / API 가이드 보기
+              📘 텔레그램 / API 가이드 보기
             </a>
           </div>
 
@@ -383,7 +381,6 @@ function collectPaymentExtra(product){
   };
 
   return {
-    tg_bot_token: (document.getElementById("payBotToken")?.value || "").trim(),
     tg_chat_id: (document.getElementById("payChatId")?.value || "").trim(),
     telegram_id: (document.getElementById("payTelegramId")?.value || "").trim(),
     referral_uids,
@@ -521,11 +518,10 @@ window.submitVipRequest = async function(){
     return msg("❌ TxID / 입금 메모 / 확인용 내용을 입력해주세요.");
   }
 
-  const tgBotToken = val("payBotToken");
   const tgChatId = val("payChatId");
   const telegramId = val("payTelegramId");
 
-  if(!tgBotToken || !tgChatId) return msg("❌ AUTO는 BOT TOKEN과 CHAT ID가 필요합니다.");
+  if(!tgChatId) return msg("❌ AUTO는 CHAT ID가 필요합니다. 먼저 @Kedge0203bot에서 /start 후 CHAT ID를 입력해주세요.");
 
   const domestic_apis = {
     bithumb: readApi("payBithumbUse", "payBithumbApiKey", "payBithumbApiSecret")
@@ -557,7 +553,6 @@ window.submitVipRequest = async function(){
     pay_name: payName,
     memo: payType === "BANK" ? "" : memo,
     status: "PENDING",
-    tg_bot_token: tgBotToken,
     tg_chat_id: tgChatId,
     domestic_apis,
     foreign_apis,
@@ -712,31 +707,28 @@ document.addEventListener("DOMContentLoaded", function(){
 window.openKedgeGuide = function(type){
   const guides = {
     bot: {
-      title: "📘 BOT TOKEN 가이드",
+      title: "📘 텔레그램 연결 가이드",
       body: `
         <ol>
-          <li>텔레그램에서 <b>@BotFather</b> 를 검색합니다.</li>
-          <li>채팅창에서 <b>/newbot</b> 을 입력합니다.</li>
-          <li>봇 이름(Name)과 봇 아이디(ID)를 설정합니다.<br><br>예시:<br>이름 : KEDGE ALERT<br>아이디 : kedge_alert_bot</li>
-          <li>생성 완료 후 아래와 같은 BOT TOKEN이 발급됩니다.<br><span class="guide-code">123456789:AAxxxxxxxxxxxxxxxxxxxx</span></li>
-          <li>발급된 BOT TOKEN 전체를 복사해서 BOT TOKEN 입력칸에 붙여넣으세요.</li>
+          <li>텔레그램에서 <b>@Kedge0203bot</b> 를 검색합니다.</li>
+          <li>채팅방에 들어가서 <b>/start</b> 를 입력합니다.</li>
+          <li>이제 K-EDGE 공용봇으로 개인 DM 알림을 받을 수 있습니다.</li>
+          <li>신청 페이지에는 <b>BOT TOKEN 없이 CHAT ID 숫자만</b> 입력하면 됩니다.</li>
         </ol>
-        <p class="guide-warn">※ BOT TOKEN은 봇 비밀번호와 같습니다.<br>절대 다른 사람에게 공유하지 마세요.</p>
+        <p class="guide-warn">※ 유저가 개인 봇을 만들 필요 없습니다.<br>※ 알림은 @Kedge0203bot 공용봇으로 발송됩니다.</p>
       `
     },
     chat: {
       title: "📘 CHAT ID 가이드",
       body: `
         <ol>
-          <li>먼저 <b>@BotFather</b> 에서 BOT TOKEN을 생성합니다.</li>
-          <li>텔레그램에서 방금 만든 내 봇을 검색합니다.</li>
-          <li>내 봇 채팅방에 들어가서 <b>/start</b> 를 입력합니다.</li>
-          <li>브라우저 주소창에 아래 주소를 입력합니다.<span class="guide-code">https://api.telegram.org/bot내BOT_TOKEN/getUpdates</span>예시:<span class="guide-code">https://api.telegram.org/bot123456:AAxxxx/getUpdates</span></li>
-          <li>화면에서 <b>chat → id</b> 숫자를 찾습니다.<br>예시:<span class="guide-code">"chat":{"id":123456789,...}</span></li>
-          <li>표시된 숫자 전체를 복사해서 CHAT ID 입력칸에 붙여넣으세요.</li>
-          <li>마지막으로 운영자 봇 <b>@Kedge0203bot</b> 검색 후 입장해서 <b>/start</b> 를 입력해주세요.</li>
+          <li>텔레그램에서 <b>@Kedge0203bot</b> 를 검색합니다.</li>
+          <li>채팅방에 들어가서 <b>/start</b> 를 입력합니다.</li>
+          <li>CHAT ID는 운영자 안내 또는 공용봇 확인 기능을 통해 받은 <b>숫자 ID</b>를 입력합니다.</li>
+          <li>예시:<span class="guide-code">6870367623</span></li>
+          <li>신청 페이지의 CHAT ID 입력칸에 숫자 전체를 붙여넣으세요.</li>
         </ol>
-        <p class="guide-warn">※ /start 를 하지 않으면 K-EDGE AUTO 알림이 전송되지 않을 수 있습니다.<br>※ CHAT ID는 @닉네임이 아니라 숫자입니다.</p>
+        <p class="guide-warn">※ CHAT ID는 @닉네임이 아니라 숫자입니다.<br>※ @Kedge0203bot 에 /start 를 하지 않으면 개인 DM 알림이 전송되지 않습니다.<br>※ 유저 개인 BOT TOKEN은 필요 없습니다.</p>
       `
     },
     bithumb: {
