@@ -144,9 +144,7 @@
             <p class="mini-desc">자동 진입/청산 결과 알림을 받을 텔레그램 정보를 입력하세요.</p>
             <input id="payTelegramId" placeholder="텔레그램 ID 예: @listing0517">
             <input id="payBotToken" placeholder="텔레그램 BOT TOKEN">
-<button type="button" class="mini-guide-btn" onclick="openKedgeGuide('bot')">📘 BOT TOKEN 가이드</button>
             <input id="payChatId" placeholder="텔레그램 CHAT ID">
-<button type="button" class="mini-guide-btn" onclick="openKedgeGuide('chat')">📘 CHAT ID 가이드</button>
           </div>
 
           <div class="product-extra api-extra">
@@ -157,7 +155,6 @@
               <label class="api-check"><input type="checkbox" id="payBithumbUse" checked> 빗썸 사용</label>
               <input id="payBithumbApiKey" placeholder="빗썸 API KEY / CONNECT KEY">
               <input id="payBithumbApiSecret" placeholder="빗썸 SECRET KEY">
-<button type="button" class="mini-guide-btn warning" onclick="openKedgeGuide('bithumb')">📘 빗썸 API 가이드</button>
             </div>
 
             </div>
@@ -170,28 +167,24 @@
               <label class="api-check"><input type="checkbox" id="payMexcUse" checked> MEXC 사용</label>
               <input id="payMexcApiKey" placeholder="MEXC API KEY">
               <input id="payMexcApiSecret" placeholder="MEXC SECRET KEY">
-<button type="button" class="mini-guide-btn warning" onclick="openKedgeGuide('mexc')">📘 MEXC API 가이드</button>
             </div>
 
             <div class="api-exchange-box">
               <label class="api-check"><input type="checkbox" id="payGateUse" checked> Gate.io 사용</label>
               <input id="payGateApiKey" placeholder="Gate.io API KEY">
               <input id="payGateApiSecret" placeholder="Gate.io SECRET KEY">
-<button type="button" class="mini-guide-btn warning" onclick="openKedgeGuide('gate')">📘 Gate.io API 가이드</button>
             </div>
 
             <div class="api-exchange-box">
               <label class="api-check"><input type="checkbox" id="payBitgetUse" checked> Bitget 사용</label>
               <input id="payBitgetApiKey" placeholder="Bitget API KEY">
               <input id="payBitgetApiSecret" placeholder="Bitget SECRET KEY">
-<button type="button" class="mini-guide-btn warning" onclick="openKedgeGuide('bitget')">📘 Bitget API 가이드</button>
             </div>
 
             <div class="api-exchange-box">
               <label class="api-check"><input type="checkbox" id="payBingxUse" checked> BingX 사용</label>
               <input id="payBingxApiKey" placeholder="BingX API KEY">
               <input id="payBingxApiSecret" placeholder="BingX SECRET KEY">
-<button type="button" class="mini-guide-btn warning" onclick="openKedgeGuide('bingx')">📘 BingX API 가이드</button>
             </div>
           </div>
 
@@ -437,206 +430,6 @@ document.addEventListener("DOMContentLoaded", function(){
 
 
 
-
-
-<!-- KEDGE_GUIDE_MODAL_START -->
-<style>
-.mini-guide-btn{
-  width:auto!important;
-  min-height:36px!important;
-  height:auto!important;
-  margin:6px 0 12px!important;
-  padding:8px 12px!important;
-  border-radius:10px!important;
-  border:1px solid rgba(49,213,255,.35)!important;
-  background:rgba(49,213,255,.08)!important;
-  color:#31d5ff!important;
-  font-weight:950!important;
-  cursor:pointer!important;
-}
-.mini-guide-btn.warning{
-  border-color:rgba(255,202,56,.38)!important;
-  background:rgba(255,202,56,.08)!important;
-  color:#ffca38!important;
-}
-.kedge-guide-modal{
-  position:fixed;
-  inset:0;
-  z-index:99999;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  padding:18px;
-}
-.kedge-guide-backdrop{
-  position:absolute;
-  inset:0;
-  background:rgba(0,0,0,.68);
-  backdrop-filter:blur(4px);
-}
-.kedge-guide-box{
-  position:relative;
-  width:min(520px,94vw);
-  max-height:86vh;
-  overflow:auto;
-  border:1px solid rgba(49,213,255,.38);
-  background:linear-gradient(150deg,rgba(12,30,58,.98),rgba(3,9,20,.98));
-  border-radius:22px;
-  padding:26px;
-  box-shadow:0 24px 90px rgba(0,0,0,.55);
-}
-.kedge-guide-close{
-  position:absolute;
-  right:14px;
-  top:12px;
-  width:36px!important;
-  height:36px!important;
-  border-radius:50%!important;
-  border:1px solid rgba(255,255,255,.18)!important;
-  background:rgba(255,255,255,.06)!important;
-  color:#fff!important;
-  font-size:24px!important;
-  font-weight:900!important;
-  cursor:pointer!important;
-}
-.kedge-guide-box h3{
-  margin:0 0 14px;
-  color:#31d5ff;
-  font-size:24px;
-}
-.kedge-guide-box ol{
-  margin:0;
-  padding-left:20px;
-  color:#dce7f7;
-  line-height:1.8;
-  font-weight:800;
-}
-.kedge-guide-box li{margin:6px 0}
-.guide-warn{
-  margin:16px 0 0;
-  color:#ffdf7e;
-  font-weight:900;
-  line-height:1.6;
-}
-.guide-danger{
-  margin:16px 0 0;
-  color:#ff7676;
-  font-weight:950;
-  line-height:1.6;
-}
-</style>
-
-<div id="kedgeGuideModal" class="kedge-guide-modal">
-  <div class="kedge-guide-backdrop" onclick="closeKedgeGuide()"></div>
-  <div class="kedge-guide-box">
-    <button type="button" class="kedge-guide-close" onclick="closeKedgeGuide()">×</button>
-    <h3 id="kedgeGuideTitle">가이드</h3>
-    <div id="kedgeGuideBody"></div>
-  </div>
-</div>
-
-<script>
-function openKedgeGuide(type){
-  const guides = {
-    bot: {
-      title: "📘 BOT TOKEN 가이드",
-      body: `
-        <ol>
-          <li>텔레그램에서 <b>@BotFather</b>를 검색합니다.</li>
-          <li><b>/newbot</b> 입력 후 안내에 따라 봇을 생성합니다.</li>
-          <li>생성 완료 후 나오는 <b>BOT TOKEN</b>을 복사해 입력합니다.</li>
-        </ol>
-        <p class="guide-warn">※ BOT TOKEN은 비밀번호처럼 중요합니다. 외부에 공유하지 마세요.</p>
-      `
-    },
-    chat: {
-      title: "📘 CHAT ID 가이드",
-      body: `
-        <ol>
-          <li>알림을 받을 텔레그램 봇을 먼저 실행합니다.</li>
-          <li><b>/start</b>를 입력합니다.</li>
-          <li><b>@userinfobot</b> 또는 관리자 안내 방식으로 본인의 CHAT ID를 확인합니다.</li>
-          <li>확인한 숫자 ID를 입력합니다.</li>
-        </ol>
-        <p class="guide-warn">※ /start를 하지 않으면 알림 전송이 실패할 수 있습니다.</p>
-      `
-    },
-    bithumb: {
-      title: "📘 빗썸 API 가이드",
-      body: `
-        <ol>
-          <li>빗썸 로그인 후 <b>API 관리</b> 메뉴로 이동합니다.</li>
-          <li>API KEY / SECRET KEY를 생성합니다.</li>
-          <li><b>거래 권한 ON</b>으로 설정합니다.</li>
-          <li><b>출금 권한은 반드시 OFF</b>로 설정합니다.</li>
-          <li>생성된 KEY / SECRET을 복사해 입력합니다.</li>
-        </ol>
-        <p class="guide-danger">🚫 출금 권한은 절대 켜지 마세요.</p>
-      `
-    },
-    mexc: {
-      title: "📘 MEXC API 가이드",
-      body: `
-        <ol>
-          <li>MEXC 로그인 후 API 관리 메뉴로 이동합니다.</li>
-          <li>선물 거래가 가능한 API를 생성합니다.</li>
-          <li><b>거래 권한 ON</b>, <b>출금 권한 OFF</b>로 설정합니다.</li>
-          <li>API KEY / SECRET을 복사해 입력합니다.</li>
-        </ol>
-        <p class="guide-danger">🚫 출금 권한은 절대 켜지 마세요.</p>
-      `
-    },
-    gate: {
-      title: "📘 Gate.io API 가이드",
-      body: `
-        <ol>
-          <li>Gate.io 로그인 후 API 관리 메뉴로 이동합니다.</li>
-          <li>선물 거래 권한이 포함된 API를 생성합니다.</li>
-          <li><b>거래 권한 ON</b>, <b>출금 권한 OFF</b>로 설정합니다.</li>
-          <li>API KEY / SECRET을 복사해 입력합니다.</li>
-        </ol>
-        <p class="guide-danger">🚫 출금 권한은 절대 켜지 마세요.</p>
-      `
-    },
-    bitget: {
-      title: "📘 Bitget API 가이드",
-      body: `
-        <ol>
-          <li>Bitget 로그인 후 API 관리 메뉴로 이동합니다.</li>
-          <li>선물 거래 권한이 포함된 API를 생성합니다.</li>
-          <li><b>거래 권한 ON</b>, <b>출금 권한 OFF</b>로 설정합니다.</li>
-          <li>API KEY / SECRET을 복사해 입력합니다.</li>
-        </ol>
-        <p class="guide-danger">🚫 출금 권한은 절대 켜지 마세요.</p>
-      `
-    },
-    bingx: {
-      title: "📘 BingX API 가이드",
-      body: `
-        <ol>
-          <li>BingX 로그인 후 API 관리 메뉴로 이동합니다.</li>
-          <li>선물 거래 권한이 포함된 API를 생성합니다.</li>
-          <li><b>거래 권한 ON</b>, <b>출금 권한 OFF</b>로 설정합니다.</li>
-          <li>API KEY / SECRET을 복사해 입력합니다.</li>
-        </ol>
-        <p class="guide-danger">🚫 출금 권한은 절대 켜지 마세요.</p>
-      `
-    }
-  };
-
-  const g = guides[type];
-  if(!g) return;
-  document.getElementById("kedgeGuideTitle").innerHTML = g.title;
-  document.getElementById("kedgeGuideBody").innerHTML = g.body;
-  document.getElementById("kedgeGuideModal").style.display = "flex";
-}
-
-function closeKedgeGuide(){
-  const modal = document.getElementById("kedgeGuideModal");
-  if(modal) modal.style.display = "none";
-}
-</script>
-<!-- KEDGE_GUIDE_MODAL_END -->
 
 <script>
 if ("serviceWorker" in navigator) {
