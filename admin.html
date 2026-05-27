@@ -101,6 +101,11 @@ const ADMIN_PIN = "0517";
 const ADMIN_SESSION = "kedge_admin_logged_in";
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// K-EDGE 공용 알림봇(@Kedge0203bot)
+// 주의: 정적 GitHub Pages에 BOT TOKEN을 넣는 방식은 빠른 테스트용입니다.
+// 운영 안정화 후에는 Supabase Edge Function으로 토큰을 서버에 숨기는 구조가 더 안전합니다.
+const KEDGE_COMMON_BOT_TOKEN = "8055440671:AAHz8G1xtJh5dWzRzraxuyT61PqhxXweuVI";
+
 let requestCache = [];
 
 function qs(id){ return document.getElementById(id); }
@@ -261,13 +266,71 @@ function renderAdminUsers(){
   `).join("");
 }
 
+
+function approvalDmText(){
+  return [
+    "🎉 K-EDGE AUTO 승인 완료",
+    "",
+    "텔레그램 알람이 활성화되었습니다.",
+    "",
+    "현재 상태",
+    "알람 : ON",
+    "자동매매 : OFF",
+    "",
+    "AUTO 설정에서",
+    "운용금액 / 분할 / 자동매매를 설정해주세요.",
+    "",
+    "AUTO 설정:",
+    "https://jongyeongkim.github.io/k-edge-homepage/auto-settings.html"
+  ].join("\n");
+}
+
+async function sendApprovalTelegramDm(req){
+  const chatId = String(req?.tg_chat_id || "").trim();
+  if(!chatId){
+    return { ok:false, reason:"CHAT ID 미등록" };
+  }
+  if(!KEDGE_COMMON_BOT_TOKEN || KEDGE_COMMON_BOT_TOKEN.includes("PUT_")){
+    return { ok:false, reason:"공용봇 토큰 미설정" };
+  }
+
+  try{
+    const res = await fetch(`https://api.telegram.org/bot${KEDGE_COMMON_BOT_TOKEN}/sendMessage`, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify({
+        chat_id: chatId,
+        text: approvalDmText(),
+        disable_web_page_preview:true
+      })
+    });
+
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok || !data.ok){
+      console.error("Telegram approval DM failed", data);
+      return { ok:false, reason:data.description || ("HTTP " + res.status) };
+    }
+
+    return { ok:true, reason:"전송 성공" };
+  }catch(e){
+    console.error("Telegram approval DM error", e);
+    return { ok:false, reason:e.message || "전송 오류" };
+  }
+}
+
 async function approveRequest(id){
+  const req = requestCache.find(x => String(x.id) === String(id));
   const note = val("adminNote-" + id);
+  const approvedAt = new Date().toISOString();
+
   const { error } = await db.from("kedge_requests").update({
     status:"APPROVED",
-    approved_at:new Date().toISOString(),
+    approved_at:approvedAt,
     rejected_at:null,
-    admin_note:note
+    admin_note:note,
+    service_enabled:true,
+    alert_enabled:true,
+    auto_enabled:false
   }).eq("id", id);
 
   if(error){
@@ -275,7 +338,18 @@ async function approveRequest(id){
     alert("승인 실패: " + error.message);
     return;
   }
-  alert("승인 완료");
+
+  const dmResult = await sendApprovalTelegramDm({
+    ...(req || {}),
+    tg_chat_id: req?.tg_chat_id || ""
+  });
+
+  if(dmResult.ok){
+    alert("승인 완료 + 텔레그램 DM 전송 성공");
+  }else{
+    alert("승인 완료\n단, 텔레그램 DM 실패: " + dmResult.reason);
+  }
+
   await loadAdminDashboard();
 }
 
