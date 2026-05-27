@@ -74,7 +74,14 @@
 
           <div id="productInfo" class="product-info">
             <h4>🚀 K-EDGE AUTO</h4>
-            <strong>월 100,000원 / 월 200,000원</strong>
+            
+<strong>서비스 선택</strong>
+<select id="autoPlanSelect" onchange="updateAutoPrice()">
+  <option value="100000">AUTO Lite 월 100,000원</option>
+  <option value="200000">AUTO Pro 월 200,000원</option>
+</select>
+<p class="mini-desc">원하는 AUTO 서비스 금액을 선택하면 추천인 할인 금액이 자동 계산됩니다.</p>
+
             <p>국내 현물 매수 + 해외 선물 숏 진입/청산을 자동으로 처리하는 괴리차 양방 자동매매 서비스입니다.</p>
             <ul>
               <li>국내 현물 ↔ 해외 선물 괴리차 자동 감지</li>
@@ -130,7 +137,11 @@
           <div id="payInfo" class="pay-info"></div>
 
           <input id="payName" placeholder="입금자명 또는 보내는 사람 이름">
-          <input id="txidInput" placeholder="TxID / 입금 메모 / 확인용 내용">
+          
+<div id="txidWrap">
+  <input id="txidInput" placeholder="TxID / 입금 메모 / 확인용 내용">
+</div>
+
 
           <div class="product-extra">
             <h3>텔레그램 연결 정보</h3>
@@ -210,10 +221,10 @@
           <div class="product-info">
             <h4>추천인 할인표</h4>
             <ul>
-              <li>UID 1개 입력: 10% 할인 → 180,000원</li>
-              <li>UID 2개 입력: 20% 할인 → 160,000원</li>
-              <li>UID 3개 입력: 30% 할인 → 140,000원</li>
-              <li>UID 4개 입력: 40% 할인 → 120,000원</li>
+              <li>UID 1개 입력: 10% 할인</li>
+              <li>UID 2개 입력: 20% 할인</li>
+              <li>UID 3개 입력: 30% 할인</li>
+              <li>UID 4개 입력: 40% 할인</li>
             </ul>
           </div>
 
@@ -252,7 +263,12 @@
   <script src="./kedge-supabase-db.js?v=20260523"></script>
 
 <script>
-const AUTO_BASE_PRICE = 100000;
+
+function getAutoBasePrice(){
+  const sel = document.getElementById("autoPlanSelect");
+  return Number(sel?.value || 100000);
+}
+
 
 function syncRefCheck(checkId, inputId){
   const chk = document.getElementById(checkId);
@@ -277,7 +293,10 @@ function getReferralCount(){
 function updateAutoPrice(){
   const count = Math.min(getReferralCount(), 4);
   const discountRate = count * 10;
-  const finalPrice = AUTO_BASE_PRICE * (100 - discountRate) / 100;
+  
+  const basePrice = getAutoBasePrice();
+  const finalPrice = basePrice * (100 - discountRate) / 100;
+
 
   const priceEl = document.getElementById("autoFinalPrice");
   const textEl = document.getElementById("autoDiscountText");
@@ -298,7 +317,10 @@ function collectPaymentExtra(product){
   const referral_uids = getReferralUidData();
   const referral_count = Math.min(getReferralCount(), 4);
   const referral_discount_percent = referral_count * 10;
-  const final_price_krw = AUTO_BASE_PRICE * (100 - referral_discount_percent) / 100;
+  
+  const base_price_krw = getAutoBasePrice();
+  const final_price_krw = base_price_krw * (100 - referral_discount_percent) / 100;
+
 
   const domestic_apis = {
     upbit:{
@@ -344,7 +366,7 @@ function collectPaymentExtra(product){
     referral_uids,
     referral_count,
     referral_discount_percent,
-    base_price_krw: AUTO_BASE_PRICE,
+    base_price_krw,
     final_price_krw,
     domestic_apis,
     foreign_apis
@@ -358,6 +380,39 @@ document.addEventListener("DOMContentLoaded", function(){
 
   const productSelect = document.getElementById("productSelect");
   if(productSelect) productSelect.value = "AUTO";
+});
+</script>
+
+
+<script>
+function updateTxidVisibility(){
+  const payType = document.getElementById("payType")?.value || "USDT";
+  const txidWrap = document.getElementById("txidWrap");
+  const txidInput = document.getElementById("txidInput");
+  if(!txidWrap || !txidInput) return;
+
+  if(payType === "USDT"){
+    txidWrap.style.display = "block";
+    txidInput.placeholder = "USDT TxID 입력";
+  }else if(payType === "BANK"){
+    txidWrap.style.display = "none";
+    txidInput.value = "";
+  }else{
+    txidWrap.style.display = "none";
+    txidInput.value = "";
+  }
+}
+
+const originalChangePayInfo = window.changePayInfo;
+window.changePayInfo = function(){
+  if(typeof originalChangePayInfo === "function") originalChangePayInfo();
+  updateTxidVisibility();
+};
+
+document.addEventListener("DOMContentLoaded", function(){
+  document.getElementById("payType")?.addEventListener("change", updateTxidVisibility);
+  updateTxidVisibility();
+  updateAutoPrice();
 });
 </script>
 
