@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="icon" type="image/png" href="./favicon.png" />
+  <title>K-EDGE | AUTO 설정</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0b1020">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="K-EDGE">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+</head>
+<body data-page="auto">
+  <div class="bg-grid"></div>
+
+  <header class="topbar">
+    <a class="brand" href="./index.html"><span class="kmark">K</span><b>K-EDGE</b></a>
+    <nav>
+      <a href="./index.html" data-nav="home">홈</a>
+      <a href="./pricing.html" data-nav="pricing">요금제</a>
+      <a href="./guide.html" data-nav="guide">가이드</a>
+      <a href="./referral.html" data-nav="referral">추천인</a>
+      <a href="./payment.html" data-nav="payment">등록</a>
+      <a href="./auto-settings.html" data-nav="auto">AUTO 설정</a>
+      <a href="./support.html" data-nav="support">문의</a>
+      <a href="./mypage.html" data-nav="mypage">내정보</a>
+    </nav>
+    <div class="top-actions" id="topAuthArea">
+      <a class="login" href="./login.html">로그인</a>
+      <a class="join" href="./join.html">회원가입</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="page-hero">
+      <p class="exchange-pill">AUTO SETTINGS</p>
+      <h1>K-EDGE AUTO 설정</h1>
+      <p>승인 후 알람은 기본 ON 상태입니다. 자동매매를 시작하려면 운용방식, 금액, 분할 수를 설정하고 자동매매를 ON으로 전환하세요.</p>
+    </section>
+
+    <section class="section auth-section">
+      <div class="auth-status" id="autoSettingStatus"><b>승인 상태 확인 중...</b></div>
+
+      <div id="autoSettingLocked" class="auth-card center-card" style="display:none;">
+        <h3>🔒 관리자 승인 후 사용 가능</h3>
+        <p>등록 신청 후 관리자가 승인하면 AUTO 설정을 저장할 수 있습니다.</p>
+        <a class="btn primary full" href="./payment.html">등록 페이지로 이동</a>
+        <br><br>
+        <a class="btn ghost full" href="./mypage.html">내정보 확인</a>
+      </div>
+
+      <div id="autoSettingForm" class="auto-setting-wrap" style="display:none;">
+        <div class="auto-setting-grid">
+          <article class="auto-setting-card">
+            <h3>1. 운용 방식</h3>
+            <p class="mini-desc">실제 진입금액 계산 기준입니다. 복리는 총 운용금액을 분할 수로 나눠 매 진입 시 다시 계산합니다.</p>
+            <label class="auto-radio"><input type="radio" name="capitalMode" value="fixed" checked> 고정금액</label>
+            <label class="auto-radio"><input type="radio" name="capitalMode" value="compound"> 총자산 복리</label>
+
+            <label>총 운용금액</label>
+            <input id="autoCapitalKrw" type="number" min="0" step="10000" value="2000000" oninput="calcAutoEntryAmount()">
+
+            <label>분할 수</label>
+            <input id="autoSplitCount" type="number" min="1" max="100" step="1" value="20" oninput="calcAutoEntryAmount()">
+
+            <div class="auto-result-box">
+              <small>계산된 1회 진입금액</small>
+              <strong id="autoEntryAmountText">100,000원</strong>
+            </div>
+          </article>
+
+          <article class="auto-setting-card">
+            <h3>2. 자동매매 상태</h3>
+            <p class="mini-desc">승인 직후에는 알람 ON / 자동매매 OFF가 기본입니다.</p>
+
+            <label class="auto-switch-line">
+              <span>알람 수신</span>
+              <select id="autoAlertEnabled">
+                <option value="ON">ON</option>
+                <option value="OFF">OFF</option>
+              </select>
+            </label>
+
+            <label class="auto-switch-line">
+              <span>자동 진입</span>
+              <select id="autoEntryEnabled">
+                <option value="OFF">OFF</option>
+                <option value="ON">ON</option>
+              </select>
+            </label>
+
+            <label class="auto-switch-line">
+              <span>자동 청산</span>
+              <select id="autoExitEnabled">
+                <option value="ON">ON</option>
+                <option value="OFF">OFF</option>
+              </select>
+            </label>
+
+            <label>최대 동시 포지션</label>
+            <input id="autoMaxPositions" type="number" min="1" max="20" value="3">
+
+            <label>1일 최대 진입 횟수</label>
+            <input id="autoMaxDailyEntries" type="number" min="1" max="100" value="10">
+          </article>
+
+          <article class="auto-setting-card">
+            <h3>3. 진입 / 청산 기준</h3>
+            <p class="mini-desc">자동 진입 기준과 익절/손절 감시 기준입니다.</p>
+
+            <label>최소 실제엣지 (%)</label>
+            <input id="autoMinEdge" type="number" min="0" step="0.1" value="1.5">
+
+            <label>익절 목표 (%)</label>
+            <input id="autoTakeProfit" type="number" min="0" step="0.1" value="0.3">
+
+            <label>손절 감시 (%)</label>
+            <input id="autoStopLoss" type="number" min="0" step="0.1" value="8">
+
+            <label class="auto-switch-line">
+              <span>자동 재진입</span>
+              <select id="autoReentryEnabled">
+                <option value="OFF">OFF</option>
+                <option value="ON">ON</option>
+              </select>
+            </label>
+          </article>
+
+          <article class="auto-setting-card">
+            <h3>4. 거래소 사용 설정</h3>
+            <p class="mini-desc">등록한 API 중 사용할 거래소만 ON으로 두세요.</p>
+
+            <h4>국내 현물</h4>
+            <label class="auto-check"><input type="checkbox" id="autoUseBithumb" checked> 빗썸</label>
+
+            <h4>해외 선물</h4>
+            <label class="auto-check"><input type="checkbox" id="autoUseMexc" checked> MEXC</label>
+            <label class="auto-check"><input type="checkbox" id="autoUseGate" checked> Gate.io</label>
+            <label class="auto-check"><input type="checkbox" id="autoUseBitget" checked> Bitget</label>
+            <label class="auto-check"><input type="checkbox" id="autoUseBingx" checked> BingX</label>
+          </article>
+        </div>
+
+        <div class="auto-setting-save">
+          <div>
+            <h3>설정 저장</h3>
+            <p>저장 후 텔레그램 알림과 자동매매 봇에서 이 값을 기준으로 운용합니다.</p>
+          </div>
+          <button class="btn primary" type="button" onclick="saveAutoSettings()">AUTO 설정 저장</button>
+        </div>
+        <p id="autoSettingMsg" class="form-msg"></p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <b>K-EDGE TEAM</b>
+    <p>Telegram: <a href="https://t.me/listing0517" target="_blank">@listing0517</a></p>
+    <p>본 서비스는 정보 제공 목적이며, 투자 판단과 책임은 이용자 본인에게 있습니다.</p>
+    <p><a href="./referral.html">추천인</a> · <a href="./pricing.html">요금제</a> · <a href="./support.html">문의</a></p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./script.js"></script>
+  <script src="./kedge-supabase-db.js?v=20260523"></script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("/service-worker.js").catch(function (err) {
+      console.log("Service Worker registration failed:", err);
+    });
+  });
+}
+</script>
+</body>
+</html>

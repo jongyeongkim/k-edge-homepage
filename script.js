@@ -1246,3 +1246,238 @@ document.addEventListener("DOMContentLoaded",()=>{
     }
   });
 })();
+
+
+/* =========================================================
+   K-EDGE AUTO SETTINGS
+   - 승인 후 설정 가능
+   - 기본값: 알람 ON / 자동매매 OFF
+   - 저장 위치: Supabase auto_settings 테이블
+========================================================= */
+(function(){
+  const AUTO_DEFAULT_SETTINGS = {
+    alert_enabled: "ON",
+    auto_entry_enabled: "OFF",
+    auto_exit_enabled: "ON",
+    capital_mode: "fixed",
+    capital_krw: 2000000,
+    split_count: 20,
+    max_positions: 3,
+    max_daily_entries: 10,
+    min_edge_percent: 1.5,
+    take_profit_percent: 0.3,
+    stop_loss_percent: 8,
+    reentry_enabled: "OFF",
+    use_bithumb: true,
+    use_mexc: true,
+    use_gate: true,
+    use_bitget: true,
+    use_bingx: true
+  };
+
+  function q(id){ return document.getElementById(id); }
+  function getNum(id, fallback){
+    const n = Number(q(id)?.value);
+    return Number.isFinite(n) ? n : fallback;
+  }
+  function getSettingDb(){
+    if(window.supabase){
+      const url = window.KEDGE_SUPABASE_URL || "https://qakhbihueonefzifrmct.supabase.co";
+      const key = window.KEDGE_SUPABASE_ANON_KEY || "sb_publishable_XboBFueAITcieSL75B2S5g_qlm4XmOm";
+      return window.supabase.createClient(url, key);
+    }
+    return null;
+  }
+  function setAutoMsg(text, type){
+    const el = q("autoSettingMsg");
+    if(!el) return;
+    el.textContent = text;
+    el.className = "form-msg " + (type || "error");
+  }
+
+  window.calcAutoEntryAmount = function(){
+    const capital = getNum("autoCapitalKrw", AUTO_DEFAULT_SETTINGS.capital_krw);
+    const split = Math.max(1, getNum("autoSplitCount", AUTO_DEFAULT_SETTINGS.split_count));
+    const entry = Math.floor(capital / split);
+    if(q("autoEntryAmountText")) q("autoEntryAmountText").textContent = entry.toLocaleString("ko-KR") + "원";
+  };
+
+  async function getApprovedRequestForUser(user){
+    const db = getSettingDb();
+    if(!db || !user?.email) return null;
+    const { data, error } = await db
+      .from("kedge_requests")
+      .select("*")
+      .eq("email", user.email)
+      .eq("status", "APPROVED")
+      .order("created_at", { ascending:false })
+      .limit(1);
+    if(error || !data || !data.length) return null;
+    return data[0];
+  }
+
+  async function loadAutoSettings(user){
+    const db = getSettingDb();
+    if(!db || !user?.email) return null;
+    const { data, error } = await db
+      .from("auto_settings")
+      .select("*")
+      .eq("email", user.email)
+      .limit(1);
+    if(error || !data || !data.length) return null;
+    return data[0];
+  }
+
+  function applyAutoSettings(s){
+    const settings = {...AUTO_DEFAULT_SETTINGS, ...(s || {})};
+
+    const mode = document.querySelector(`input[name="capitalMode"][value="${settings.capital_mode || "fixed"}"]`);
+    if(mode) mode.checked = true;
+
+    if(q("autoCapitalKrw")) q("autoCapitalKrw").value = settings.capital_krw;
+    if(q("autoSplitCount")) q("autoSplitCount").value = settings.split_count;
+    if(q("autoAlertEnabled")) q("autoAlertEnabled").value = settings.alert_enabled;
+    if(q("autoEntryEnabled")) q("autoEntryEnabled").value = settings.auto_entry_enabled;
+    if(q("autoExitEnabled")) q("autoExitEnabled").value = settings.auto_exit_enabled;
+    if(q("autoMaxPositions")) q("autoMaxPositions").value = settings.max_positions;
+    if(q("autoMaxDailyEntries")) q("autoMaxDailyEntries").value = settings.max_daily_entries;
+    if(q("autoMinEdge")) q("autoMinEdge").value = settings.min_edge_percent;
+    if(q("autoTakeProfit")) q("autoTakeProfit").value = settings.take_profit_percent;
+    if(q("autoStopLoss")) q("autoStopLoss").value = settings.stop_loss_percent;
+    if(q("autoReentryEnabled")) q("autoReentryEnabled").value = settings.reentry_enabled;
+
+    if(q("autoUseBithumb")) q("autoUseBithumb").checked = !!settings.use_bithumb;
+    if(q("autoUseMexc")) q("autoUseMexc").checked = !!settings.use_mexc;
+    if(q("autoUseGate")) q("autoUseGate").checked = !!settings.use_gate;
+    if(q("autoUseBitget")) q("autoUseBitget").checked = !!settings.use_bitget;
+    if(q("autoUseBingx")) q("autoUseBingx").checked = !!settings.use_bingx;
+
+    window.calcAutoEntryAmount();
+  }
+
+  function collectAutoSettings(user){
+    const mode = document.querySelector('input[name="capitalMode"]:checked')?.value || "fixed";
+    return {
+      email: user.email,
+      alert_enabled: q("autoAlertEnabled")?.value || "ON",
+      auto_entry_enabled: q("autoEntryEnabled")?.value || "OFF",
+      auto_exit_enabled: q("autoExitEnabled")?.value || "ON",
+      capital_mode: mode,
+      capital_krw: getNum("autoCapitalKrw", AUTO_DEFAULT_SETTINGS.capital_krw),
+      split_count: Math.max(1, getNum("autoSplitCount", AUTO_DEFAULT_SETTINGS.split_count)),
+      max_positions: Math.max(1, getNum("autoMaxPositions", AUTO_DEFAULT_SETTINGS.max_positions)),
+      max_daily_entries: Math.max(1, getNum("autoMaxDailyEntries", AUTO_DEFAULT_SETTINGS.max_daily_entries)),
+      min_edge_percent: getNum("autoMinEdge", AUTO_DEFAULT_SETTINGS.min_edge_percent),
+      take_profit_percent: getNum("autoTakeProfit", AUTO_DEFAULT_SETTINGS.take_profit_percent),
+      stop_loss_percent: getNum("autoStopLoss", AUTO_DEFAULT_SETTINGS.stop_loss_percent),
+      reentry_enabled: q("autoReentryEnabled")?.value || "OFF",
+      use_bithumb: !!q("autoUseBithumb")?.checked,
+      use_mexc: !!q("autoUseMexc")?.checked,
+      use_gate: !!q("autoUseGate")?.checked,
+      use_bitget: !!q("autoUseBitget")?.checked,
+      use_bingx: !!q("autoUseBingx")?.checked,
+      updated_at: new Date().toISOString()
+    };
+  }
+
+  window.initAutoSettingsPage = async function(){
+    if(document.body?.dataset?.page !== "auto") return;
+
+    const user = await (window.getCurrentUser ? window.getCurrentUser() : null);
+    if(!user){
+      if(q("autoSettingStatus")) q("autoSettingStatus").innerHTML = "<b>로그인이 필요합니다.</b><p>AUTO 설정은 로그인 후 이용할 수 있습니다.</p>";
+      if(q("autoSettingLocked")) q("autoSettingLocked").style.display = "block";
+      if(q("autoSettingForm")) q("autoSettingForm").style.display = "none";
+      return;
+    }
+
+    const approvedReq = await getApprovedRequestForUser(user);
+    if(!approvedReq){
+      if(q("autoSettingStatus")) q("autoSettingStatus").innerHTML = "<b>🔒 관리자 승인 필요</b><p>승인 완료 후 AUTO 설정을 저장할 수 있습니다. 승인 전에는 알람/자동 설정이 활성화되지 않습니다.</p>";
+      if(q("autoSettingLocked")) q("autoSettingLocked").style.display = "block";
+      if(q("autoSettingForm")) q("autoSettingForm").style.display = "none";
+      return;
+    }
+
+    if(q("autoSettingStatus")) q("autoSettingStatus").innerHTML = "<b>✅ K-EDGE AUTO 승인 완료</b><p>알람 수신은 ON 상태입니다. 자동매매 시작 전 운용방식을 설정해주세요.</p>";
+    if(q("autoSettingLocked")) q("autoSettingLocked").style.display = "none";
+    if(q("autoSettingForm")) q("autoSettingForm").style.display = "block";
+
+    const saved = await loadAutoSettings(user);
+    applyAutoSettings(saved || AUTO_DEFAULT_SETTINGS);
+  };
+
+  window.saveAutoSettings = async function(){
+    const db = getSettingDb();
+    if(!db) return setAutoMsg("❌ Supabase 연결 실패");
+
+    const user = await (window.getCurrentUser ? window.getCurrentUser() : null);
+    if(!user) return setAutoMsg("❌ 로그인 후 저장할 수 있습니다.");
+
+    const approvedReq = await getApprovedRequestForUser(user);
+    if(!approvedReq) return setAutoMsg("❌ 관리자 승인 후 AUTO 설정을 저장할 수 있습니다.");
+
+    const payload = collectAutoSettings(user);
+
+    const { error } = await db
+      .from("auto_settings")
+      .upsert(payload, { onConflict:"email" });
+
+    if(error){
+      console.error(error);
+      return setAutoMsg("❌ 설정 저장 실패: " + error.message);
+    }
+
+    setAutoMsg("✅ AUTO 설정 저장 완료. 텔레그램 알림/자동매매 봇에 반영됩니다.", "success");
+    if(window.updateAuthUI) window.updateAuthUI();
+  };
+
+  document.addEventListener("DOMContentLoaded", function(){
+    if(document.body?.dataset?.page === "auto"){
+      window.initAutoSettingsPage();
+      window.calcAutoEntryAmount();
+    }
+  });
+})();
+
+
+/* AUTO 설정 상태를 내정보에 추가 표시 */
+(function(){
+  const prevUpdateAuthUI = window.updateAuthUI;
+  window.updateAuthUI = async function(){
+    if(typeof prevUpdateAuthUI === "function") await prevUpdateAuthUI();
+
+    const user = window.getCurrentUser ? await window.getCurrentUser() : null;
+    if(!user || !window.supabase) return;
+
+    const db = window.supabase.createClient(
+      window.KEDGE_SUPABASE_URL || "https://qakhbihueonefzifrmct.supabase.co",
+      window.KEDGE_SUPABASE_ANON_KEY || "sb_publishable_XboBFueAITcieSL75B2S5g_qlm4XmOm"
+    );
+
+    let latest = null;
+    let setting = null;
+
+    try{
+      const req = await db.from("kedge_requests").select("*").eq("email", user.email).eq("status","APPROVED").order("created_at",{ascending:false}).limit(1);
+      latest = req.data && req.data[0] ? req.data[0] : null;
+    }catch(e){}
+
+    try{
+      const st = await db.from("auto_settings").select("*").eq("email", user.email).limit(1);
+      setting = st.data && st.data[0] ? st.data[0] : null;
+    }catch(e){}
+
+    const alertEl = document.getElementById("myAlertStatus");
+    const autoEl = document.getElementById("myAutoTradeStatus");
+
+    if(alertEl){
+      alertEl.textContent = latest ? (setting?.alert_enabled || "ON") : "승인 후 ON";
+    }
+    if(autoEl){
+      if(!latest) autoEl.textContent = "승인 후 설정 가능";
+      else if(!setting) autoEl.textContent = "OFF (설정 필요)";
+      else autoEl.textContent = setting.auto_entry_enabled === "ON" ? "ON" : "OFF";
+    }
+  };
+})();
