@@ -451,7 +451,7 @@ async function submitVipRequest(){
   const extra = collectPaymentExtra(product);
 
   if(!payName) return setMsg("vipRequestMsg", "❌ 입금자명 또는 보내는 사람 이름을 입력해주세요.");
-  if(payType !== "BANK" && !memo) return setMsg("vipRequestMsg", "❌ TxID / 입금 메모 / 확인용 내용을 입력해주세요.");
+  if(!memo) return setMsg("vipRequestMsg", "❌ TxID / 입금 메모 / 확인용 내용을 입력해주세요.");
   if(isBotPlan(product) && (!extra.tg_bot_token || !extra.tg_chat_id)) return setMsg("vipRequestMsg", "❌ 회원가입 정보를 확인해주세요.");
   if(isBotPlan(product)){
     if(!hasValidEnabledApi(extra.domestic_apis)) return setMsg("vipRequestMsg", "❌ 국내 거래소 API를 1개 이상 입력해주세요.");
@@ -633,7 +633,7 @@ async function submitVipRequest(){
   const extra = collectPaymentExtra(product);
 
   if(!payName) return setMsg("vipRequestMsg", "❌ 입금자명 또는 보내는 사람 이름을 입력해주세요.");
-  if(payType !== "BANK" && !memo) return setMsg("vipRequestMsg", "❌ TxID / 입금 메모 / 확인용 내용을 입력해주세요.");
+  if(!memo) return setMsg("vipRequestMsg", "❌ TxID / 입금 메모 / 확인용 내용을 입력해주세요.");
   if(isBotPlan(product) && (!extra.tg_bot_token || !extra.tg_chat_id)) return setMsg("vipRequestMsg", "❌ 회원가입 정보를 확인해주세요.");
   if(isBotPlan(product)){
     if(!hasValidEnabledApi(extra.domestic_apis)) return setMsg("vipRequestMsg", "❌ 국내 거래소 API를 1개 이상 입력해주세요.");
@@ -984,86 +984,263 @@ document.addEventListener("DOMContentLoaded",()=>{
 });
 
 /* =========================================================
-   K-EDGE AUTO 승인 완료 팝업
-   - 내정보에서 승인 완료 + AUTO 설정 미완료 시 1회 표시
+   K-EDGE Supabase Auth FINAL OVERRIDE
+   - 로그인/회원가입은 localStorage 테스트모드 사용 금지
+   - Supabase Auth 계정만 사용
+   - 다른 PC/브라우저에서도 같은 계정 로그인 가능
+   - AUTO 서비스 전용
 ========================================================= */
 (function(){
-  async function kedgePopupDb(){
-    if(!window.supabase) return null;
-    return window.supabase.createClient(
-      window.KEDGE_SUPABASE_URL || "https://qakhbihueonefzifrmct.supabase.co",
-      window.KEDGE_SUPABASE_ANON_KEY || "sb_publishable_XboBFueAITcieSL75B2S5g_qlm4XmOm"
-    );
+  const SUPABASE_URL_FINAL = window.KEDGE_SUPABASE_URL || "https://qakhbihueonefzifrmct.supabase.co";
+  const SUPABASE_ANON_KEY_FINAL = window.KEDGE_SUPABASE_ANON_KEY || "sb_publishable_XboBFueAITcieSL75B2S5g_qlm4XmOm";
+  let authDb = null;
+
+  function $id(id){ return document.getElementById(id); }
+  function $val(id){ return ($id(id)?.value || "").trim(); }
+
+  function getAuthDb(){
+    if(authDb) return authDb;
+    if(!window.supabase){
+      console.error("Supabase library not loaded");
+      return null;
+    }
+    authDb = window.supabase.createClient(SUPABASE_URL_FINAL, SUPABASE_ANON_KEY_FINAL);
+    return authDb;
   }
 
-  async function shouldShowAutoApprovePopup(user){
-    if(!user || !user.email) return false;
-    const db = await kedgePopupDb();
-    if(!db) return false;
+  function showMsg(id, text, type){
+    const el = $id(id);
+    if(!el){
+      alert(text);
+      return;
+    }
+    el.textContent = text;
+    el.className = (el.classList.contains("form-msg") ? "form-msg " : "auth-msg ") + (type || "error");
+  }
+
+  window.planLabel = function(plan){
+    if(plan === "AUTO") return "K-EDGE AUTO 🚀";
+    return "FREE";
+  };
+
+  window.productLabel = function(product){
+    if(product === "AUTO") return "K-EDGE AUTO 🚀";
+    return product || "-";
+  };
+
+  window.isBotPlan = function(plan){ return plan === "AUTO"; };
+  window.isAutoPlan = function(plan){ return plan === "AUTO"; };
+
+  window.friendlyAuthError = function(err){
+    const msg = String((err && err.message) || err || "").toLowerCase();
+    if(msg.includes("invalid login") || msg.includes("invalid credentials")) return "❌ 이메일 또는 비밀번호가 틀렸습니다.";
+    if(msg.includes("email not confirmed")) return "❌ 이메일 인증이 필요합니다. 메일함을 확인해주세요.";
+    if(msg.includes("user already registered") || msg.includes("already")) return "❌ 이미 가입된 이메일입니다. 로그인해주세요.";
+    if(msg.includes("password")) return "❌ 비밀번호 형식이 올바르지 않습니다.";
+    if(msg.includes("email")) return "❌ 이메일 형식이 올바르지 않습니다.";
+    return "❌ 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+  };
+
+  window.getCurrentUser = async function(){
+    const db = getAuthDb();
+    if(!db) return null;
+
+    const { data, error } = await db.auth.getUser();
+    if(error || !data || !data.user) return null;
+
+    const meta = data.user.user_metadata || {};
+    return {
+      id: data.user.id,
+      email: data.user.email || "-",
+      telegram: meta.telegram || "미등록",
+      plan: "AUTO"
+    };
+  };
+
+  async function getLatestRequest(email){
+    const db = getAuthDb();
+    if(!db || !email) return null;
 
     try{
-      const req = await db.from("kedge_requests")
+      const { data, error } = await db
+        .from("kedge_requests")
         .select("*")
-        .eq("email", user.email)
-        .eq("status", "APPROVED")
-        .order("created_at", {ascending:false})
+        .eq("email", email)
+        .order("created_at", { ascending:false })
         .limit(1);
 
-      if(req.error || !req.data || !req.data.length) return false;
-
-      const st = await db.from("auto_settings")
-        .select("*")
-        .eq("email", user.email)
-        .limit(1);
-
-      if(st.data && st.data.length) return false;
-
-      const key = "kedge_auto_approve_popup_seen_" + user.email;
-      return !localStorage.getItem(key);
+      if(error || !Array.isArray(data) || !data.length) return null;
+      return data[0];
     }catch(e){
-      return false;
+      console.log("latest request skipped", e);
+      return null;
     }
   }
 
-  window.showKedgeAutoApprovePopup = async function(){
-    if(document.body?.dataset?.page !== "mypage") return;
-    const user = await (window.getCurrentUser ? window.getCurrentUser() : null);
-    if(!await shouldShowAutoApprovePopup(user)) return;
+  window.signupUser = async function(){
+    const db = getAuthDb();
+    if(!db) return showMsg("signupMsg", "❌ Supabase 연결 실패");
 
-    const el = document.getElementById("autoApprovePopup");
-    if(el){
-      el.style.display = "flex";
-      localStorage.setItem("kedge_auto_approve_popup_seen_" + user.email, "Y");
+    const email = $val("signupEmail");
+    const password = $id("signupPassword")?.value || "";
+    const confirm = $id("signupPasswordConfirm")?.value || "";
+    const telegram = $val("signupTelegram");
+
+    if(!email) return showMsg("signupMsg", "❌ 이메일을 입력해주세요.");
+    if(!email.includes("@")) return showMsg("signupMsg", "❌ 이메일 형식이 올바르지 않습니다.");
+    if(!password) return showMsg("signupMsg", "❌ 비밀번호를 입력해주세요.");
+    if(password.length < 6) return showMsg("signupMsg", "❌ 비밀번호는 6자리 이상으로 입력해주세요.");
+    if(password !== confirm) return showMsg("signupMsg", "❌ 비밀번호가 일치하지 않습니다.");
+
+    const { error } = await db.auth.signUp({
+      email,
+      password,
+      options:{
+        data:{
+          telegram: telegram || "미등록",
+          plan: "AUTO"
+        }
+      }
+    });
+
+    if(error) return showMsg("signupMsg", window.friendlyAuthError(error));
+
+    showMsg("signupMsg", "✅ 회원가입 완료. 로그인 페이지로 이동합니다.", "success");
+    setTimeout(()=> location.href="./login.html", 900);
+  };
+
+  window.loginUser = async function(){
+    const db = getAuthDb();
+    if(!db) return showMsg("loginMsg", "❌ Supabase 연결 실패");
+
+    const email = $val("loginEmail");
+    const password = $id("loginPassword")?.value || "";
+
+    if(!email) return showMsg("loginMsg", "❌ 이메일을 입력해주세요.");
+    if(!password) return showMsg("loginMsg", "❌ 비밀번호를 입력해주세요.");
+
+    const { error } = await db.auth.signInWithPassword({ email, password });
+    if(error) return showMsg("loginMsg", window.friendlyAuthError(error));
+
+    showMsg("loginMsg", "✅ 로그인 완료. 메인으로 이동합니다.", "success");
+    await window.updateAuthUI();
+    setTimeout(()=> location.href="./index.html", 700);
+  };
+
+  window.resetPassword = async function(){
+    const db = getAuthDb();
+    if(!db) return showMsg("loginMsg", "❌ Supabase 연결 실패");
+
+    const email = $val("loginEmail");
+    if(!email) return showMsg("loginMsg", "❌ 비밀번호 찾기를 하려면 이메일을 먼저 입력해주세요.");
+
+    const { error } = await db.auth.resetPasswordForEmail(email, {
+      redirectTo: location.origin + location.pathname.replace(/[^\/]*$/, "login.html")
+    });
+
+    if(error) return showMsg("loginMsg", window.friendlyAuthError(error));
+    showMsg("loginMsg", "✅ 비밀번호 재설정 메일을 보냈습니다.", "success");
+  };
+
+  window.logoutUser = async function(){
+    const db = getAuthDb();
+    try{ if(db) await db.auth.signOut(); }catch(e){}
+    // 예전 테스트 로그인 흔적 제거
+    try{
+      localStorage.removeItem("kedge_local_user");
+      localStorage.removeItem("kedge_local_users");
+      localStorage.removeItem("kedge_vip_requests");
+    }catch(e){}
+    location.href = "./index.html";
+  };
+
+  window.updateAuthUI = async function(){
+    const user = await window.getCurrentUser();
+    const latest = user ? await getLatestRequest(user.email) : null;
+
+    const approved = latest && latest.status === "APPROVED";
+    const pending = latest && latest.status === "PENDING";
+    const rejected = latest && latest.status === "REJECTED";
+    const plan = approved ? "AUTO" : "FREE";
+
+    const top = $id("topAuthArea");
+    if(top){
+      if(user){
+        top.innerHTML = `
+          <div class="user-mini">
+            <span class="user-name">${user.email || "회원"}</span>
+            <span class="plan-badge plan-${plan.toLowerCase()}">${window.planLabel(plan)}</span>
+            <a class="login" href="./mypage.html">내정보</a>
+            <button onclick="logoutUser()">로그아웃</button>
+          </div>`;
+      }else{
+        top.innerHTML = `<a class="login" href="./login.html">로그인</a><a class="join" href="./join.html">회원가입</a>`;
+      }
+    }
+
+    const status = $id("authStatus");
+    if(status){
+      status.innerHTML = user
+        ? `<b>✅ 로그인 중</b><p>${user.email || "-"} / ${window.planLabel(plan)}</p>`
+        : `<b>로그인이 필요합니다.</b><p>회원 기능은 로그인 후 이용할 수 있습니다.</p>`;
+    }
+
+    if($id("myEmail")) $id("myEmail").textContent = user?.email || "-";
+    if($id("myPlan")) $id("myPlan").textContent = window.planLabel(plan);
+    if($id("myTelegram")) $id("myTelegram").textContent = user?.telegram || "미등록";
+    if($id("myApproval")){
+      $id("myApproval").textContent = pending ? "승인 대기중" : approved ? "승인완료" : rejected ? "거절" : "신청 없음";
+    }
+    if($id("myLastRequest")){
+      $id("myLastRequest").textContent = latest ? `K-EDGE AUTO / ${latest.status || "-"}` : "신청 내역 없음";
+    }
+    if($id("myInviteLink")){
+      $id("myInviteLink").innerHTML = approved
+        ? `<a href="https://t.me/listing0517" target="_blank">텔레그램 입장/문의 링크</a>`
+        : "승인 후 표시";
+    }
+
+    if($id("myBotToken")) $id("myBotToken").textContent = latest?.tg_bot_token ? "등록됨" : "미등록";
+    if($id("myChatId")) $id("myChatId").textContent = latest?.tg_chat_id || "미등록";
+    if($id("myExchange")) $id("myExchange").textContent = "빗썸 / 해외선물";
+    if($id("myApiKey")) $id("myApiKey").textContent = latest?.domestic_apis ? "등록됨" : "미등록";
+    if($id("myApiSecret")) $id("myApiSecret").textContent = latest?.foreign_apis ? "등록됨" : "미등록";
+
+    document.querySelectorAll("[data-my-bot]").forEach(el=> el.style.display = approved ? "block" : "none");
+    document.querySelectorAll("[data-my-auto]").forEach(el=> el.style.display = approved ? "block" : "none");
+
+    const loggedIn = $id("mypageLoggedIn");
+    const loggedOut = $id("mypageLoggedOut");
+    if(loggedIn && loggedOut){
+      loggedIn.style.display = user ? "grid" : "none";
+      loggedOut.style.display = user ? "none" : "grid";
     }
   };
 
-  const prevUpdate = window.updateAuthUI;
-  window.updateAuthUI = async function(){
-    if(typeof prevUpdate === "function") await prevUpdate();
-    setTimeout(()=>window.showKedgeAutoApprovePopup && window.showKedgeAutoApprovePopup(), 200);
+  window.resolveApprovedPlan = async function(user){
+    const latest = user ? await getLatestRequest(user.email) : null;
+    return latest && latest.status === "APPROVED" ? "AUTO" : "FREE";
+  };
+
+  window.syncPlanFields = function(){
+    document.querySelectorAll("[data-plan-field='bot'],[data-plan-field='auto']").forEach(el=> el.style.display = "none");
   };
 
   document.addEventListener("DOMContentLoaded", function(){
-    setTimeout(()=>window.showKedgeAutoApprovePopup && window.showKedgeAutoApprovePopup(), 800);
+    try{
+      // 예전 테스트 회원 저장소 때문에 다른 PC와 상태가 달라지는 문제 방지
+      localStorage.removeItem("kedge_local_user");
+      localStorage.removeItem("kedge_local_users");
+      localStorage.removeItem("kedge_vip_requests");
+    }catch(e){}
+
+    window.updateAuthUI && window.updateAuthUI();
+
+    const page = document.body?.dataset?.page;
+    if(page){
+      document.querySelectorAll("[data-nav]").forEach(a=>{
+        if(a.dataset.nav === page) a.classList.add("active");
+      });
+    }
   });
-})();
-
-
-/* =========================================================
-   K-EDGE AUTO SETTINGS SIMPLE OVERRIDE
-========================================================= */
-(function(){
-  const SIMPLE_DEFAULT = {alert_enabled:"ON",auto_entry_enabled:"OFF",auto_exit_enabled:"ON",capital_mode:"fixed",capital_krw:2000000,split_count:20,min_edge_percent:1.5,take_profit_percent:0.3,stop_loss_percent:8,reentry_enabled:"OFF",use_bithumb:true,use_mexc:true,use_gate:true,use_bitget:true,use_bingx:true};
-  function q(id){return document.getElementById(id);}
-  function getNum(id,f){const n=Number(q(id)?.value);return Number.isFinite(n)?n:f;}
-  function db(){if(!window.supabase)return null;return window.supabase.createClient(window.KEDGE_SUPABASE_URL||"https://qakhbihueonefzifrmct.supabase.co",window.KEDGE_SUPABASE_ANON_KEY||"sb_publishable_XboBFueAITcieSL75B2S5g_qlm4XmOm");}
-  function msg(t,type){const el=q("autoSettingMsg");if(!el)return alert(t);el.textContent=t;el.className="form-msg "+(type||"error");}
-  window.calcAutoEntryAmount=function(){const capital=getNum("autoCapitalKrw",SIMPLE_DEFAULT.capital_krw);const split=Math.max(1,getNum("autoSplitCount",SIMPLE_DEFAULT.split_count));const entry=Math.floor(capital/split);if(q("autoEntryAmountText"))q("autoEntryAmountText").textContent=entry.toLocaleString("ko-KR")+"원";};
-  async function getApproved(user){const c=db();if(!c||!user?.email)return null;const {data,error}=await c.from("kedge_requests").select("*").eq("email",user.email).eq("status","APPROVED").order("created_at",{ascending:false}).limit(1);if(error||!data||!data.length)return null;return data[0];}
-  async function getSaved(user){const c=db();if(!c||!user?.email)return null;const {data,error}=await c.from("auto_settings").select("*").eq("email",user.email).limit(1);if(error||!data||!data.length)return null;return data[0];}
-  function applySettings(saved){const s={...SIMPLE_DEFAULT,...(saved||{})};const mode=document.querySelector(`input[name="capitalMode"][value="${s.capital_mode||"fixed"}"]`);if(mode)mode.checked=true;if(q("autoCapitalKrw"))q("autoCapitalKrw").value=s.capital_krw;if(q("autoSplitCount"))q("autoSplitCount").value=s.split_count;if(q("autoEntryEnabled"))q("autoEntryEnabled").value=s.auto_entry_enabled||"OFF";window.calcAutoEntryAmount();}
-  function collect(user){const mode=document.querySelector('input[name="capitalMode"]:checked')?.value||"fixed";return {email:user.email,alert_enabled:"ON",auto_entry_enabled:q("autoEntryEnabled")?.value||"OFF",auto_exit_enabled:"ON",capital_mode:mode,capital_krw:getNum("autoCapitalKrw",SIMPLE_DEFAULT.capital_krw),split_count:Math.max(1,getNum("autoSplitCount",SIMPLE_DEFAULT.split_count)),max_positions:0,max_daily_entries:0,min_edge_percent:1.5,take_profit_percent:0.3,stop_loss_percent:8,reentry_enabled:"OFF",use_bithumb:true,use_mexc:true,use_gate:true,use_bitget:true,use_bingx:true,updated_at:new Date().toISOString()};}
-  window.initAutoSettingsPage=async function(){if(document.body?.dataset?.page!=="auto")return;const user=await(window.getCurrentUser?window.getCurrentUser():null);if(!user){if(q("autoSettingStatus"))q("autoSettingStatus").innerHTML="<b>로그인이 필요합니다.</b><p>AUTO 설정은 로그인 후 이용할 수 있습니다.</p>";if(q("autoSettingLocked"))q("autoSettingLocked").style.display="block";if(q("autoSettingForm"))q("autoSettingForm").style.display="none";return;}const approved=await getApproved(user);if(!approved){if(q("autoSettingStatus"))q("autoSettingStatus").innerHTML="<b>🔒 관리자 승인 필요</b><p>승인 완료 후 AUTO 설정을 저장할 수 있습니다.</p>";if(q("autoSettingLocked"))q("autoSettingLocked").style.display="block";if(q("autoSettingForm"))q("autoSettingForm").style.display="none";return;}if(q("autoSettingStatus"))q("autoSettingStatus").innerHTML="<b>✅ K-EDGE AUTO 승인 완료</b><p>알람 수신은 ON 상태입니다. 자동매매 시작 전 빗썸 총자산 기준 운용금액과 분할 수를 설정해주세요.</p>";if(q("autoSettingLocked"))q("autoSettingLocked").style.display="none";if(q("autoSettingForm"))q("autoSettingForm").style.display="block";applySettings(await getSaved(user));};
-  window.saveAutoSettings=async function(){const c=db();if(!c)return msg("❌ Supabase 연결 실패");const user=await(window.getCurrentUser?window.getCurrentUser():null);if(!user)return msg("❌ 로그인 후 저장할 수 있습니다.");const approved=await getApproved(user);if(!approved)return msg("❌ 관리자 승인 후 AUTO 설정을 저장할 수 있습니다.");const {error}=await c.from("auto_settings").upsert(collect(user),{onConflict:"email"});if(error){console.error(error);return msg("❌ 설정 저장 실패: "+error.message);}msg("✅ AUTO 설정 저장 완료. 빗썸 총자산 기준 운용금액과 분할 수가 반영됩니다.","success");if(window.updateAuthUI)window.updateAuthUI();};
-  document.addEventListener("DOMContentLoaded",function(){if(document.body?.dataset?.page==="auto"){setTimeout(function(){window.initAutoSettingsPage();window.calcAutoEntryAmount();},80);}});
 })();
