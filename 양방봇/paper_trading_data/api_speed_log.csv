@@ -40,3 +40,5 @@
 2026-05-28 08:31:55,MEXC,RON/USDT:USDT,15.0801,True,
 2026-05-28 08:39:19,MEXC,JTO/USDT:USDT,0.2478,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
 2026-05-28 08:39:34,MEXC,XAN/USDT:USDT,15.0951,True,
+2026-05-28 08:46:55,MEXC,ENA/USDT:USDT,0.2639,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-05-28 08:47:10,MEXC,PENGU/USDT:USDT,15.0609,True,
