@@ -80,26 +80,28 @@
   </section>
 
   <section class="guide-section">
-    <h2>4. 자동 진입 완료 화면</h2>
-    <p class="lead">AUTO 서비스는 조건이 충족되면 봇이 국내 현물과 해외 선물을 동시에 계산해 자동 진입합니다. 진입 후에는 아래와 같은 완료 알림이 텔레그램으로 전송됩니다.</p>
+    <h2>4. 자동 진입 / 자동 익절 화면</h2>
+    <p class="lead">AUTO 서비스는 조건이 충족되면 자동 진입하고, 이후 익절 조건에 도달하면 자동 청산 조건을 감지합니다. 아래 예시는 실제 텔레그램 개인 DM으로 전달되는 자동 실행 결과 화면입니다.</p>
     <div class="guide-two">
-      <div class="guide-shot-wrap"><img class="guide-shot land" src="./guide-auto-entry.jpg" alt="자동 진입 완료 텔레그램 알림 화면"><p class="guide-caption">실전가상 자동진입 완료 알림 예시</p></div>
-      <div>
-        <div class="guide-card">
-          <h3>자동 진입 알림에서 확인할 내용</h3>
-          <ul>
-            <li><b>코인 / 경로</b>: 어떤 코인을 어느 국내·해외 거래소 조합으로 진입했는지 표시합니다.</li>
-            <li><b>국내 진입 / 해외 선물 명목</b>: 국내 현물 매수 금액과 해외 선물 숏 명목금액을 표시합니다.</li>
-            <li><b>해외 증거금</b>: 레버리지 기준 실제 필요한 해외 증거금을 표시합니다.</li>
-            <li><b>진입 실제엣지</b>: 자동 진입 당시 기준 실제 엣지를 표시합니다.</li>
-            <li><b>최종벽 / 거래소MAX / 남은 가능금액</b>: 진입 가능 금액 계산 근거를 표시합니다.</li>
-          </ul>
-        </div>
-        <div class="guide-card" style="margin-top:14px">
-          <h3>중복 실행 방지</h3>
-          <p>자동진입은 신호별 1회 LOCK 처리되어 같은 신호가 중복 실행되지 않도록 차단합니다.</p>
-        </div>
+      <div class="guide-shot-wrap">
+        <img class="guide-shot small" style="max-width:240px" src="./guide-auto-entry.jpg" alt="자동 진입 완료 텔레그램 알림 화면">
+        <p class="guide-caption">자동 진입 완료<br>실제엣지 +1.55% / 신호별 1회 LOCK</p>
       </div>
+      <div class="guide-shot-wrap">
+        <img class="guide-shot small" style="max-width:240px" src="./guide-auto-exit.jpg" alt="자동 익절 조건 도달 텔레그램 알림 화면">
+        <p class="guide-caption">자동 익절 조건 도달<br>익절 기준 +0.30% 이하 감지</p>
+      </div>
+    </div>
+    <div class="guide-card" style="margin-top:14px">
+      <h3>자동 실행 알림에서 확인할 내용</h3>
+      <ul>
+        <li><b>코인 / 경로</b>: 어떤 코인을 어느 국내·해외 거래소 조합으로 진입했는지 표시합니다.</li>
+        <li><b>진입 금액</b>: 국내 현물 진입금액과 해외 선물 명목금액을 표시합니다.</li>
+        <li><b>진입 실제엣지</b>: 자동 진입 당시 기준 실제 엣지를 표시합니다.</li>
+        <li><b>최소 유지엣지 / 허용 슬리피지</b>: 진입 기준을 통과했는지 확인하는 항목입니다.</li>
+        <li><b>LOCK</b>: 같은 신호로 중복 진입되는 것을 막기 위한 1회 실행 잠금입니다.</li>
+        <li><b>자동익절</b>: 현재 실제엣지가 익절 기준 이하로 회귀하면 청산 조건을 감지합니다.</li>
+      </ul>
     </div>
   </section>
 
