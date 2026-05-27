@@ -33,3 +33,5 @@
 2026-05-28 08:12:40,MEXC,SHIB/USDT:USDT,15.0943,True,
 2026-05-28 08:16:14,MEXC,MEGA/USDT:USDT,0.2676,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
 2026-05-28 08:16:29,MEXC,MANTRA/USDT:USDT,15.0664,True,
+2026-05-28 08:23:52,MEXC,PEPE/USDT:USDT,0.2966,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-05-28 08:24:07,MEXC,ENA/USDT:USDT,15.074,True,
