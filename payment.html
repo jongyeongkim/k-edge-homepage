@@ -47,12 +47,13 @@
       <a href="./guide.html" data-nav="guide">가이드</a>
       <a href="./referral.html" data-nav="referral">추천인</a>
       <a href="./payment.html" data-nav="payment">등록</a>
+      <a href="./auto-settings.html" data-nav="auto">AUTO 설정</a>
       <a href="./support.html" data-nav="support">문의</a>
       <a href="./mypage.html" data-nav="mypage">내정보</a>
     </nav>
     <div class="top-actions" id="topAuthArea">
       <a class="login" href="./login.html">로그인</a>
-      <a class="join" href="./login.html">회원가입</a>
+      <a class="join" href="./join.html">회원가입</a>
     </div>
   </header>
 
@@ -339,11 +340,6 @@ function collectPaymentExtra(product){
 
 
   const domestic_apis = {
-    upbit:{
-      enabled: !!document.getElementById("payUpbitUse")?.checked,
-      api_key: (document.getElementById("payUpbitApiKey")?.value || "").trim(),
-      api_secret: (document.getElementById("payUpbitApiSecret")?.value || "").trim()
-    },
     bithumb:{
       enabled: !!document.getElementById("payBithumbUse")?.checked,
       api_key: (document.getElementById("payBithumbApiKey")?.value || "").trim(),
@@ -433,167 +429,7 @@ document.addEventListener("DOMContentLoaded", function(){
 </script>
 
 
-<!-- KEDGE_FINAL_BANK_TXID_FIX_START -->
-<script>
-/* FINAL: 국내 계좌는 TxID 필수 아님. script.js / kedge-supabase-db.js 덮어쓰기까지 최종 차단 */
-window.submitVipRequest = async function(){
-  const SUPABASE_URL = window.KEDGE_SUPABASE_URL || "https://qakhbihueonefzifrmct.supabase.co";
-  const SUPABASE_ANON_KEY = window.KEDGE_SUPABASE_ANON_KEY || "sb_publishable_XboBFueAITcieSL75B2S5g_qlm4XmOm";
 
-  const qs = (id) => document.getElementById(id);
-  const val = (id) => (qs(id)?.value || "").trim();
-
-  function msg(text, type){
-    const el = qs("vipRequestMsg");
-    if(!el) return alert(text);
-    el.textContent = text;
-    el.className = "form-msg " + (type || "error");
-  }
-
-  function readApi(checkId, keyId, secretId){
-    return {
-      enabled: !!qs(checkId)?.checked,
-      api_key: val(keyId),
-      api_secret: val(secretId)
-    };
-  }
-
-  function enabledList(obj){
-    return Object.entries(obj || {}).filter(([_, v]) => v && v.enabled);
-  }
-
-  function hasValidEnabledApi(obj){
-    return enabledList(obj).some(([_, v]) => v.api_key && v.api_secret);
-  }
-
-  function hasInvalidEnabledApi(obj){
-    return enabledList(obj).some(([_, v]) => !v.api_key || !v.api_secret);
-  }
-
-  function referralData(){
-    return {
-      mexc: { enabled: !!qs("refMexcUse")?.checked, uid: val("refMexcUid") },
-      bitget: { enabled: !!qs("refBitgetUse")?.checked, uid: val("refBitgetUid") },
-      bingx: { enabled: !!qs("refBingxUse")?.checked, uid: val("refBingxUid") },
-      gate: { enabled: !!qs("refGateUse")?.checked, uid: val("refGateUid") }
-    };
-  }
-
-  if(!window.supabase) return msg("❌ Supabase 라이브러리 로드 실패");
-
-  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  let user = null;
-  try{
-    if(typeof window.getCurrentUser === "function") user = await window.getCurrentUser();
-  }catch(e){}
-
-  if(!user || !user.email){
-    try{
-      const { data } = await db.auth.getUser();
-      if(data && data.user){
-        user = {
-          email: data.user.email,
-          telegram: data.user.user_metadata?.telegram || "미등록"
-        };
-      }
-    }catch(e){}
-  }
-
-  if(!user || !user.email) return msg("❌ 로그인 후 등록 신청할 수 있습니다.");
-
-  const product = "AUTO";
-  const payType = val("payType") || "USDT";
-  const payName = val("payName");
-  const memo = val("txidInput");
-
-  if(!payName) return msg("❌ 입금자명 또는 보내는 사람 이름을 입력해주세요.");
-
-  // 핵심 수정: 국내 계좌는 TxID/메모 필수 아님
-  if(payType !== "BANK" && !memo){
-    return msg("❌ TxID / 입금 메모 / 확인용 내용을 입력해주세요.");
-  }
-
-  const tgBotToken = val("payBotToken");
-  const tgChatId = val("payChatId");
-  const telegramId = val("payTelegramId");
-
-  if(!tgBotToken || !tgChatId) return msg("❌ AUTO는 BOT TOKEN과 CHAT ID가 필요합니다.");
-
-  const domestic_apis = {
-    bithumb: readApi("payBithumbUse", "payBithumbApiKey", "payBithumbApiSecret")
-  };
-
-  const foreign_apis = {
-    mexc: readApi("payMexcUse", "payMexcApiKey", "payMexcApiSecret"),
-    gate: readApi("payGateUse", "payGateApiKey", "payGateApiSecret"),
-    bitget: readApi("payBitgetUse", "payBitgetApiKey", "payBitgetApiSecret"),
-    bingx: readApi("payBingxUse", "payBingxApiKey", "payBingxApiSecret")
-  };
-
-  if(!hasValidEnabledApi(domestic_apis)) return msg("❌ 빗썸 API KEY와 SECRET을 입력해주세요.");
-  if(!hasValidEnabledApi(foreign_apis)) return msg("❌ 해외 거래소 API를 1개 이상 입력해주세요.");
-  if(hasInvalidEnabledApi(domestic_apis)) return msg("❌ 체크된 국내 거래소는 KEY와 SECRET을 모두 입력해야 합니다.");
-  if(hasInvalidEnabledApi(foreign_apis)) return msg("❌ 체크된 해외 거래소는 KEY와 SECRET을 모두 입력해야 합니다.");
-
-  const refs = referralData();
-  const referral_count = Math.min(Object.values(refs).filter(x => x.enabled && x.uid).length, 4);
-  const referral_discount_percent = referral_count * 10;
-  const base_price_krw = 200000;
-  const final_price_krw = base_price_krw * (100 - referral_discount_percent) / 100;
-
-  const payload = {
-    email: user.email,
-    telegram: telegramId || user.telegram || "미등록",
-    product,
-    pay_type: payType,
-    pay_name: payName,
-    memo: payType === "BANK" ? "" : memo,
-    status: "PENDING",
-    tg_bot_token: tgBotToken,
-    tg_chat_id: tgChatId,
-    domestic_apis,
-    foreign_apis,
-    referral_uids: refs,
-    referral_count,
-    referral_discount_percent,
-    base_price_krw,
-    final_price_krw
-  };
-
-  const { error } = await db.from("kedge_requests").insert(payload);
-  if(error){
-    console.error(error);
-    return msg("❌ 신청 저장 실패: " + error.message);
-  }
-
-  msg("✅ AUTO 신청 완료. 관리자 승인 후 알람 수신이 활성화됩니다.", "success");
-  if(qs("payName")) qs("payName").value = "";
-  if(qs("txidInput")) qs("txidInput").value = "";
-};
-
-document.addEventListener("DOMContentLoaded", function(){
-  const payType = document.getElementById("payType");
-  const txidWrap = document.getElementById("txidWrap");
-  const txidInput = document.getElementById("txidInput");
-
-  function refreshTxid(){
-    const type = payType?.value || "USDT";
-    if(!txidWrap || !txidInput) return;
-    if(type === "BANK"){
-      txidWrap.style.display = "none";
-      txidInput.value = "";
-    }else{
-      txidWrap.style.display = "block";
-      txidInput.placeholder = "USDT TxID 입력";
-    }
-  }
-
-  payType?.addEventListener("change", refreshTxid);
-  refreshTxid();
-});
-</script>
-<!-- KEDGE_FINAL_BANK_TXID_FIX_END -->
 
 <script>
 if ("serviceWorker" in navigator) {
