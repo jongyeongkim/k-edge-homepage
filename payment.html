@@ -255,6 +255,32 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./script.js"></script>
+
+<script>
+/* script.js의 기존 VIP Pro 100,000원 문구 강제 덮어쓰기 */
+window.changeProductInfo = function(){
+  const box = document.getElementById("productInfo");
+  if(box){
+    box.innerHTML = `
+      <h4>🚀 K-EDGE AUTO</h4>
+      <strong>월 200,000원</strong>
+      <p>국내 현물 ↔ 해외 선물 괴리차를 자동 감지하고, 조건 충족 시 자동 진입/청산까지 연동되는 AUTO 서비스입니다.</p>
+      <ul>
+        <li>국내 현물 ↔ 해외 선물 괴리차 자동 감지</li>
+        <li>BTC 괴리 제외 실제엣지 계산</li>
+        <li>실체결 가능금액 / 매수벽 / 매도벽 분석</li>
+        <li>조건 충족 시 자동 진입</li>
+        <li>목표 수익 도달 시 자동 청산</li>
+        <li>텔레그램 진입/청산 결과 알림</li>
+      </ul>
+    `;
+  }
+};
+document.addEventListener("DOMContentLoaded", function(){
+  window.changeProductInfo();
+});
+</script>
+
   <script src="./kedge-supabase-db.js?v=20260523"></script>
 
 <script>
