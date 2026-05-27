@@ -38,3 +38,5 @@
 2026-05-28 08:29:45,MEXC,WET/USDT:USDT,0.253,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
 2026-05-28 08:31:40,MEXC,FF/USDT:USDT,0.2484,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
 2026-05-28 08:31:55,MEXC,RON/USDT:USDT,15.0801,True,
+2026-05-28 08:39:19,MEXC,JTO/USDT:USDT,0.2478,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-05-28 08:39:34,MEXC,XAN/USDT:USDT,15.0951,True,
