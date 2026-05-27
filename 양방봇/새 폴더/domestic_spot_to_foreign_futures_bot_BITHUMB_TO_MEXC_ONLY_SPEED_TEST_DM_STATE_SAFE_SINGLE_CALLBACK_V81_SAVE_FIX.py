@@ -30,6 +30,7 @@ import os
 import json
 import subprocess
 import threading
+import csv
 from datetime import datetime
 from typing import Dict, List, Any, Optional, Tuple
 
@@ -108,7 +109,11 @@ MAX_SPOT_SPREAD_PERCENT = 5.0
 MAX_FUTURES_SPREAD_PERCENT = 3.0
 
 # 오더북 벽 계산 범위
+# V8: 신규 진입은 고정 0.5%가 아니라 현재 실제엣지에서 최소 유지엣지 2%를 뺀 값까지 허용한다.
+# 예: 현재 실제엣지 4.0% -> 허용 슬리피지 2.0% / 현재 실제엣지 2.1% -> 허용 슬리피지 0.1%
 WALL_RANGE_PERCENT = 0.5
+MIN_RETAIN_EDGE_PERCENT = float(os.getenv("MIN_RETAIN_EDGE_PERCENT", "2.0"))
+DYNAMIC_SLIPPAGE_STEP_PERCENT = float(os.getenv("DYNAMIC_SLIPPAGE_STEP_PERCENT", "0.5"))
 
 # 루프
 LOOP_SLEEP_SEC = 10
@@ -121,7 +126,7 @@ ALERT_COOLDOWN_SEC = 60 * 10
 SYMBOL_ALERT_COOLDOWN_SEC = 60 * 30
 
 # 너무 많은 검사 방지
-MAX_SPOT_ITEMS = 160
+MAX_SPOT_ITEMS = 140
 
 # 0.5% 벽 기준: 현물/선물 각각 100만원 이상이어야 알림
 MIN_SPOT_WALL_KRW = 1_000_000
@@ -144,8 +149,8 @@ BAD_SYMBOL_PARTS = [
 ENABLE_FOREIGN_SPOT_SCAN = False
 
 # 국내 거래소별 최대 후보 수
-MAX_UPBIT_ITEMS = 140
-MAX_BITHUMB_ITEMS = 80
+MAX_UPBIT_ITEMS = 0
+MAX_BITHUMB_ITEMS = 140
 MAX_GOPAX_ITEMS = 40
 MAX_COINONE_ITEMS = 0
 MAX_KORBIT_ITEMS = 40
@@ -162,9 +167,60 @@ FALLBACK_USD_KRW = 1400.0
 # 예: set KEDGE_DATA_DIR=C:\Users\pc1\Desktop\kedge_homepage\data
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 WEB_DATA_DIR = r"C:\Users\pc1\Desktop\k-edge-homepage\data"
-WEB_SIGNALS_PATH = os.path.join(WEB_DATA_DIR, "signals.json")
-WEB_STATS_PATH = os.path.join(WEB_DATA_DIR, "stats.json")
+WEB_SIGNALS_PATH = os.path.join(WEB_DATA_DIR, "signals_mexc.json")
+WEB_STATS_PATH = os.path.join(WEB_DATA_DIR, "stats_mexc.json")
 MAX_WEB_SIGNALS = 100
+
+
+
+
+# ============================================================
+# 로컬 환경설정 자동 로드
+# - 4파일을 새 CMD에서 각각 실행하면 SUPABASE_URL/SERVICE_KEY 환경변수가 빠지는 경우가 많다.
+# - 같은 폴더의 kedge_supabase_config.json 또는 .env 에서 자동으로 읽는다.
+# ============================================================
+def _load_kedge_local_env() -> None:
+    try:
+        cfg_path = os.path.join(BASE_DIR if 'BASE_DIR' in globals() else os.path.dirname(os.path.abspath(__file__)), "kedge_supabase_config.json")
+    except Exception:
+        cfg_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "kedge_supabase_config.json")
+
+    # JSON 우선: {"SUPABASE_URL":"...", "SUPABASE_SERVICE_KEY":"..."}
+    try:
+        if os.path.exists(cfg_path):
+            with open(cfg_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if isinstance(data, dict):
+                for k, v in data.items():
+                    if v is not None and str(v).strip() and not os.getenv(str(k)):
+                        os.environ[str(k)] = str(v).strip()
+                print(f"[로컬설정 로드] {cfg_path}")
+                return
+    except Exception as e:
+        print("[로컬설정 JSON 로드 실패]", e)
+
+    # .env 보조 지원
+    for name in (".env", "kedge_env.txt"):
+        env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), name)
+        try:
+            if not os.path.exists(env_path):
+                continue
+            with open(env_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith("#") or "=" not in line:
+                        continue
+                    k, v = line.split("=", 1)
+                    k = k.strip()
+                    v = v.strip().strip('"').strip("'")
+                    if k and v and not os.getenv(k):
+                        os.environ[k] = v
+            print(f"[로컬설정 로드] {env_path}")
+            return
+        except Exception as e:
+            print("[로컬설정 ENV 로드 실패]", name, e)
+
+_load_kedge_local_env()
 
 
 # ============================================================
@@ -173,8 +229,11 @@ MAX_WEB_SIGNALS = 100
 # Supabase REST API 값은 환경변수로 넣는 것을 권장.
 # set SUPABASE_URL=https://xxxxx.supabase.co
 # set SUPABASE_SERVICE_KEY=xxxxx
-SUPABASE_URL = os.getenv("SUPABASE_URL", "").strip()
-SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "").strip()
+SUPABASE_URL = (os.getenv("SUPABASE_URL", "").strip() or "https://qakhbihueonefzifrmct.supabase.co").rstrip("/")
+# 실수로 /rest/v1 까지 넣어도 자동 보정
+if SUPABASE_URL.endswith("/rest/v1"):
+    SUPABASE_URL = SUPABASE_URL[:-len("/rest/v1")].rstrip("/")
+SUPABASE_SERVICE_KEY = (os.getenv("SUPABASE_SERVICE_KEY", "").strip() or "sb_publishable_XboBFueAITcieSL75B2S5g_qlm4XmOm").strip()
 
 # signals 저장 테이블명
 SUPABASE_SIGNALS_TABLE = os.getenv("SUPABASE_SIGNALS_TABLE", "signals").strip()
@@ -204,7 +263,7 @@ SEMI_AUTO_BOT_TOKEN = (os.getenv("KEDGE_USER_DM_BOT_TOKEN", "").strip() or USER_
 AMOUNT_BUTTONS_KRW = [10_000, 50_000, 100_000, 500_000, 1_000_000, 5_000_000]
 
 # 유저 1회 최대 진입금액. 선물MAX/벽금액보다 커도 여기서 한 번 더 컷.
-MAX_USER_ENTRY_KRW = int(os.getenv("MAX_USER_ENTRY_KRW", "0"))  # 0이면 고정 상한 없음. 최종금액은 벽/선물한도/유저잔고로 동적 계산
+MAX_USER_ENTRY_KRW = int(os.getenv("MAX_USER_ENTRY_KRW", "0"))  # 0이면 고정 상한 없음
 
 # 예상구간: 최고 이론 엣지에서 1%p 차감해서 하단 표시
 EXPECTED_PROFIT_DISCOUNT_PERCENT = 1.0
@@ -235,12 +294,19 @@ AUTO_STOP_EDGE_ADD_PERCENT = AUTO_STOP_WATCH_EDGE_ADD_PERCENT
 # 테스트 끝나면 false로 바꿔도 됨.
 FORCE_APPROVAL_DM_EVERY_START = os.getenv("FORCE_APPROVAL_DM_EVERY_START", "false").lower() == "true"
 
+# 테스트 진행 중에는 파일 실행/재실행 시 승인회원 개인 DM으로 시작 알림을 1회 보낸다.
+# 실서비스 전에는 CMD에서 set SEND_STARTUP_TEST_DM=false 로 끄면 된다.
+SEND_STARTUP_TEST_DM = os.getenv("SEND_STARTUP_TEST_DM", "true").lower() == "true"
+
 
 # 선택금액 상태 저장
-SEMI_AUTO_STATE_PATH = os.path.join(BASE_DIR, "semi_auto_state.json")
+SEMI_AUTO_STATE_PATH = os.path.join(BASE_DIR, "semi_auto_state_mexc.json")
 
 
 # 텔레그램 callback offset
+# 4파일 동시 실행 시 callback poller는 반드시 1개만 켠다.
+# 여러 파일이 동시에 getUpdates를 잡으면 버튼 1회 클릭이 2~4회 누적될 수 있다.
+ENABLE_CALLBACK_POLLER = os.getenv("ENABLE_CALLBACK_POLLER", "true").lower() == "true"
 last_update_id: int = 0
 
 # 승인회원 캐시: 양방 루프마다 DB 전원조회하지 않고 5분마다 갱신
@@ -251,6 +317,217 @@ _APPROVED_MEMBERS_CACHE_LOCK = threading.Lock()
 
 # 진입 직전 재검사용 전역 거래소 객체
 GLOBAL_FUTURE_EXS: Dict[str, Any] = {}
+
+
+
+# ============================================================
+# 실전가상 / 페이퍼 트레이딩 데이터 저장
+# ============================================================
+# REAL_ORDER_ENABLED=False 상태에서 버튼으로 진입하면 실제 주문은 나가지 않고
+# 가상 진입/가상 청산 결과를 CSV/JSON으로 저장한다.
+PAPER_TRADING_ENABLED = os.getenv("PAPER_TRADING_ENABLED", "true").lower() == "true"
+PAPER_DATA_DIR = os.path.join(BASE_DIR, "paper_trading_data")
+PAPER_ENTRIES_CSV = os.path.join(PAPER_DATA_DIR, "paper_entries.csv")
+PAPER_RESULTS_CSV = os.path.join(PAPER_DATA_DIR, "trade_results.csv")
+PAPER_DAILY_STATS_JSON = os.path.join(PAPER_DATA_DIR, "daily_stats.json")
+
+
+def _ensure_paper_data_dir() -> None:
+    try:
+        os.makedirs(PAPER_DATA_DIR, exist_ok=True)
+    except Exception:
+        pass
+
+
+def _csv_append(path: str, fieldnames: List[str], row: Dict[str, Any]) -> None:
+    _ensure_paper_data_dir()
+    exists = os.path.exists(path)
+    safe_row = {}
+    for k in fieldnames:
+        v = row.get(k, "")
+        if isinstance(v, (dict, list)):
+            v = json.dumps(v, ensure_ascii=False)
+        safe_row[k] = v
+    with open(path, "a", newline="", encoding="utf-8-sig") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        if not exists:
+            writer.writeheader()
+        writer.writerow(safe_row)
+    print(f"[CSV 저장 성공] {path}")
+
+
+def paper_record_entry(pos_id: str, user_id: str, signal: Dict[str, Any], amount_krw: int) -> None:
+    """반자동 버튼으로 진입 등록된 순간 가상진입 기록."""
+    if not PAPER_TRADING_ENABLED:
+        print(f"[실전가상 기록 SKIP] PAPER_TRADING_ENABLED=False / {pos_id}")
+        return
+
+    _ensure_paper_data_dir()
+    print(f"[실전가상 기록 준비] dir={PAPER_DATA_DIR} / entries={PAPER_ENTRIES_CSV}")
+
+    fieldnames = [
+        "event_time", "pos_id", "signal_id", "user_id",
+        "coin", "domestic", "foreign", "domestic_market", "foreign_market",
+        "entry_krw", "domestic_entry_krw", "foreign_entry_krw",
+        "entry_edge", "allowed_slippage_percent", "min_retain_edge_percent", "btc_gap", "coin_gap",
+        "expected_profit_min", "expected_profit_max",
+        "spot_wall_krw", "futures_wall_krw", "futures_position_limit_krw",
+        "funding_rate", "real_order", "status"
+    ]
+    domestic_entry_krw, foreign_entry_krw, final_entry_krw = calc_domestic_foreign_entry_amounts(signal, amount_krw)
+
+    row = {
+        "event_time": now_str(),
+        "pos_id": pos_id,
+        "signal_id": signal.get("signal_id"),
+        "user_id": user_id,
+        "coin": signal.get("coin"),
+        "domestic": signal.get("domestic"),
+        "foreign": signal.get("foreign"),
+        "domestic_market": signal.get("domestic_market"),
+        "foreign_market": signal.get("foreign_market"),
+        "entry_krw": int(final_entry_krw),
+        "domestic_entry_krw": int(domestic_entry_krw),
+        "foreign_entry_krw": int(foreign_entry_krw),
+        "entry_edge": round(safe_float(signal.get("real_edge")), 4),
+        "allowed_slippage_percent": round(safe_float(signal.get("allowed_slippage_percent")), 4),
+        "min_retain_edge_percent": round(safe_float(signal.get("min_retain_edge_percent"), MIN_RETAIN_EDGE_PERCENT), 4),
+        "btc_gap": round(safe_float(signal.get("btc_gap")), 4),
+        "coin_gap": round(safe_float(signal.get("coin_gap")), 4),
+        "expected_profit_min": round(safe_float(signal.get("expected_profit_min")), 4),
+        "expected_profit_max": round(safe_float(signal.get("expected_profit_max")), 4),
+        "spot_wall_krw": round(safe_float(signal.get("spot_wall_krw")), 2),
+        "futures_wall_krw": round(safe_float(signal.get("futures_wall_krw")), 2),
+        "futures_position_limit_krw": round(safe_float(signal.get("futures_position_limit_krw")), 2),
+        "funding_rate": signal.get("funding_rate"),
+        "real_order": REAL_ORDER_ENABLED,
+        "status": "VIRTUAL_OPEN" if not REAL_ORDER_ENABLED else "REAL_OPEN",
+    }
+    _csv_append(PAPER_ENTRIES_CSV, fieldnames, row)
+    print(
+        f"[실전가상 기록] 진입 저장 {pos_id} / {row['coin']} / {row['foreign']} "
+        f"/ 국내 {fmt_man_krw(domestic_entry_krw)} / 해외 {fmt_man_krw(foreign_entry_krw)}"
+    )
+
+
+def _paper_update_daily_stats(result_row: Dict[str, Any]) -> None:
+    _ensure_paper_data_dir()
+    today = datetime.now().strftime("%Y-%m-%d")
+    stats = _read_json(PAPER_DAILY_STATS_JSON, {})
+    if not isinstance(stats, dict):
+        stats = {}
+    day = stats.setdefault(today, {
+        "date": today,
+        "closed_count": 0,
+        "tp_count": 0,
+        "sl_count": 0,
+        "warn_or_other_count": 0,
+        "total_entry_krw": 0,
+        "total_pnl_krw": 0.0,
+        "avg_pnl_percent": 0.0,
+        "by_exchange": {},
+    })
+
+    status = str(result_row.get("status") or "")
+    entry_krw = safe_float(result_row.get("entry_krw"))
+    pnl_krw = safe_float(result_row.get("pnl_krw"))
+    pnl_percent = safe_float(result_row.get("pnl_percent"))
+    foreign = str(result_row.get("foreign") or "UNKNOWN").upper()
+
+    day["closed_count"] = int(day.get("closed_count", 0)) + 1
+    day["total_entry_krw"] = safe_float(day.get("total_entry_krw")) + entry_krw
+    day["total_pnl_krw"] = safe_float(day.get("total_pnl_krw")) + pnl_krw
+
+    if "TAKE" in status or "TP" in status or "PROFIT" in status or pnl_krw > 0:
+        day["tp_count"] = int(day.get("tp_count", 0)) + 1
+    elif "STOP" in status or "SL" in status or pnl_krw < 0:
+        day["sl_count"] = int(day.get("sl_count", 0)) + 1
+    else:
+        day["warn_or_other_count"] = int(day.get("warn_or_other_count", 0)) + 1
+
+    # 누적 평균 수익률은 단순 평균으로 관리
+    old_n = max(0, int(day.get("closed_count", 1)) - 1)
+    old_avg = safe_float(day.get("avg_pnl_percent"))
+    n = int(day.get("closed_count", 1))
+    day["avg_pnl_percent"] = round(((old_avg * old_n) + pnl_percent) / max(1, n), 4)
+
+    ex = day.setdefault("by_exchange", {}).setdefault(foreign, {
+        "closed_count": 0,
+        "tp_count": 0,
+        "sl_count": 0,
+        "total_entry_krw": 0,
+        "total_pnl_krw": 0.0,
+        "avg_pnl_percent": 0.0,
+    })
+    ex["closed_count"] = int(ex.get("closed_count", 0)) + 1
+    ex["total_entry_krw"] = safe_float(ex.get("total_entry_krw")) + entry_krw
+    ex["total_pnl_krw"] = safe_float(ex.get("total_pnl_krw")) + pnl_krw
+    if pnl_krw > 0:
+        ex["tp_count"] = int(ex.get("tp_count", 0)) + 1
+    elif pnl_krw < 0:
+        ex["sl_count"] = int(ex.get("sl_count", 0)) + 1
+    old_ex_n = max(0, int(ex.get("closed_count", 1)) - 1)
+    old_ex_avg = safe_float(ex.get("avg_pnl_percent"))
+    ex_n = int(ex.get("closed_count", 1))
+    ex["avg_pnl_percent"] = round(((old_ex_avg * old_ex_n) + pnl_percent) / max(1, ex_n), 4)
+
+    _write_json_atomic(PAPER_DAILY_STATS_JSON, stats)
+
+
+def paper_record_close(pos_id: str, pos: Dict[str, Any], status: str, current_edge: float, reason: str) -> None:
+    """가상/실전 포지션 종료 결과 저장."""
+    if not PAPER_TRADING_ENABLED:
+        return
+
+    entry_edge = safe_float(pos.get("entry_edge"))
+    close_edge = safe_float(current_edge)
+    entry_krw = int(safe_float(pos.get("amount_krw")))
+    domestic_entry_krw = int(safe_float(pos.get("domestic_entry_krw"), entry_krw))
+    foreign_entry_krw = int(safe_float(pos.get("foreign_entry_krw"), entry_krw))
+
+    # 양방 수익은 진입 후 실제엣지가 줄어들수록 플러스.
+    # 예: 진입 2.03% → 청산 0.45% = +1.58%
+    pnl_percent = entry_edge - close_edge
+    pnl_krw = entry_krw * pnl_percent / 100.0
+
+    opened_at = str(pos.get("opened_at") or "")
+    closed_at = now_str()
+
+    fieldnames = [
+        "closed_at", "opened_at", "pos_id", "signal_id", "user_id",
+        "coin", "domestic", "foreign", "domestic_market", "foreign_market",
+        "entry_krw", "domestic_entry_krw", "foreign_entry_krw",
+        "entry_edge", "close_edge",
+        "pnl_percent", "pnl_krw", "status", "reason", "real_order"
+    ]
+    row = {
+        "closed_at": closed_at,
+        "opened_at": opened_at,
+        "pos_id": pos_id,
+        "signal_id": pos.get("signal_id"),
+        "user_id": pos.get("user_id"),
+        "coin": pos.get("coin"),
+        "domestic": pos.get("domestic"),
+        "foreign": pos.get("foreign"),
+        "domestic_market": pos.get("domestic_market"),
+        "foreign_market": pos.get("foreign_market"),
+        "entry_krw": entry_krw,
+        "domestic_entry_krw": domestic_entry_krw,
+        "foreign_entry_krw": foreign_entry_krw,
+        "entry_edge": round(entry_edge, 4),
+        "close_edge": round(close_edge, 4),
+        "pnl_percent": round(pnl_percent, 4),
+        "pnl_krw": round(pnl_krw, 2),
+        "status": status,
+        "reason": reason,
+        "real_order": pos.get("real_order", REAL_ORDER_ENABLED),
+    }
+    _csv_append(PAPER_RESULTS_CSV, fieldnames, row)
+    _paper_update_daily_stats(row)
+    print(
+        f"[실전가상 기록] 결과 저장 {pos_id} / {row['coin']} / {row['foreign']} "
+        f"/ {row['pnl_percent']:+.2f}% / {fmt_man_krw(row['pnl_krw'])}"
+    )
 
 
 # 거래소별/코인별 선물 최대 포지션 수동 보정표.
@@ -344,7 +621,12 @@ SPOT_EXCHANGES = []
 
 # 홈페이지 레퍼럴 연결 거래소만 사용
 # 알림 품질/전환율을 위해 Binance / OKX / Bybit는 기본 제외
+# 4파일 분리 속도 모드: 이 파일은 BITHUMB -> MEXC 만 검사
 FUTURES_EXCHANGES = [
+    ("MEXC", "mexc"),
+]
+
+CALLBACK_FUTURES_EXCHANGES = [
     ("MEXC", "mexc"),
     ("GATE", "gateio"),
     ("BITGET", "bitget"),
@@ -650,25 +932,15 @@ def build_support_message(
 """
 
 
-def make_active_lock_key(symbol: str, spot_source: str, future_source: str) -> str:
-    """같은 코인이라도 국내거래소/해외선물 조합별로 따로 잠금.
-    예: EDEN_UPBIT_GATE 와 EDEN_BITHUMB_GATE 는 각각 별도 기회로 본다.
-    """
+def make_active_lock_key(symbol: str, spot_source: str = "", future_source: str = "") -> str:
+    """같은 코인이라도 국내거래소+해외선물 조합별로 다른 기회로 본다."""
     return f"{normalize_symbol(symbol)}_{str(spot_source or '').upper()}_{str(future_source or '').upper()}"
 
 
 def active_lock_check(symbol: str, spot_source: str, future_source: str, current_percent: float, funding_rate_percent: Optional[float] = None) -> bool:
     """
-    알림 발생 = 진입했다고 가정.
-    이후에는 시간 단위가 아니라 이벤트 발생 시에만 서포트 알림을 보낸다.
-
-    이벤트:
-    1) 실제엣지 <= POSITION_RELEASE_PERCENT => 청산/종료 알림 후 잠금 해제
-    2) 실제엣지 >= 진입엣지 + STOP_EDGE_ADD_PERCENT => 손절 알림 후 잠금 해제
-    3) 펀딩비 >= FUNDING_SUPPORT_WARN_PERCENT => 펀딩 주의 알림 1회, 잠금 유지
-
-    return True  -> 잠금 중이므로 신규 후보 알림 스킵
-    return False -> 잠금 없음 또는 종료/손절로 해제됨
+    알림 발생 = 해당 조합에 진입했다고 가정.
+    같은 코인이라도 UPBIT/GATE, BITHUMB/GATE, UPBIT/MEXC는 따로 추적한다.
     """
     symbol = normalize_symbol(symbol)
     lock_key = make_active_lock_key(symbol, spot_source, future_source)
@@ -683,7 +955,6 @@ def active_lock_check(symbol: str, spot_source: str, future_source: str, current
         msg = build_support_message("TAKE_PROFIT", symbol, locked, current_percent, funding_rate_percent)
         print(msg)
         telegram_send(msg)
-        # FREE에는 종료/청산 알림을 보내지 않는다. 종료/회귀/손절은 VIP 전용.
         active_symbol_locks.pop(lock_key, None)
         return False
 
@@ -727,11 +998,7 @@ def mark_active_lock(symbol: str, current_percent: float, spot_source: str, futu
 
 
 def symbol_cooldown_ok(symbol: str, spot_source: str = "", future_source: str = "") -> bool:
-    """
-    같은 조합이 너무 자주 울리는 것만 방지.
-    코인 단독 쿨다운이 아니라 국내거래소+해외선물 조합별 쿨다운이라
-    빗썸 알림이 와도 업비트 알림은 따로 살아난다.
-    """
+    """같은 조합만 쿨다운. 빗썸 알림이 떠도 업비트 알림은 따로 살아난다."""
     t = time.time()
     cooldown_key = make_active_lock_key(symbol, spot_source, future_source)
     old = last_symbol_alert_at.get(cooldown_key, 0)
@@ -921,6 +1188,22 @@ def calc_expected_profit_range(edge_percent: float) -> Tuple[float, float]:
     return lo, hi
 
 
+def calc_domestic_foreign_entry_amounts(signal: Dict[str, Any], amount_krw: int) -> Tuple[int, int, int]:
+    """국내/해외 실제 진입 기준 금액 계산."""
+    amount = int(max(0, safe_float(amount_krw)))
+    max_entry = int(max(0, safe_float(signal.get("max_entry_krw") or signal.get("final_entry_krw"))))
+    remaining = int(max(0, safe_float(signal.get("remaining_entry_krw", max_entry))))
+
+    candidates = [amount]
+    if max_entry > 0:
+        candidates.append(max_entry)
+    if remaining > 0:
+        candidates.append(remaining)
+
+    final_entry = int(max(0, min(candidates))) if candidates else amount
+    return final_entry, final_entry, final_entry
+
+
 def make_signal_id(symbol: str, domestic: str, foreign: str) -> str:
     return f"{normalize_symbol(symbol)}_{domestic}_{foreign}_{int(time.time())}"
 
@@ -986,6 +1269,7 @@ def get_member_row_id(member: Dict[str, Any]) -> str:
 
 def supabase_get_approved_members_uncached() -> List[Dict[str, Any]]:
     """승인회원 DB 직접 조회. 일반 로직에서는 supabase_get_approved_members 캐시 함수를 사용."""
+    print("[DM 설정 확인]", {"callback_poller": ENABLE_CALLBACK_POLLER, "state_path": SEMI_AUTO_STATE_PATH})
     print("[Supabase 설정]", {
         "url_set": bool(SUPABASE_URL),
         "key_set": bool(SUPABASE_SERVICE_KEY),
@@ -1047,59 +1331,119 @@ def supabase_get_approved_members(force_refresh: bool = False) -> List[Dict[str,
         return list(_APPROVED_MEMBERS_CACHE)
 
 
+def _semi_state_path_for_exchange(exchange_name: str) -> str:
+    ex = str(exchange_name or "").upper()
+    name_map = {
+        "MEXC": "semi_auto_state_mexc.json",
+        "GATE": "semi_auto_state_gate.json",
+        "GATEIO": "semi_auto_state_gate.json",
+        "BITGET": "semi_auto_state_bitget.json",
+        "BINGX": "semi_auto_state_bingx.json",
+    }
+    return os.path.join(BASE_DIR, name_map.get(ex, os.path.basename(SEMI_AUTO_STATE_PATH)))
+
+
+def _semi_state_known_paths() -> List[str]:
+    paths = [
+        SEMI_AUTO_STATE_PATH,
+        os.path.join(BASE_DIR, "semi_auto_state_mexc.json"),
+        os.path.join(BASE_DIR, "semi_auto_state_gate.json"),
+        os.path.join(BASE_DIR, "semi_auto_state_bitget.json"),
+        os.path.join(BASE_DIR, "semi_auto_state_bingx.json"),
+    ]
+    out = []
+    for p in paths:
+        if p not in out:
+            out.append(p)
+    return out
+
+
+def _semi_state_path_from_signal_id(signal_id: str) -> str:
+    s = str(signal_id or "").upper()
+    for ex in ("MEXC", "GATE", "BITGET", "BINGX"):
+        if f"_{ex}_" in s or s.endswith(f"_{ex}"):
+            return _semi_state_path_for_exchange(ex)
+    return SEMI_AUTO_STATE_PATH
+
+
+def _read_state_file(path: str) -> Dict[str, Any]:
+    state = _read_json(path, {"signals": {}, "users": {}, "positions": {}})
+    if not isinstance(state, dict):
+        state = {"signals": {}, "users": {}, "positions": {}}
+    state.setdefault("signals", {})
+    state.setdefault("users", {})
+    state.setdefault("positions", {})
+    return state
+
+
+def _write_state_file(path: str, state: Dict[str, Any]) -> None:
+    _write_json_atomic(path, state)
+
+
 def _read_semi_state() -> Dict[str, Any]:
-    return _read_json(SEMI_AUTO_STATE_PATH, {"signals": {}, "users": {}})
+    return _read_state_file(SEMI_AUTO_STATE_PATH)
 
 
 def _write_semi_state(state: Dict[str, Any]) -> None:
-    _write_json_atomic(SEMI_AUTO_STATE_PATH, state)
+    _write_state_file(SEMI_AUTO_STATE_PATH, state)
+
+
+def _read_signal_state_file(signal_id: str) -> Tuple[str, Dict[str, Any]]:
+    preferred = _semi_state_path_from_signal_id(signal_id)
+    paths = [preferred] + [p for p in _semi_state_known_paths() if p != preferred]
+    for path in paths:
+        state = _read_state_file(path)
+        if signal_id in (state.get("signals") or {}):
+            return path, state
+    return preferred, _read_state_file(preferred)
 
 
 def save_signal_state(signal_id: str, row: Dict[str, Any]) -> None:
-    state = _read_semi_state()
+    path = _semi_state_path_from_signal_id(signal_id)
+    state = _read_state_file(path)
     row = dict(row or {})
     row.setdefault("used_entry_krw", 0)
     max_entry = int(safe_float(row.get("max_entry_krw") or row.get("final_entry_krw")))
     row.setdefault("remaining_entry_krw", max(0, max_entry - int(safe_float(row.get("used_entry_krw")))))
     state.setdefault("signals", {})[signal_id] = row
-    _write_semi_state(state)
+    _write_state_file(path, state)
 
 
 def get_signal_state(signal_id: str) -> Optional[Dict[str, Any]]:
-    state = _read_semi_state()
+    _, state = _read_signal_state_file(signal_id)
     row = state.get("signals", {}).get(signal_id)
     return row if isinstance(row, dict) else None
 
 
 def get_user_selected_amount(user_id: str, signal_id: str) -> int:
-    state = _read_semi_state()
+    _, state = _read_signal_state_file(signal_id)
     key = f"{user_id}:{signal_id}"
     return int(safe_float(state.get("users", {}).get(key, {}).get("selected_krw")))
 
 
 def set_user_selected_amount(user_id: str, signal_id: str, amount_krw: int) -> int:
-    # 속도 우선: 금액 버튼 단계에서는 최대금액/API/잔고 검사를 하지 않는다.
-    # 선택금액은 누른 만큼 그대로 표시하고, [진입 실행]에서만 차단/검사한다.
+    # 4파일 분리 실행 안정화:
+    # 어떤 파일의 callback poller가 버튼을 잡아도 signal_id의 거래소 상태파일에 저장한다.
     amount_krw = max(0, int(amount_krw))
 
-    state = _read_semi_state()
+    path, state = _read_signal_state_file(signal_id)
     key = f"{user_id}:{signal_id}"
     state.setdefault("users", {})[key] = {
         "selected_krw": amount_krw,
         "updated_at": now_str(),
     }
-    _write_semi_state(state)
+    _write_state_file(path, state)
     return amount_krw
 
 
 def update_signal_usage(signal_id: str, add_used_krw: int = 0) -> Tuple[int, int]:
     """동시 진입 대비 signal 사용금액/남은금액 갱신.
 
-    단일 봇 프로세스 기준으로 callback은 순차 처리되므로 JSON 상태로도 선착순 차감 가능.
-    VPS에서 프로세스를 여러 개 띄울 경우 Supabase RPC/row lock으로 교체 권장.
+    4파일 분리 실행에서는 callback을 어느 프로세스가 받아도
+    signal_id에 포함된 거래소의 상태파일을 찾아 갱신한다.
     return = (used_entry_krw, remaining_entry_krw)
     """
-    state = _read_semi_state()
+    path, state = _read_signal_state_file(signal_id)
     sig = state.setdefault("signals", {}).get(signal_id) or {}
     max_entry = int(safe_float(sig.get("max_entry_krw") or sig.get("final_entry_krw")))
     used = int(safe_float(sig.get("used_entry_krw")))
@@ -1108,7 +1452,7 @@ def update_signal_usage(signal_id: str, add_used_krw: int = 0) -> Tuple[int, int
     sig["used_entry_krw"] = used
     sig["remaining_entry_krw"] = remaining
     state["signals"][signal_id] = sig
-    _write_semi_state(state)
+    _write_state_file(path, state)
     return used, remaining
 
 
@@ -1178,8 +1522,14 @@ BTC 기준 프리미엄: {safe_float(signal.get('btc_gap')):+.2f}%
 {fmt_man_krw(signal.get('max_entry_krw'))}
 남은가능 {fmt_man_krw(signal.get('remaining_entry_krw', signal.get('max_entry_krw')))}
 
-현물벽(0.5%) {fmt_man_krw(signal.get('spot_wall_krw'))}
-선물벽(0.5%) {fmt_man_krw(signal.get('futures_wall_krw'))}
+최소 유지엣지 {safe_float(signal.get('min_retain_edge_percent'), MIN_RETAIN_EDGE_PERCENT):+.2f}%
+허용 슬리피지 {safe_float(signal.get('allowed_slippage_percent')):.2f}%
+
+체결범위별 가능금액
+{signal.get('slippage_tiers_text', '계산 없음')}
+
+국내 최종벽 {fmt_man_krw(signal.get('spot_wall_krw'))}
+해외 최종벽 {fmt_man_krw(signal.get('futures_wall_krw'))}
 거래소 최대 {fmt_man_krw(signal.get('futures_position_limit_krw'))}
 
 펀딩 {funding_text}
@@ -1192,7 +1542,7 @@ BTC 기준 프리미엄: {safe_float(signal.get('btc_gap')):+.2f}%
 {('⚠ 최종 진입가능 ' + fmt_man_krw(signal.get('max_entry_krw')) + ' 초과') if safe_float(selected_krw) > safe_float(signal.get('max_entry_krw')) > 0 else ''}
 
 ※ 금액 버튼은 즉시 누적됩니다.
-※ 진입 실행 시 실제엣지 / 0.5%벽 / 남은금액 / API / 잔고를 재검사합니다.
+※ 진입 실행 시 실제엣지 / 엣지2% 유지 체결범위 / 남은금액 / API / 잔고를 재검사합니다.
 """
 
 
@@ -1205,8 +1555,14 @@ def build_compact_vip_message_from_signal(signal: Dict[str, Any]) -> str:
 
 진입 {fmt_man_krw(signal.get('max_entry_krw'))}
 
-현물벽(0.5%) {fmt_man_krw(signal.get('spot_wall_krw'))}
-선물벽(0.5%) {fmt_man_krw(signal.get('futures_wall_krw'))}
+유지엣지 {safe_float(signal.get('min_retain_edge_percent'), MIN_RETAIN_EDGE_PERCENT):+.2f}%
+허용슬리피지 {safe_float(signal.get('allowed_slippage_percent')):.2f}%
+
+체결범위
+{signal.get('slippage_tiers_text', '계산 없음')}
+
+국내최종벽 {fmt_man_krw(signal.get('spot_wall_krw'))}
+해외최종벽 {fmt_man_krw(signal.get('futures_wall_krw'))}
 거래소최대 {fmt_man_krw(signal.get('futures_position_limit_krw'))}
 
 {signal.get('domestic')} ↔ {signal.get('foreign')}
@@ -1258,7 +1614,13 @@ def member_has_active_coin_position(member: Dict[str, Any], signal: Dict[str, An
 
 
 def notify_approved_members(signal: Dict[str, Any]) -> None:
-    """승인회원 개인 DM 전송. Supabase 승인회원 없으면 스킵."""
+    """승인회원 개인 DM 전송.
+
+    원칙:
+    - 알람 엔진은 건드리지 않고, DM 전송 단계에서만 중복을 막는다.
+    - 같은 tg_chat_id가 DB에 여러 row 있어도 1회만 보낸다.
+    - 이미 같은 코인의 ACTIVE 포지션을 가진 유저만 신규 신호를 제외한다.
+    """
     members = supabase_get_approved_members()
     if not members:
         print("[승인회원 DM] 대상 없음 또는 Supabase 미설정")
@@ -1267,23 +1629,33 @@ def notify_approved_members(signal: Dict[str, Any]) -> None:
     signal_id = str(signal.get("signal_id"))
     save_signal_state(signal_id, signal)
 
+    sent_tg_ids = set()
+
     for member in members:
         tg_id = get_member_chat_id(member)
         if not tg_id:
             print("[승인회원 SKIP] tg_chat_id/chat_id 없음", member)
             continue
+        if tg_id in sent_tg_ids:
+            print(f"[승인회원 SKIP] 중복 tg_chat_id {tg_id}")
+            continue
+        sent_tg_ids.add(tg_id)
+
         if member_has_active_coin_position(member, signal):
             print(f"[승인회원 DM 제외] telegram_id={tg_id} / {signal.get('coin')} ACTIVE 포지션 보유중 - 신규 알림 스킵")
             continue
 
         msg = build_member_dm_message(signal, selected_krw=0)
-        _telegram_send_with_keyboard(
+        ok = _telegram_send_with_keyboard(
             SEMI_AUTO_BOT_TOKEN,
             str(tg_id),
             msg,
             build_entry_keyboard(signal_id),
             "승인회원DM",
         )
+        if not ok:
+            print(f"[승인회원DM 버튼 실패 -> 일반DM fallback] telegram_id={tg_id}")
+            _telegram_send_to(SEMI_AUTO_BOT_TOKEN, str(tg_id), msg, "승인회원DM-Fallback")
 
 
 def fetch_futures_position_limit_krw(future_ex_name: str, fex: Any, market: str, symbol: str, usd_krw: float, best_bid: float) -> Tuple[float, str]:
@@ -1450,11 +1822,10 @@ def realtime_entry_recheck(signal: Dict[str, Any], amount_krw: int) -> Tuple[boo
     if not spot:
         return False, "❌ 진입 취소\n\n사유: 국내 현물 현재 호가 재조회 실패"
     spot_ask_usdt = safe_float(spot.get("best_ask")) / usd_krw
-    spot_wall_krw = sum_ask_wall_quote(spot.get("asks") or [], safe_float(spot.get("best_ask")), WALL_RANGE_PERCENT)
 
     fex = GLOBAL_FUTURE_EXS.get(future_name)
     if not fex:
-        return False, f"❌ 진입 취소\n\n사유: 해외 선물 거래소 객체 없음 ({future_name})"
+        return False, f"❌ 진입 취소\n\n사유: 해외 선물 거래소 객체 없음 ({future_name})\n\n확인: 반자동 재검사용 선물 객체={list(GLOBAL_FUTURE_EXS.keys())}"
     fmarket = signal.get("foreign_market") or find_future_market(fex, coin)
     future = fetch_ccxt_book(fex, fmarket, is_future=True) if fmarket else None
     if not future:
@@ -1473,33 +1844,47 @@ def realtime_entry_recheck(signal: Dict[str, Any], amount_krw: int) -> Tuple[boo
             btc_basis_now = calc_basis_percent(btc_future["best_bid"], btc_spot_ask_usdt)
 
     edge_now = basis_now - btc_basis_now
-    if edge_now < MIN_EDGE_PERCENT:
+    if edge_now < MIN_RETAIN_EDGE_PERCENT:
         return False, (
             "❌ 진입 취소\n\n"
             "사유: 현재 실제엣지 부족\n\n"
             f"알림 당시: {safe_float(signal.get('real_edge')):+.2f}%\n"
             f"현재: {edge_now:+.2f}%\n"
-            f"기준: +{MIN_EDGE_PERCENT:.2f}% 이상"
+            f"최소 유지엣지: +{MIN_RETAIN_EDGE_PERCENT:.2f}% 이상"
         )
 
-    future_wall_usdt = sum_bid_wall_quote(future.get("bids") or [], future["best_bid"], WALL_RANGE_PERCENT)
-    future_wall_krw = future_wall_usdt * usd_krw
-    live_fill_krw = min(spot_wall_krw, future_wall_krw, safe_float(signal.get("futures_position_limit_krw"), 10**18))
+    allowed_slippage = calc_allowed_slippage_percent(edge_now)
+    tiers_text, spot_wall_krw, future_wall_krw, live_fill_krw = build_dynamic_slippage_tiers_text(
+        spot.get("asks") or [],
+        safe_float(spot.get("best_ask")),
+        future.get("bids") or [],
+        future["best_bid"],
+        usd_krw,
+        allowed_slippage,
+        safe_float(signal.get("futures_position_limit_krw"), 10**18),
+        spot.get("quote", "KRW"),
+    )
+
     if amount_krw > live_fill_krw:
         return False, (
             "❌ 진입 취소\n\n"
-            "사유: 현재 0.5% 벽 부족 / 슬리피지 초과 가능\n\n"
+            "사유: 엣지 2% 유지 가능금액 부족 / 동적 슬리피지 초과\n\n"
             f"선택금액: {fmt_man_krw(amount_krw)}\n"
-            f"현재 0.5% 가능: {fmt_man_krw(live_fill_krw)}\n"
-            f"현물벽(0.5%): {fmt_man_krw(spot_wall_krw)}\n"
-            f"선물벽(0.5%): {fmt_man_krw(future_wall_krw)}"
+            f"현재 실제엣지: {edge_now:+.2f}%\n"
+            f"최소 유지엣지: +{MIN_RETAIN_EDGE_PERCENT:.2f}%\n"
+            f"허용 슬리피지: {allowed_slippage:.2f}%\n"
+            f"현재 가능: {fmt_man_krw(live_fill_krw)}\n\n"
+            f"체결범위별 가능금액\n{tiers_text}"
         )
 
     return True, (
         "진입 직전 재검사 통과\n\n"
         f"현재 실제엣지: {edge_now:+.2f}%\n"
-        f"현재 0.5% 가능: {fmt_man_krw(live_fill_krw)}\n"
-        f"남은 가능: {fmt_man_krw(remaining)}"
+        f"최소 유지엣지: +{MIN_RETAIN_EDGE_PERCENT:.2f}%\n"
+        f"허용 슬리피지: {allowed_slippage:.2f}%\n"
+        f"현재 가능: {fmt_man_krw(live_fill_krw)}\n"
+        f"남은 가능: {fmt_man_krw(remaining)}\n\n"
+        f"체결범위별 가능금액\n{tiers_text}"
     )
 
 
@@ -1512,6 +1897,17 @@ def check_entry_balances(user_id: str, signal: Dict[str, Any], amount_krw: int) 
     ok_live, live_reason = realtime_entry_recheck(signal, amount_krw)
     if not ok_live:
         return False, live_reason
+
+    # 실전가상 모드:
+    # 실제 주문을 내지 않으므로 유저 API/잔고 검사는 하지 않는다.
+    # 현재 엣지/엣지2% 유지 체결범위/거래소MAX/남은금액 재검사만 통과하면 가상진입 허용.
+    if PAPER_TRADING_ENABLED and not REAL_ORDER_ENABLED:
+        return True, (
+            live_reason + "\n\n"
+            "✅ 실전가상 모드 통과\n"
+            "실제 주문 OFF / API·잔고 검사 SKIP\n"
+            "가상 진입 데이터만 저장합니다."
+        )
 
     member = find_member_by_telegram_id(user_id)
     if not member:
@@ -1586,9 +1982,11 @@ def check_entry_balances(user_id: str, signal: Dict[str, Any], amount_krw: int) 
 
 def register_semi_auto_position(user_id: str, signal: Dict[str, Any], amount_krw: int) -> str:
     """진입 성공 후 자동청산 감시 대상으로 등록한다."""
-    state = _read_semi_state()
+    signal_id_for_path = str(signal.get("signal_id") or "")
+    path, state = _read_signal_state_file(signal_id_for_path)
     pos_id = f"POS_{signal.get('signal_id')}_{user_id}_{int(time.time())}"
     entry_edge = safe_float(signal.get("real_edge"))
+    domestic_entry_krw, foreign_entry_krw, final_entry_krw = calc_domestic_foreign_entry_amounts(signal, amount_krw)
     state.setdefault("positions", {})[pos_id] = {
         "pos_id": pos_id,
         "user_id": str(user_id),
@@ -1598,7 +1996,9 @@ def register_semi_auto_position(user_id: str, signal: Dict[str, Any], amount_krw
         "foreign": signal.get("foreign"),
         "domestic_market": signal.get("domestic_market"),
         "foreign_market": signal.get("foreign_market"),
-        "amount_krw": int(amount_krw),
+        "amount_krw": int(final_entry_krw),
+        "domestic_entry_krw": int(domestic_entry_krw),
+        "foreign_entry_krw": int(foreign_entry_krw),
         "entry_edge": entry_edge,
         "take_profit_edge": AUTO_TAKE_PROFIT_EDGE_PERCENT,
         "take_profit_force_edge": AUTO_TAKE_PROFIT_FORCE_EDGE_PERCENT,
@@ -1612,7 +2012,15 @@ def register_semi_auto_position(user_id: str, signal: Dict[str, Any], amount_krw
         "opened_at": now_str(),
         "real_order": REAL_ORDER_ENABLED,
     }
-    _write_semi_state(state)
+    _write_state_file(path, state)
+
+    # V8.1 저장 보강:
+    # 실전가상/페이퍼 모드에서는 진입 성공 즉시 CSV 기록을 강제로 남긴다.
+    try:
+        paper_record_entry(pos_id, user_id, signal, int(final_entry_krw))
+    except Exception as e:
+        print(f"[실전가상 기록 실패] 진입 CSV 저장 실패 {pos_id}: {e}")
+
     return pos_id
 
 
@@ -1640,11 +2048,13 @@ def mark_position_closed(pos_id: str, status: str, current_edge: float, reason: 
     state = _read_semi_state()
     pos = state.setdefault("positions", {}).get(pos_id)
     if isinstance(pos, dict):
+        before_close = dict(pos)
         pos["status"] = status
         pos["closed_at"] = now_str()
         pos["close_edge"] = round(current_edge, 4)
         pos["close_reason"] = reason
         _write_semi_state(state)
+        paper_record_close(pos_id, before_close, status, current_edge, reason)
 
 
 def execute_auto_close_orders(pos: Dict[str, Any], current_edge: float) -> Tuple[bool, str]:
@@ -1861,8 +2271,13 @@ def process_callback_query(cb: Dict[str, Any]) -> None:
         telegram_answer_callback(cb_id, "잔고 확인 중...")
         ok, reason = check_entry_balances(user_id, signal, selected)
         if not ok:
+            # 진입 실행 실패 시 선택금액 초기화.
+            # 실패 후 기존 금액이 남아 있으면 다음 신호/재시도 때 실수로 과금액 진입할 수 있음.
+            selected = set_user_selected_amount(user_id, signal_id, 0)
             fail_text = reason if str(reason).lstrip().startswith("❌") else "❌ 진입 불가\n\n" + reason
-            telegram_edit_message(chat_id, message_id, build_member_dm_message(signal, selected) + "\n" + fail_text, build_entry_keyboard(signal_id))
+            reset_text = "\n\n선택금액은 0원으로 초기화되었습니다."
+            telegram_answer_callback(cb_id, "진입 불가 - 금액 초기화", True)
+            telegram_edit_message(chat_id, message_id, build_member_dm_message(signal, selected) + "\n" + fail_text + reset_text, build_entry_keyboard(signal_id))
             return
 
         confirm_text = f"""✅ 진입 전 확인
@@ -1892,40 +2307,66 @@ def process_callback_query(cb: Dict[str, Any]) -> None:
         telegram_answer_callback(cb_id, "최종 잔고 재확인 중...")
         ok, reason = check_entry_balances(user_id, signal, amount)
         if not ok:
+            # 최종 확인 실패 시에도 선택금액 초기화.
+            selected = set_user_selected_amount(user_id, signal_id, 0)
             fail_text = reason if str(reason).lstrip().startswith("❌") else "❌ 진입 불가\n\n" + reason
-            telegram_edit_message(chat_id, message_id, build_member_dm_message(signal, amount) + "\n" + fail_text, build_entry_keyboard(signal_id))
+            reset_text = "\n\n선택금액은 0원으로 초기화되었습니다."
+            telegram_answer_callback(cb_id, "진입 불가 - 금액 초기화", True)
+            telegram_edit_message(chat_id, message_id, build_member_dm_message(signal, selected) + "\n" + fail_text + reset_text, build_entry_keyboard(signal_id))
             return
 
         remaining_before = get_signal_remaining_krw(signal_id)
         if amount > remaining_before > 0:
-            telegram_answer_callback(cb_id, "남은금액 부족", True)
+            selected = set_user_selected_amount(user_id, signal_id, 0)
+            telegram_answer_callback(cb_id, "남은금액 부족 - 금액 초기화", True)
             fail_text = (
                 "❌ 진입 불가\n\n"
                 "사유: 남은 진입 가능금액 부족\n\n"
                 f"선택금액: {fmt_man_krw(amount)}\n"
                 f"현재 남음: {fmt_man_krw(remaining_before)}"
             )
-            telegram_edit_message(chat_id, message_id, build_member_dm_message(signal, amount) + "\n" + fail_text, build_entry_keyboard(signal_id))
+            reset_text = "\n\n선택금액은 0원으로 초기화되었습니다."
+            telegram_edit_message(chat_id, message_id, build_member_dm_message(signal, selected) + "\n" + fail_text + reset_text, build_entry_keyboard(signal_id))
             return
 
-        used_after, remaining_after = update_signal_usage(signal_id, amount)
         # 최신 signal 상태를 다시 읽어 화면에 남은 금액 반영
         signal = get_signal_state(signal_id) or signal
-        pos_id = register_semi_auto_position(user_id, signal, amount)
+        domestic_entry_krw, foreign_entry_krw, final_entry_krw = calc_domestic_foreign_entry_amounts(signal, amount)
+
+        # 최종 기준금액만큼 사용 처리
+        used_after, remaining_after = update_signal_usage(signal_id, final_entry_krw)
+
+        pos_id = register_semi_auto_position(user_id, signal, final_entry_krw)
         telegram_answer_callback(cb_id, "자동청산 감시 등록")
         telegram_send_private(
             user_id,
-            "✅ 반자동 진입 감시 등록\n\n"
-            f"코인: {signal.get('coin')}\n"
-            f"금액: {fmt_man_krw(amount)}\n"
-            f"포지션ID: {pos_id}\n\n"
-            f"자동익절: 실제엣지 {AUTO_TAKE_PROFIT_EDGE_PERCENT:+.2f}% 이하 유연 청산\n"
-            f"1차 경고: 진입엣지 +{AUTO_WARN_EDGE_ADD_PERCENT:.2f}%p\n"
-            f"2차 강경고: 진입엣지 +{AUTO_STRONG_WARN_EDGE_ADD_PERCENT:.2f}%p\n"
-            f"자동손절: 진입엣지 +{AUTO_STOP_WATCH_EDGE_ADD_PERCENT:.2f}%p 이상 {AUTO_STOP_HOLD_SEC // 60}분 유지\n\n"
-            "※ 이 코인을 보유 중인 동안 같은 코인의 신규 진입 알림은 받지 않고, 청산/경고 알림만 받습니다.\n"
-            "현재 REAL_ORDER_ENABLED=False이면 실제 주문/청산은 실행하지 않고 조건 감지만 합니다.\n"
-            "실제 주문 함수 연결 후 이 단계에서 현물 매수 + 선물 숏 진입이 실행됩니다."
+            (
+                "✅ 실전가상 진입 감시 등록\n\n" if not REAL_ORDER_ENABLED else "✅ 반자동 진입 감시 등록\n\n"
+            )
+            + f"코인: {signal.get('coin')}\n"
+            + f"경로: {signal.get('domestic')} ↔ {signal.get('foreign')}\n\n"
+            + f"국내 진입: {fmt_man_krw(domestic_entry_krw)}\n"
+            + f"해외 선물 진입: {fmt_man_krw(foreign_entry_krw)}\n"
+            + f"최종 기준금액: {fmt_man_krw(final_entry_krw)}\n\n"
+            + f"진입 실제엣지: {safe_float(signal.get('real_edge')):+.2f}%\n"
+            + f"최소 유지엣지: {safe_float(signal.get('min_retain_edge_percent'), MIN_RETAIN_EDGE_PERCENT):+.2f}%\n"
+            + f"허용 슬리피지: {safe_float(signal.get('allowed_slippage_percent')):.2f}%\n"
+            + f"국내 최종벽: {fmt_man_krw(signal.get('spot_wall_krw'))}\n"
+            + f"해외 최종벽: {fmt_man_krw(signal.get('futures_wall_krw'))}\n"
+            + f"거래소MAX: {fmt_man_krw(signal.get('futures_position_limit_krw'))}\n"
+            + f"남은 가능금액: {fmt_man_krw(remaining_after)}\n"
+            + f"포지션ID: {pos_id}\n\n"
+            + f"자동익절: 실제엣지 {AUTO_TAKE_PROFIT_EDGE_PERCENT:+.2f}% 이하 유연 청산\n"
+            + f"1차 경고: 진입엣지 +{AUTO_WARN_EDGE_ADD_PERCENT:.2f}%p\n"
+            + f"2차 강경고: 진입엣지 +{AUTO_STRONG_WARN_EDGE_ADD_PERCENT:.2f}%p\n"
+            + f"자동손절: 진입엣지 +{AUTO_STOP_WATCH_EDGE_ADD_PERCENT:.2f}%p 이상 {AUTO_STOP_HOLD_SEC // 60}분 유지\n\n"
+            + "※ 이 코인을 보유 중인 동안 같은 코인의 신규 진입 알림은 받지 않고, 청산/경고 알림만 받습니다.\n"
+            + (
+                "실제 주문 OFF / API·잔고 검사 SKIP\n"
+                "가상 진입 데이터가 저장되었습니다."
+                if not REAL_ORDER_ENABLED else
+                "실제 주문 함수 연결 후 이 단계에서 현물 매수 + 선물 숏 진입이 실행됩니다."
+            )
         )
         return
 
@@ -1935,6 +2376,64 @@ def process_callback_query(cb: Dict[str, Any]) -> None:
         return
 
 
+
+
+def send_startup_test_dm_to_approved_members() -> None:
+    """테스트용 실행 시작 알림.
+
+    목적:
+    - 양방 후보가 실제로 뜰 때까지 기다리지 않아도, 승인회원 DM 통로가 살아있는지 바로 확인한다.
+    - 기존 연결완료 DM의 connected_members 중복방지와 완전히 분리한다.
+    - 실시간 신호/청산/알림 엔진은 건드리지 않는다.
+    """
+    if not SEND_STARTUP_TEST_DM:
+        print("[시작테스트DM] 비활성화")
+        return
+
+    members = supabase_get_approved_members(force_refresh=True)
+    if not members:
+        print("[시작테스트DM] 대상 없음 또는 Supabase 미설정")
+        return
+
+    sent_tg_ids = set()
+    ok_count = 0
+    fail_count = 0
+    skip_count = 0
+
+    text = f"""✅ K-EDGE 반자동 봇 실행 테스트
+
+봇이 정상 실행되었습니다.
+승인회원 개인 DM 연결 테스트 알림입니다.
+
+이 메시지가 오면:
+- Supabase 승인회원 조회 정상
+- tg_chat_id 읽기 정상
+- 개인 DM 봇 전송 정상
+
+실시간 양방 신호가 뜨면 금액 버튼과 함께 별도 알림이 전송됩니다.
+
+🕒 {now_str()}"""
+
+    for member in members:
+        tg_id = get_member_chat_id(member)
+        if not tg_id:
+            print("[시작테스트DM SKIP] tg_chat_id/chat_id 없음", member.get("id"), member.get("email"))
+            skip_count += 1
+            continue
+        tg_id = str(tg_id).strip()
+        if tg_id in sent_tg_ids:
+            print(f"[시작테스트DM SKIP] 중복 tg_chat_id {tg_id}")
+            skip_count += 1
+            continue
+        sent_tg_ids.add(tg_id)
+
+        ok = _telegram_send_to(SEMI_AUTO_BOT_TOKEN, tg_id, text, "시작테스트DM")
+        if ok:
+            ok_count += 1
+        else:
+            fail_count += 1
+
+    print(f"[시작테스트DM 결과] 성공={ok_count} / 실패={fail_count} / 스킵={skip_count}")
 
 def sync_approved_member_telegram_connection() -> None:
     """
@@ -2197,6 +2696,68 @@ def sum_bid_wall_quote(bids: List[List[float]], best_bid: float, range_pct: floa
         if price >= min_price:
             total += price * amount
     return total
+
+
+
+def calc_allowed_slippage_percent(edge_percent: float) -> float:
+    """현재 실제엣지가 최소 유지엣지 2% 이상 남도록 허용 가능한 슬리피지."""
+    return max(0.0, safe_float(edge_percent) - safe_float(MIN_RETAIN_EDGE_PERCENT))
+
+
+def build_slippage_ranges(allowed_pct: float) -> List[float]:
+    """0.5%, 1.0% ... 허용 슬리피지까지 표시. 2.1%면 0.1%만 표시."""
+    allowed = round(max(0.0, safe_float(allowed_pct)), 4)
+    if allowed <= 0:
+        return []
+    step = max(0.1, safe_float(DYNAMIC_SLIPPAGE_STEP_PERCENT, 0.5))
+    vals: List[float] = []
+    cur = step
+    while cur < allowed - 1e-9:
+        vals.append(round(cur, 4))
+        cur += step
+    # 허용값이 0.5 단위와 정확히 같지 않으면 마지막에 정확한 허용값 표시
+    if not vals or abs(vals[-1] - allowed) > 1e-9:
+        vals.append(round(allowed, 4))
+    return vals
+
+
+def build_dynamic_slippage_tiers_text(
+    spot_asks: List[List[float]],
+    spot_best_ask: float,
+    futures_bids: List[List[float]],
+    futures_best_bid: float,
+    usd_krw: float,
+    allowed_pct: float,
+    futures_position_limit_krw: float,
+    spot_quote: str = "KRW",
+) -> Tuple[str, float, float, float]:
+    """허용 슬리피지 구간별 국내/해외 체결 가능금액 표시용 텍스트 생성."""
+    ranges = build_slippage_ranges(allowed_pct)
+    if not ranges:
+        return "허용 슬리피지 없음", 0.0, 0.0, 0.0
+
+    lines = []
+    last_spot_krw = 0.0
+    last_future_krw = 0.0
+    last_final_krw = 0.0
+
+    for r in ranges:
+        spot_wall = sum_ask_wall_quote(spot_asks, spot_best_ask, r)
+        spot_wall_krw = spot_wall if str(spot_quote).upper() == "KRW" else spot_wall * usd_krw
+        future_wall_krw = sum_bid_wall_quote(futures_bids, futures_best_bid, r) * usd_krw
+        final_krw = min(
+            safe_float(spot_wall_krw),
+            safe_float(future_wall_krw),
+            safe_float(futures_position_limit_krw, 10**18),
+        )
+        last_spot_krw = spot_wall_krw
+        last_future_krw = future_wall_krw
+        last_final_krw = final_krw
+        lines.append(
+            f"{r:.2f}%: 국내 {fmt_man_krw(spot_wall_krw)} / 해외 {fmt_man_krw(future_wall_krw)} / 최종 {fmt_man_krw(final_krw)}"
+        )
+
+    return "\n".join(lines), last_spot_krw, last_future_krw, last_final_krw
 
 
 # ============================================================
@@ -2602,6 +3163,31 @@ def init_ccxt_all() -> Tuple[Dict[str, Any], Dict[str, Any]]:
     return spot_exs, future_exs
 
 
+def init_callback_future_exs(scan_future_exs: Dict[str, Any]) -> Dict[str, Any]:
+    """반자동 버튼 진입 재검사용 선물 객체.
+
+    4파일 모드에서는 버튼 callback poller를 MEXC 파일 1개만 켠다.
+    따라서 MEXC 파일이 BINGX/GATE/BITGET 신호 버튼도 처리할 수 있어야 한다.
+    스캔은 각 파일의 단일 거래소만 유지하고, callback 재검사용 객체만 4개를 모두 로딩한다.
+    """
+    out = dict(scan_future_exs or {})
+    if not ENABLE_CALLBACK_POLLER:
+        return out
+
+    for name, ccxt_id in CALLBACK_FUTURES_EXCHANGES:
+        if name in out:
+            continue
+        try:
+            ex = init_exchange(name, ccxt_id, "swap")
+            out[name] = ex
+            print(f"[반자동 재검사용 선물 등록] {name} / 마켓 {len(ex.markets)}개")
+        except Exception as e:
+            print(f"[반자동 재검사용 선물 등록 실패] {name}: {e}")
+
+    print("[반자동 재검사용 선물 객체]", sorted(out.keys()))
+    return out
+
+
 def find_spot_market(ex: Any, base: str) -> Optional[str]:
     base = normalize_symbol(base)
     if is_bad_symbol(base):
@@ -2756,6 +3342,9 @@ def fetch_all_domestic_spots() -> List[Dict[str, Any]]:
 
     all_items = []
     for fn, limit in funcs:
+        if int(limit) <= 0:
+            print(f"[국내 현물] {fn.__name__}: SKIP / 검사 0개")
+            continue
         items = fn()
         items.sort(key=lambda x: x.get("volume_krw", 0), reverse=True)
         limited = items[:limit]
@@ -2921,11 +3510,8 @@ def scan_once(spot_exs: Dict[str, Any], future_exs: Dict[str, Any]) -> None:
         # 현물 매수 기준 가격을 USDT로 환산
         if spot["quote"] == "KRW":
             spot_ask_usdt = spot["best_ask"] / usd_krw
-            spot_wall_krw = sum_ask_wall_quote(spot["asks"], spot["best_ask"], WALL_RANGE_PERCENT)
         else:
             spot_ask_usdt = spot["best_ask"]
-            spot_wall_usdt = sum_ask_wall_quote(spot["asks"], spot["best_ask"], WALL_RANGE_PERCENT)
-            spot_wall_krw = spot_wall_usdt * usd_krw
 
         if spot_ask_usdt <= 0:
             continue
@@ -2977,13 +3563,11 @@ def scan_once(spot_exs: Dict[str, Any], future_exs: Dict[str, Any]) -> None:
                 # 반자동 활성 포지션 자동청산/손절 감시
                 check_semi_auto_auto_close(base, spot.get("source", ""), future_ex_name, edge, funding_rate_percent)
 
-                # 기존 진입 코인은 신규 알림 기준과 무관하게 청산/손절/펀딩 이벤트를 먼저 체크
-                # 단, 최초 알림이 발생한 동일 국내거래소 + 동일 해외선물 거래소 조합만 추적한다.
+                # 기존 진입 조합은 신규 알림 기준과 무관하게 청산/손절/펀딩 이벤트를 먼저 체크한다.
+                # 같은 코인이라도 국내거래소+해외선물 조합이 다르면 별도 기회로 둔다.
                 lock_key = make_active_lock_key(base, spot.get("source", ""), future_ex_name)
-                locked = active_symbol_locks.get(lock_key)
-                if locked:
+                if active_symbol_locks.get(lock_key):
                     active_lock_check(base, spot.get("source", ""), future_ex_name, edge, funding_rate_percent)
-                    # 동일 조합만 잠금. 다른 국내거래소/해외선물 조합은 신규 알림 허용.
                     continue
 
                 if edge < MIN_EDGE_PERCENT:
@@ -3003,9 +3587,6 @@ def scan_once(spot_exs: Dict[str, Any], future_exs: Dict[str, Any]) -> None:
                     print(f"[이상괴리 제외] {spot['source']} {base} -> {future_ex_name} basis={basis:.2f}% edge={edge:.2f}%")
                     continue
 
-                future_wall_usdt = sum_bid_wall_quote(future["bids"], future["best_bid"], WALL_RANGE_PERCENT)
-                future_wall_krw = future_wall_usdt * usd_krw
-
                 futures_position_limit_krw, limit_source = fetch_futures_position_limit_krw(
                     future_ex_name=future_ex_name,
                     fex=fex,
@@ -3015,12 +3596,26 @@ def scan_once(spot_exs: Dict[str, Any], future_exs: Dict[str, Any]) -> None:
                     best_bid=future["best_bid"],
                 )
 
+                allowed_slippage = calc_allowed_slippage_percent(edge)
+                slippage_tiers_text, spot_wall_krw, future_wall_krw, dynamic_fill_krw = build_dynamic_slippage_tiers_text(
+                    spot["asks"],
+                    spot["best_ask"],
+                    future["bids"],
+                    future["best_bid"],
+                    usd_krw,
+                    allowed_slippage,
+                    futures_position_limit_krw,
+                    spot.get("quote", "KRW"),
+                )
+
                 real_fill_krw = min(spot_wall_krw, future_wall_krw)
-                final_entry_krw = min(real_fill_krw, futures_position_limit_krw)
+                final_entry_krw = min(dynamic_fill_krw, futures_position_limit_krw)
                 if MAX_USER_ENTRY_KRW > 0:
                     final_entry_krw = min(final_entry_krw, MAX_USER_ENTRY_KRW)
 
-                # 0.5% 벽 기준: 양쪽 각각 100만원 이상이어야 수익금 측정이 의미 있음
+                # V8 동적 슬리피지 기준: 엣지 2% 이상 유지 가능한 체결금액만 진입 가능
+                if allowed_slippage <= 0:
+                    continue
                 if spot_wall_krw < MIN_SPOT_WALL_KRW:
                     continue
                 if future_wall_krw < MIN_FUTURES_WALL_KRW:
@@ -3030,7 +3625,7 @@ def scan_once(spot_exs: Dict[str, Any], future_exs: Dict[str, Any]) -> None:
                 if final_entry_krw < MIN_REAL_FILL_KRW:
                     print(
                         f"[최종진입금액 부족 제외] {spot.get('source')} {base} -> {future_ex_name} "
-                        f"final={fmt_krw(final_entry_krw)} / max_limit_source={limit_source}"
+                        f"final={fmt_krw(final_entry_krw)} / 허용슬리피지={allowed_slippage:.2f}% / max_limit_source={limit_source}"
                     )
                     continue
 
@@ -3069,12 +3664,15 @@ def scan_once(spot_exs: Dict[str, Any], future_exs: Dict[str, Any]) -> None:
                     "real_fill_krw": round(real_fill_krw),
                     "futures_position_limit_krw": round(futures_position_limit_krw),
                     "futures_position_limit_source": limit_source,
-                    "max_user_entry_krw": MAX_USER_ENTRY_KRW if MAX_USER_ENTRY_KRW > 0 else None,
+                    "min_retain_edge_percent": round(MIN_RETAIN_EDGE_PERCENT, 2),
+                    "allowed_slippage_percent": round(allowed_slippage, 2),
+                    "slippage_tiers_text": slippage_tiers_text,
+                    "max_user_entry_krw": MAX_USER_ENTRY_KRW,
                     "max_entry_krw": round(final_entry_krw),
                     "final_entry_krw": round(final_entry_krw),
                     "used_entry_krw": 0,
                     "remaining_entry_krw": round(final_entry_krw),
-                    "wall_range_percent": WALL_RANGE_PERCENT,
+                    "wall_range_percent": round(allowed_slippage, 4),
                     "executable_krw": round(final_entry_krw),
                     "krw": round(final_entry_krw),
                     "usd_krw": round(usd_krw, 4),
@@ -3085,21 +3683,28 @@ def scan_once(spot_exs: Dict[str, Any], future_exs: Dict[str, Any]) -> None:
                 msg = build_compact_vip_message_from_signal(signal_row)
                 print(msg)
 
-                if telegram_send(msg):
+                vip_sent = telegram_send(msg)
+                if vip_sent:
                     mark_active_lock(base, edge, spot.get("source", ""), future_ex_name)
 
                     free_msg = build_compact_free_message_from_signal(signal_row)
                     telegram_send_free(free_msg)
+                else:
+                    print("[주의] VIP 텔레그램 전송 실패 - 그래도 Supabase 저장/승인회원 DM은 계속 진행")
 
-                    # 로컬 홈페이지 JSON 저장
-                    save_web_signal(signal_row)
+                # 로컬 홈페이지 JSON 저장
+                save_web_signal(signal_row)
 
-                    # Supabase signals 저장 + 승인회원 개인 DM 전송
-                    supabase_insert_signal(signal_row)
-                    save_signal_state(signal_id, signal_row)
-                    notify_approved_members(signal_row)
+                # Supabase signals 저장 + 승인회원 개인 DM 전송
+                # 4파일 분리 테스트에서도 유저 DM은 거래소별 개별 신호로 반드시 호출한다.
+                print(f"[승인회원 DM 호출] {signal_row.get('coin')} / {signal_row.get('domestic')} -> {signal_row.get('foreign')} / signal_id={signal_id}")
+                supabase_insert_signal(signal_row)
+                save_signal_state(signal_id, signal_row)
+                notify_approved_members(signal_row)
 
-                    auto_git_push()
+                # 4파일 동시 테스트에서는 git push 충돌 방지를 위해 자동 PUSH는 끈다.
+                # 홈페이지 반영이 필요하면 단일 통합본에서 다시 켜면 된다.
+                print("[홈페이지 자동 PUSH] 4파일 분리 테스트 모드 - 스킵")
                 alerts += 1
                 time.sleep(0.1)
 
@@ -3116,15 +3721,15 @@ def boot_message() -> None:
 현물 매수 + 선물 숏 전용
 
 국내 현물:
-UPBIT / BITHUMB
-속도 모드: 업비트 70개 / 빗썸 20개
+BITHUMB 전용
+속도 모드: 빗썸 140개 / 업비트 제외
 
 해외 현물:
 완전 제외
 
 해외 선물:
-MEXC / GATE / BITGET / BINGX
-홈페이지 레퍼럴 연결 거래소만 사용
+MEXC 전용
+4파일 분리 속도 테스트 모드
 
 기준:
 BTC 기준 실제 엣지 +{MIN_EDGE_PERCENT:.1f}% 이상
@@ -3160,12 +3765,15 @@ def start_semi_auto_callback_poller() -> None:
     if not SEMI_AUTO_BOT_TOKEN:
         print("[반자동 버튼 폴러] SEMI_AUTO_BOT_TOKEN 없음")
         return
+    if not ENABLE_CALLBACK_POLLER:
+        print("[반자동 버튼 폴러] 비활성화 - 4파일 모드에서는 MEXC 파일 1개만 버튼 처리")
+        return
     th = threading.Thread(target=semi_auto_callback_poller_loop, daemon=True)
     th.start()
 
 def main() -> None:
     print("=" * 70)
-    print("국내 현물 → 해외 선물 괴리 감시봇 - 빠른 테스트 모드")
+    print("국내 현물 → 해외 선물 괴리 감시봇 - BITHUMB->MEXC 전용 4파일 속도 모드")
     print("중지: Ctrl + C")
     print("=" * 70)
 
@@ -3175,7 +3783,7 @@ def main() -> None:
 
     spot_exs, future_exs = init_ccxt_all()
     global GLOBAL_FUTURE_EXS
-    GLOBAL_FUTURE_EXS = future_exs
+    GLOBAL_FUTURE_EXS = init_callback_future_exs(future_exs)
 
     if not future_exs:
         print("선물 거래소 등록 실패")
@@ -3183,6 +3791,8 @@ def main() -> None:
 
     boot_message()
     start_semi_auto_callback_poller()
+    # 테스트 중에는 실행 즉시 승인회원 개인 DM 통로를 확인한다.
+    send_startup_test_dm_to_approved_members()
 
     while True:
         try:

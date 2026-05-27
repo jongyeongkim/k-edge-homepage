@@ -63,7 +63,7 @@ button:hover, .btn:hover, .login:hover, .join:hover, .outline:hover, .register-c
 
 
 
-/* 레퍼럴 배너 / 페이지 */
+/* 추천인 배너 / 페이지 */
 .referral-banner{
   width:92vw;max-width:1380px;margin:36px auto;
   border:1px solid rgba(49,213,255,.26);
@@ -107,7 +107,7 @@ button:hover, .btn:hover, .login:hover, .join:hover, .outline:hover, .register-c
   .referral-actions,.referral-grid,.ref-steps{grid-template-columns:1fr}
 }
 
-/* v4: 레퍼럴 배너 강제 표시 보강 */
+/* v4: 추천인 배너 강제 표시 보강 */
 .referral-banner{
   width:92vw!important;
   max-width:1380px!important;
@@ -143,7 +143,7 @@ footer a{color:#31d5ff;text-decoration:none;font-weight:800}
 @media(max-width:1000px){.referral-banner{grid-template-columns:1fr!important}.referral-actions{grid-template-columns:1fr 1fr!important}}
 @media(max-width:640px){.referral-actions{grid-template-columns:1fr!important}}
 
-/* v5: 메인 레퍼럴 섹션 확실히 노출 */
+/* v5: 메인 추천인 섹션 확실히 노출 */
 .referral-obvious{
   width:92vw;
   max-width:1380px;
@@ -372,7 +372,7 @@ footer a{color:#31d5ff;text-decoration:none;font-weight:800}
 }
 
 
-/* ===== 가격/카드 정렬/레퍼럴 할인 원화 표기 보강 ===== */
+/* ===== 가격/카드 정렬/추천인 할인 원화 표기 보강 ===== */
 .service-card{
   display:flex;
   flex-direction:column;
@@ -526,3 +526,11 @@ footer a{color:#31d5ff;text-decoration:none;font-weight:800}
 .guide-section{width:92vw;max-width:1380px;margin:26px auto;border:1px solid rgba(145,176,255,.22);background:linear-gradient(150deg,rgba(12,30,58,.70),rgba(3,9,20,.78));border-radius:22px;padding:30px;box-shadow:0 18px 60px rgba(0,0,0,.20)}
 .guide-section h2{font-size:30px;margin:0 0 12px}.guide-section .lead{color:#cbd5e1;line-height:1.7;margin:0 0 20px}.guide-two{display:grid;grid-template-columns:.82fr 1.18fr;gap:22px;align-items:start}.guide-three{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.guide-card{border:1px solid rgba(145,176,255,.20);background:rgba(5,14,30,.70);border-radius:18px;padding:20px}.guide-card h3{margin:0 0 10px;font-size:21px}.guide-card p,.guide-card li{color:#c8d3e4;line-height:1.7}.guide-card ul{padding-left:20px;margin:8px 0 0}.guide-shot-wrap{border:1px solid rgba(145,176,255,.22);background:rgba(0,0,0,.24);border-radius:20px;padding:16px;text-align:center}.guide-shot{width:100%;max-width:320px;border-radius:18px;border:1px solid rgba(145,176,255,.28);box-shadow:0 16px 44px rgba(0,0,0,.35);display:block;margin:0 auto}.guide-shot.small{max-width:280px}.guide-shot.land{max-width:430px}.guide-caption{margin:12px 0 0;color:#aeb8c8;font-weight:800}.term-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.term{border:1px solid rgba(145,176,255,.16);background:rgba(4,12,28,.62);border-radius:16px;padding:16px}.term b{display:block;color:#31d5ff;margin-bottom:7px;font-size:17px}.term p{margin:0;color:#cbd5e1;line-height:1.65}.formula-box{border:1px dashed rgba(49,213,255,.45);background:rgba(49,213,255,.07);border-radius:16px;padding:16px;color:#eaf9ff;font-weight:900;line-height:1.7}.safe-list{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.safe-list div{border:1px solid rgba(145,176,255,.18);background:rgba(5,14,30,.7);border-radius:14px;padding:16px;color:#dbe7f7;font-weight:850}.flow-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.flow-steps article{border:1px solid rgba(145,176,255,.20);background:rgba(5,14,30,.66);border-radius:16px;padding:18px}.flow-steps b{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#31d5ff,#7d5cff);margin-bottom:10px}.flow-steps h3{margin:4px 0 8px}.flow-steps p{margin:0;color:#b8c4d4;line-height:1.6}.warning-note{border:1px solid rgba(255,198,61,.35);background:rgba(255,198,61,.08);color:#fff0bf;border-radius:16px;padding:16px;line-height:1.65;font-weight:800}.button-demo{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}.button-demo span{display:grid;place-items:center;min-height:44px;border-radius:12px;background:linear-gradient(135deg,rgba(49,213,255,.18),rgba(125,92,255,.18));border:1px solid rgba(145,176,255,.28);font-weight:950}.guide-mini-table{width:100%;border-collapse:collapse;overflow:hidden;border-radius:14px}.guide-mini-table th,.guide-mini-table td{border-bottom:1px solid rgba(145,176,255,.13);padding:13px 12px;text-align:left;color:#dbe7f7}.guide-mini-table th{background:rgba(49,92,160,.22);color:#fff}.guide-mini-table tr:last-child td{border-bottom:0}
 @media(max-width:1000px){.guide-two,.guide-three,.term-grid,.safe-list,.flow-steps{grid-template-columns:1fr}.guide-alert-top{flex-direction:column;align-items:flex-start}.guide-shot{max-width:270px}.guide-shot.land{max-width:320px}}
+
+
+/* 추천인 할인 가격 라인 */
+.discount-price-line span{
+  border-color:rgba(49,213,255,.38)!important;
+  background:rgba(49,213,255,.08)!important;
+  color:#31d5ff!important;
+}
