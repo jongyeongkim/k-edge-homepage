@@ -21,9 +21,8 @@
       <a href="./index.html" data-nav="home">홈</a>
       <a href="./pricing.html" data-nav="pricing">요금제</a>
       <a href="./guide.html" data-nav="guide">가이드</a>
-      <a href="./referral.html" data-nav="referral">추천인</a>
+      <a href="./referral.html" data-nav="referral">레퍼럴</a>
       <a href="./payment.html" data-nav="payment">등록</a>
-      <a href="./auto-settings.html" data-nav="auto">AUTO 설정</a>
       <a href="./support.html" data-nav="support">문의</a>
       <a href="./mypage.html" data-nav="mypage">내정보</a>
     </nav>
@@ -56,19 +55,17 @@
         <div class="auth-card profile-card">
           <h3>내 계정</h3>
           <p>이메일 : <span id="myEmail">-</span></p>
-          <p>서비스상태 : <span id="myPlan">FREE</span></p>
+          <p>구독상태 : <span id="myPlan">FREE</span></p>
           <p>텔레그램 : <span id="myTelegram">미등록</span></p>
           <p>승인상태 : <span id="myApproval">확인중</span></p>
           <p>최근신청 : <span id="myLastRequest">신청 내역 없음</span></p>
           <p>입장링크 : <span id="myInviteLink">승인 후 표시</span></p>
-          <p>알람상태 : <span id="myAlertStatus">승인 후 ON</span></p>
-          <p>자동매매 : <span id="myAutoTradeStatus">OFF (설정 필요)</span></p>
           <div data-my-bot style="display:none;">
             <p>BOT TOKEN : <span id="myBotToken">미등록</span></p>
             <p>CHAT ID : <span id="myChatId">미등록</span></p>
           </div>
           <div data-my-auto style="display:none;">
-            <p>연동상태 : <span id="myExchange">미등록</span></p>
+            <p>거래소 : <span id="myExchange">미등록</span></p>
             <p>API KEY : <span id="myApiKey">미등록</span></p>
             <p>SECRET : <span id="myApiSecret">미등록</span></p>
           </div>
@@ -76,21 +73,29 @@
         </div>
         <div class="auth-card">
           <h3>빠른 이동</h3>
-          <a class="btn primary full" href="./auto-settings.html">AUTO 설정하기</a>
-          <br><br>
-          <a class="btn ghost full" href="./payment.html">등록 센터</a>
+          <a class="btn primary full" href="./payment.html">등록 센터</a>
           <br><br>
           <a class="btn ghost full" href="./support.html">문의센터</a>
         </div>
       </div>
     </section>
-  <div id="autoApprovePopup" style="display:none"><h3>🎉 K-EDGE AUTO 승인 완료</h3><a href="./auto-settings.html">AUTO 설정하기</a></div></main>
+  
+<div id="autoApprovePopup" class="auto-approve-popup" style="display:none;">
+  <div class="auto-approve-box">
+    <h3>🎉 K-EDGE AUTO 승인 완료</h3>
+    <p>알람 수신이 활성화되었습니다.<br>자동매매 시작 전 AUTO 설정을 완료해주세요.</p>
+    <p><b>알람 : ON</b><br><b>자동매매 : OFF</b></p>
+    <a class="btn primary full" href="./auto-settings.html">AUTO 설정하기</a>
+  </div>
+</div>
+
+</main>
   <footer>
   <b>K-EDGE TEAM</b>
   <p>Telegram: <a href="https://t.me/listing0517" target="_blank">@listing0517</a></p>
   <p>본 서비스는 정보 제공 목적이며, 투자 판단과 책임은 이용자 본인에게 있습니다.</p>
   <p class="footer-note">실시간 데이터는 시장 상황에 따라 변동될 수 있으며 참고용 정보입니다.</p>
-  <p><a href="./referral.html">추천인</a> · <a href="./pricing.html">요금제</a> · <a href="./support.html">문의</a></p>
+  <p><a href="./referral.html">레퍼럴</a> · <a href="./pricing.html">요금제</a> · <a href="./support.html">문의</a></p>
 </footer>
   
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
