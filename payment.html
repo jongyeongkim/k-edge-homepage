@@ -848,5 +848,169 @@ if ("serviceWorker" in navigator) {
   });
 }
 </script>
+
+<!-- KEDGE_API_SAVE_GUARD_PATCH_START -->
+<script>
+(function(){
+  const SUPABASE_URL = window.KEDGE_SUPABASE_URL || "https://qakhbihueonefzifrmct.supabase.co";
+  const SUPABASE_ANON_KEY = window.KEDGE_SUPABASE_ANON_KEY || "sb_publishable_XboBFueAITcieSL75B2S5g_qlm4XmOm";
+  const db = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+  const $ = (id) => document.getElementById(id);
+  const val = (id) => (($ (id)?.value) || "").trim();
+  const checked = (id) => !!$(id)?.checked;
+
+  function showMsg(text, ok){
+    const el = $("vipRequestMsg") || $("requestMsg") || $("payMsg");
+    if(el){
+      el.textContent = text;
+      el.className = ok ? "form-msg success" : "form-msg error";
+      el.style.display = "block";
+    } else {
+      alert(text);
+    }
+  }
+
+  function apiObj(useId, keyId, secretId, passId){
+    const key = val(keyId);
+    const secret = val(secretId);
+    const pass = passId ? val(passId) : "";
+    const o = {
+      enabled: checked(useId) || !!key || !!secret || !!pass,
+      api_key: key,
+      api_secret: secret,
+      secret_key: secret
+    };
+    if(passId){
+      o.passphrase = pass;
+      o.password = pass;
+    }
+    return o;
+  }
+
+  function enabledApis(obj){
+    return Object.entries(obj || {}).filter(([_, v]) => v && v.enabled);
+  }
+  function hasCompleteApi(obj){
+    return enabledApis(obj).some(([_, v]) => !!v.api_key && !!(v.secret_key || v.api_secret));
+  }
+  function hasBrokenApi(obj){
+    return enabledApis(obj).some(([_, v]) => !v.api_key || !(v.secret_key || v.api_secret));
+  }
+
+  function referralData(){
+    return {
+      mexc: { enabled: checked("refMexcUse"), uid: val("refMexcUid") },
+      gate: { enabled: checked("refGateUse"), uid: val("refGateUid") },
+      bitget: { enabled: checked("refBitgetUse"), uid: val("refBitgetUid") },
+      bingx: { enabled: checked("refBingxUse"), uid: val("refBingxUid") }
+    };
+  }
+
+  function firstEnabledForeign(foreignApis){
+    const order = ["mexc", "gate", "bitget", "bingx"];
+    for(const name of order){
+      const v = foreignApis[name];
+      if(v && v.enabled && v.api_key && (v.secret_key || v.api_secret)){
+        return { name: name.toUpperCase(), data: v };
+      }
+    }
+    return { name: null, data: null };
+  }
+
+  async function submitKedgeAutoRequest(e){
+    if(e && e.preventDefault) e.preventDefault();
+    if(!db){ showMsg("❌ Supabase 라이브러리를 찾을 수 없습니다. 새로고침 후 다시 시도해주세요."); return; }
+
+    const email = val("payEmail") || val("email") || val("userEmail") || (window.KEDGE_USER_EMAIL || "");
+    const payName = val("payName");
+    const payType = val("payType") || "BANK";
+    const txid = val("txidInput") || val("payMemo") || "";
+    const tgChatId = val("payChatId");
+    const telegram = val("payTelegramId") || val("telegramId") || "미등록";
+
+    if(!email){ showMsg("❌ 이메일을 입력해주세요."); return; }
+    if(!payName){ showMsg("❌ 입금자명 또는 보내는 사람 이름을 입력해주세요."); return; }
+    if(!tgChatId){ showMsg("❌ CHAT ID를 입력해주세요. @Kedge0203bot에서 /start 후 CHAT ID를 입력하세요."); return; }
+    if(payType !== "BANK" && !txid){ showMsg("❌ TxID / 입금 메모 / 확인용 내용을 입력해주세요."); return; }
+
+    const domestic_apis = {
+      bithumb: apiObj("payBithumbUse", "payBithumbApiKey", "payBithumbApiSecret")
+    };
+    const foreign_apis = {
+      mexc: apiObj("payMexcUse", "payMexcApiKey", "payMexcApiSecret"),
+      gate: apiObj("payGateUse", "payGateApiKey", "payGateApiSecret"),
+      bitget: apiObj("payBitgetUse", "payBitgetApiKey", "payBitgetApiSecret", "payBitgetPassphrase"),
+      bingx: apiObj("payBingxUse", "payBingxApiKey", "payBingxApiSecret")
+    };
+
+    if(!hasCompleteApi(domestic_apis)){ showMsg("❌ 빗썸 API KEY와 SECRET을 입력해주세요."); return; }
+    if(!hasCompleteApi(foreign_apis)){ showMsg("❌ 해외 거래소 API를 1개 이상 입력해주세요."); return; }
+    if(hasBrokenApi(domestic_apis)){ showMsg("❌ 체크된 국내 거래소는 KEY와 SECRET을 모두 입력해야 합니다."); return; }
+    if(hasBrokenApi(foreign_apis)){ showMsg("❌ 체크된 해외 거래소는 KEY와 SECRET을 모두 입력해야 합니다."); return; }
+    if(foreign_apis.bitget.enabled && (!foreign_apis.bitget.passphrase || !foreign_apis.bitget.password)){
+      showMsg("❌ Bitget은 Passphrase / API 비밀번호까지 입력해야 합니다."); return;
+    }
+
+    const refs = referralData();
+    const referral_count = Math.min(Object.values(refs).filter(x => x.enabled && x.uid).length, 4);
+    const referral_discount_percent = referral_count * 10;
+    const base_price_krw = 200000;
+    const final_price_krw = Math.floor(base_price_krw * (100 - referral_discount_percent) / 100);
+    const f = firstEnabledForeign(foreign_apis);
+
+    const payload = {
+      email,
+      telegram,
+      product: "AUTO",
+      pay_type: payType,
+      pay_name: payName,
+      memo: payType === "BANK" ? "" : txid,
+      status: "PENDING",
+      tg_chat_id: tgChatId,
+      domestic_exchange: "BITHUMB",
+      domestic_api_key: domestic_apis.bithumb.api_key,
+      domestic_api_secret: domestic_apis.bithumb.secret_key,
+      foreign_exchange: f.name,
+      foreign_api_key: f.data ? f.data.api_key : null,
+      foreign_api_secret: f.data ? (f.data.secret_key || f.data.api_secret) : null,
+      domestic_apis,
+      foreign_apis,
+      referral_uids: refs,
+      referral_count,
+      referral_discount_percent,
+      base_price_krw,
+      final_price_krw,
+      service_enabled: false,
+      auto_config_done: false,
+      running: false
+    };
+
+    console.log("[KEDGE 저장 payload 확인]", {
+      domestic_has_key: !!payload.domestic_apis?.bithumb?.api_key,
+      foreign_keys: Object.fromEntries(Object.entries(payload.foreign_apis).map(([k,v]) => [k, !!(v.api_key && (v.secret_key || v.api_secret))])),
+      bitget_passphrase: !!payload.foreign_apis?.bitget?.passphrase
+    });
+
+    const { error } = await db.from("kedge_requests").insert(payload);
+    if(error){ showMsg("❌ 신청 저장 실패: " + error.message); return; }
+    showMsg("✅ AUTO 신청이 저장되었습니다. 승인 후 AUTO 설정을 진행해주세요.", true);
+  }
+
+  window.submitVipRequest = submitKedgeAutoRequest;
+  window.submitKedgeAutoRequest = submitKedgeAutoRequest;
+
+  document.addEventListener("DOMContentLoaded", function(){
+    document.querySelectorAll("button").forEach(btn => {
+      const t = (btn.textContent || "").trim();
+      if(t.includes("AUTO 신청") || t.includes("신청하기") || t.includes("신청 저장")){
+        btn.onclick = submitKedgeAutoRequest;
+      }
+    });
+  });
+})();
+</script>
+<!-- KEDGE_API_SAVE_GUARD_PATCH_END -->
+
 </body>
 </html>
