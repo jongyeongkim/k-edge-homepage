@@ -110,8 +110,181 @@
     <p><a href="./referral.html">추천인</a> · <a href="./pricing.html">요금제</a> · <a href="./support.html">문의</a></p>
   </footer>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./script.js?v=20260528_auto_fix_v2_real"></script>
+  <script src="./script.js"></script>
   <script src="./kedge-supabase-db.js?v=20260523"></script>
+
+
+<!-- KEDGE_AUTO_SETTINGS_DIRECT_APPROVAL_FIX_START -->
+<script>
+(function(){
+  const SUPABASE_URL = window.KEDGE_SUPABASE_URL || "https://qakhbihueonefzifrmct.supabase.co";
+  const SUPABASE_ANON_KEY = window.KEDGE_SUPABASE_ANON_KEY || "sb_publishable_XboBFueAITcieSL75B2S5g_qlm4XmOm";
+  let db = null;
+  let currentUser = null;
+  let latestApprovedRequest = null;
+
+  function $(id){ return document.getElementById(id); }
+  function showStatus(html){ const el=$("autoSettingStatus"); if(el) el.innerHTML = html; }
+  function showMsg(text, type){
+    const el=$("autoSettingMsg");
+    if(!el) return alert(text);
+    el.textContent = text;
+    el.className = "form-msg " + (type || "error");
+  }
+  function getDb(){
+    if(db) return db;
+    if(!window.supabase) return null;
+    db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    return db;
+  }
+  function num(id, fallback){
+    const v = Number(($(id)?.value || "").replace?.(/,/g, "") || $(id)?.value || fallback);
+    return Number.isFinite(v) ? v : fallback;
+  }
+  function selectedCapitalMode(){
+    return document.querySelector('input[name="capitalMode"]:checked')?.value || "fixed";
+  }
+  function setVisible(approved){
+    const locked = $("autoSettingLocked");
+    const form = $("autoSettingForm");
+    if(approved){
+      if(locked) locked.style.display = "none";
+      if(form) form.style.display = "block";
+      showStatus("<b>✅ K-EDGE AUTO 승인완료</b><p>알람은 ON, 자동매매는 기본 OFF입니다. 운용금액과 분할 수를 설정하세요.</p>");
+    }else{
+      if(locked) locked.style.display = "block";
+      if(form) form.style.display = "none";
+      showStatus("<b>🔒 관리자 승인 후 사용 가능</b><p>승인 완료 후 AUTO 설정을 저장할 수 있습니다.</p>");
+    }
+  }
+
+  window.calcAutoEntryAmount = function(){
+    const capital = Math.max(0, num("autoCapitalKrw", 2000000));
+    const split = Math.max(1, num("autoSplitCount", 20));
+    const entry = Math.floor(capital / split);
+    const el = $("autoEntryAmountText");
+    if(el) el.textContent = entry.toLocaleString("ko-KR") + "원";
+    return entry;
+  };
+
+  async function loadSavedSettings(){
+    const client = getDb();
+    if(!client || !currentUser?.email) return;
+    try{
+      const { data, error } = await client
+        .from("auto_settings")
+        .select("*")
+        .eq("email", currentUser.email)
+        .order("updated_at", { ascending:false })
+        .limit(1);
+      if(error || !Array.isArray(data) || !data.length) return;
+      const st = data[0];
+      if($("autoCapitalKrw") && st.capital_krw) $("autoCapitalKrw").value = st.capital_krw;
+      if($("autoSplitCount") && st.split_count) $("autoSplitCount").value = st.split_count;
+      const mode = st.capital_mode || "fixed";
+      const radio = document.querySelector(`input[name="capitalMode"][value="${mode}"]`);
+      if(radio) radio.checked = true;
+      if($("autoEntryEnabled")) $("autoEntryEnabled").value = st.auto_enabled ? "ON" : "OFF";
+      window.calcAutoEntryAmount();
+    }catch(e){ console.log("auto_settings load skipped", e); }
+  }
+
+  window.saveAutoSettings = async function(){
+    const client = getDb();
+    if(!client) return showMsg("❌ Supabase 연결 실패");
+    if(!currentUser?.email) return showMsg("❌ 로그인 정보를 확인할 수 없습니다.");
+    if(!latestApprovedRequest) return showMsg("❌ 관리자 승인 후 저장할 수 있습니다.");
+
+    const capital = Math.max(0, num("autoCapitalKrw", 2000000));
+    const split = Math.max(1, num("autoSplitCount", 20));
+    const entry = Math.floor(capital / split);
+    const autoEnabled = ($("autoEntryEnabled")?.value || "OFF") === "ON";
+    const payload = {
+      email: currentUser.email,
+      request_id: latestApprovedRequest.id,
+      service_enabled: true,
+      alert_enabled: true,
+      auto_enabled: autoEnabled,
+      capital_mode: selectedCapitalMode(),
+      capital_krw: capital,
+      split_count: split,
+      entry_amount_krw: entry,
+      updated_at: new Date().toISOString()
+    };
+
+    try{
+      const { error } = await client.from("auto_settings").upsert(payload, { onConflict:"email" });
+      if(error){
+        console.error(error);
+        return showMsg("❌ 설정 저장 실패: " + error.message);
+      }
+      showMsg("✅ AUTO 설정 저장 완료", "success");
+    }catch(e){
+      console.error(e);
+      showMsg("❌ 설정 저장 실패: " + (e.message || e));
+    }
+  };
+
+  async function initAutoSettingsPage(){
+    const client = getDb();
+    if(!client){
+      showStatus("<b>❌ Supabase 연결 실패</b>");
+      setVisible(false);
+      return;
+    }
+
+    try{
+      const { data:userData } = await client.auth.getUser();
+      currentUser = userData?.user ? { email:userData.user.email, id:userData.user.id } : null;
+      if(!currentUser?.email){
+        showStatus("<b>❌ 로그인이 필요합니다.</b><p>로그인 후 AUTO 설정을 이용할 수 있습니다.</p>");
+        setVisible(false);
+        return;
+      }
+
+      const { data, error } = await client
+        .from("kedge_requests")
+        .select("id,email,product,status,created_at,approved_at,tg_chat_id")
+        .eq("email", currentUser.email)
+        .eq("product", "AUTO")
+        .eq("status", "APPROVED")
+        .order("approved_at", { ascending:false, nullsFirst:false })
+        .order("created_at", { ascending:false })
+        .limit(1);
+
+      if(error){
+        console.error(error);
+        showStatus("<b>❌ 승인상태 확인 실패</b><p>" + error.message + "</p>");
+        setVisible(false);
+        return;
+      }
+
+      latestApprovedRequest = Array.isArray(data) && data.length ? data[0] : null;
+      if(!latestApprovedRequest){
+        setVisible(false);
+        return;
+      }
+
+      setVisible(true);
+      await loadSavedSettings();
+      window.calcAutoEntryAmount();
+    }catch(e){
+      console.error(e);
+      showStatus("<b>❌ 승인상태 확인 오류</b><p>" + (e.message || e) + "</p>");
+      setVisible(false);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", function(){
+    document.querySelectorAll('input[name="capitalMode"]').forEach(el=>el.addEventListener("change", window.calcAutoEntryAmount));
+    $("autoCapitalKrw")?.addEventListener("input", window.calcAutoEntryAmount);
+    $("autoSplitCount")?.addEventListener("input", window.calcAutoEntryAmount);
+    setTimeout(initAutoSettingsPage, 150);
+  });
+})();
+</script>
+<!-- KEDGE_AUTO_SETTINGS_DIRECT_APPROVAL_FIX_END -->
+
 <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", function () {
