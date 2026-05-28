@@ -89,6 +89,96 @@
       "usd_krw": 1502.11,
       "entry_status": "READY",
       "status": "V8.8_FAST_PAPER_ENTRY"
+    },
+    "SAHARA_BITHUMB_GATE_1779966876": {
+      "signal_id": "SAHARA_BITHUMB_GATE_1779966876",
+      "ts": 1779966876.0798595,
+      "time": "20:14",
+      "created_at": "2026-05-28 20:14:36",
+      "coin": "SAHARA",
+      "domestic": "BITHUMB",
+      "domestic_exchange": "BITHUMB",
+      "domestic_market": "SAHARA_KRW",
+      "foreign": "GATE",
+      "foreign_exchange": "GATE",
+      "foreign_market": "SAHARA/USDT:USDT",
+      "coin_gap": 5.6,
+      "btc_gap": 1.81,
+      "real_edge": 3.79,
+      "expected_profit_min": 2.79,
+      "expected_profit_max": 3.79,
+      "funding_rate": 0.01,
+      "recommended_leverage": "x1 기본 / x2 최대 권장",
+      "stop_edge": 5.79,
+      "spot_wall_krw": 50353377,
+      "futures_wall_krw": 1515193,
+      "real_fill_krw": 1515193,
+      "futures_position_limit_krw": 335977428,
+      "futures_position_limit_source": "ccxt_market_limits",
+      "min_retain_edge_percent": 1.5,
+      "allowed_slippage_percent": 2.29,
+      "slippage_tiers_text": "0.50%: 국내 2333.9만 / 해외 38.9만 / 최종 38.9만\n1.00%: 국내 4226.8만 / 해외 72.5만 / 최종 72.5만\n1.50%: 국내 4948.3만 / 해외 87.4만 / 최종 87.4만\n2.00%: 국내 5035.3만 / 해외 117.6만 / 최종 117.6만\n2.29%: 국내 5035.3만 / 해외 151.5만 / 최종 151.5만",
+      "max_user_entry_krw": 0,
+      "paper_domestic_base_krw": 2000000,
+      "paper_foreign_margin_base_krw": 500000,
+      "paper_futures_leverage": 4.0,
+      "roundtrip_fee_percent": 0.14,
+      "funding_simulation_enabled": false,
+      "max_entry_krw": 1515193,
+      "final_entry_krw": 1515193,
+      "used_entry_krw": 0,
+      "remaining_entry_krw": 1515193,
+      "wall_range_percent": 2.291,
+      "executable_krw": 1515193,
+      "krw": 1515193,
+      "usd_krw": 1502.6899,
+      "entry_status": "READY",
+      "status": "V8.8_FAST_PAPER_ENTRY"
+    },
+    "EUL_BITHUMB_GATE_1779970713": {
+      "signal_id": "EUL_BITHUMB_GATE_1779970713",
+      "ts": 1779970713.630838,
+      "time": "21:18",
+      "created_at": "2026-05-28 21:18:33",
+      "coin": "EUL",
+      "domestic": "BITHUMB",
+      "domestic_exchange": "BITHUMB",
+      "domestic_market": "EUL_KRW",
+      "foreign": "GATE",
+      "foreign_exchange": "GATE",
+      "foreign_market": "EUL/USDT:USDT",
+      "coin_gap": 3.7,
+      "btc_gap": 1.66,
+      "real_edge": 2.04,
+      "expected_profit_min": 1.04,
+      "expected_profit_max": 2.04,
+      "funding_rate": 0.005,
+      "recommended_leverage": "x1 기본 / x2 최대 권장",
+      "stop_edge": 4.04,
+      "spot_wall_krw": 1255534,
+      "futures_wall_krw": 4965578,
+      "real_fill_krw": 1255534,
+      "futures_position_limit_krw": 94755343,
+      "futures_position_limit_source": "ccxt_market_limits",
+      "min_retain_edge_percent": 1.5,
+      "allowed_slippage_percent": 0.54,
+      "slippage_tiers_text": "0.50%: 국내 21.6만 / 해외 496.6만 / 최종 21.6만\n0.54%: 국내 125.6만 / 해외 496.6만 / 최종 125.6만",
+      "max_user_entry_krw": 0,
+      "paper_domestic_base_krw": 2000000,
+      "paper_foreign_margin_base_krw": 500000,
+      "paper_futures_leverage": 4.0,
+      "roundtrip_fee_percent": 0.14,
+      "funding_simulation_enabled": false,
+      "max_entry_krw": 1255534,
+      "final_entry_krw": 1255534,
+      "used_entry_krw": 0,
+      "remaining_entry_krw": 1255534,
+      "wall_range_percent": 0.5402,
+      "executable_krw": 1255534,
+      "krw": 1255534,
+      "usd_krw": 1502.51,
+      "entry_status": "READY",
+      "status": "V8.8_FAST_PAPER_ENTRY"
     }
   },
   "users": {
@@ -99,6 +189,22 @@
     "6870367623:NIL_BITHUMB_GATE_1779955516": {
       "selected_krw": 0,
       "updated_at": "2026-05-28 17:05:18"
+    },
+    "6870367623:SAHARA_BITHUMB_GATE_1779966876": {
+      "selected_krw": 0,
+      "updated_at": "2026-05-28 20:14:41"
+    },
+    "654270878:SAHARA_BITHUMB_GATE_1779966876": {
+      "selected_krw": 0,
+      "updated_at": "2026-05-28 20:14:44"
+    },
+    "6870367623:EUL_BITHUMB_GATE_1779970713": {
+      "selected_krw": 0,
+      "updated_at": "2026-05-28 21:18:34"
+    },
+    "654270878:EUL_BITHUMB_GATE_1779970713": {
+      "selected_krw": 0,
+      "updated_at": "2026-05-28 21:18:36"
     }
   },
   "positions": {},
@@ -122,6 +228,30 @@
       "reason": "❌ 진입 취소\n\n사유: 현재 실제엣지 부족\n\n알림 당시: +1.63%\n현재: +1.28%\n최소 유지엣지: +1.50% 이상",
       "finished_at": "2026-05-28 17:05:18",
       "finished_ts": 1779955518.763226
+    },
+    "6870367623:SAHARA_BITHUMB_GATE_1779966876": {
+      "status": "FAILED",
+      "reason": "❌ 해외 잔고 조회 실패\n\nGATE 선물 API 권한 또는 키를 확인해주세요.\n오류: gateio {\"label\":\"INVALID_KEY\",\"message\":\"Invalid key provided\"}",
+      "finished_at": "2026-05-28 20:14:41",
+      "finished_ts": 1779966881.5571034
+    },
+    "654270878:SAHARA_BITHUMB_GATE_1779966876": {
+      "status": "FAILED",
+      "reason": "❌ 국내 잔고 조회 실패\n\nBITHUMB API 권한 또는 키를 확인해주세요.\nBITHUMB v2 결과: BITHUMB v2 실패 http=401 body={\"error\":{\"name\":\"invalid_access_key\"}}\nBITHUMB v1 결과: BITHUMB 공식API 실패 status=5300 message=Invalid Apikey",
+      "finished_at": "2026-05-28 20:14:44",
+      "finished_ts": 1779966884.6768727
+    },
+    "6870367623:EUL_BITHUMB_GATE_1779970713": {
+      "status": "FAILED",
+      "reason": "❌ 진입 취소\n\n사유: 현재 실제엣지 부족\n\n알림 당시: +2.04%\n현재: +0.79%\n최소 유지엣지: +1.50% 이상",
+      "finished_at": "2026-05-28 21:18:34",
+      "finished_ts": 1779970714.6829705
+    },
+    "654270878:EUL_BITHUMB_GATE_1779970713": {
+      "status": "FAILED",
+      "reason": "❌ 진입 취소\n\n사유: 현재 실제엣지 부족\n\n알림 당시: +2.04%\n현재: +0.91%\n최소 유지엣지: +1.50% 이상",
+      "finished_at": "2026-05-28 21:18:36",
+      "finished_ts": 1779970716.875774
     }
   }
 }

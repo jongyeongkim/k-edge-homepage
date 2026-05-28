@@ -1769,7 +1769,7 @@ def supabase_get_approved_members(force_refresh: bool = False) -> List[Dict[str,
             return list(_APPROVED_MEMBERS_CACHE)
 
         rows = supabase_get_approved_members_uncached()
-        _APPROVED_MEMBERS_CACHE = rows if isinstance(rows, list) else []
+        _APPROVED_MEMBERS_CACHE = filter_latest_approved_member_rows(rows) if isinstance(rows, list) else []
         _APPROVED_MEMBERS_CACHE_AT = now_ts
         print(f"[승인회원 캐시 갱신] {len(_APPROVED_MEMBERS_CACHE)}명 / TTL {APPROVED_MEMBER_CACHE_TTL_SEC}s")
         return list(_APPROVED_MEMBERS_CACHE)
@@ -2269,22 +2269,6 @@ def build_user_exchange_from_member(member: Dict[str, Any], exchange_name: str, 
 
     prefix = "gate" if name in ("gate", "gateio") else name
 
-    def _clean(v):
-        """DB의 NULL/빈문자/문자열 'null'을 실제 미등록값으로 처리."""
-        if v is None:
-            return ""
-        s = str(v).strip()
-        if not s or s.lower() in ("null", "none", "undefined", "nan"):
-            return ""
-        return s
-
-    def _first(*vals):
-        for v in vals:
-            s = _clean(v)
-            if s:
-                return s
-        return ""
-
     def _json_obj(v):
         if isinstance(v, dict):
             return v
@@ -2296,9 +2280,6 @@ def build_user_exchange_from_member(member: Dict[str, Any], exchange_name: str, 
                 return {}
         return {}
 
-    # 1) 새 구조: domestic_apis / foreign_apis JSON
-    # 2) 구 구조: domestic_api_key / domestic_api_secret / foreign_api_key / foreign_api_secret
-    # 3) 거래소별 구 구조: bithumb_api_key, mexc_api_key 등
     domestic_apis = _json_obj(member.get("domestic_apis"))
     foreign_apis = _json_obj(member.get("foreign_apis"))
     route_api = {}
@@ -2308,34 +2289,56 @@ def build_user_exchange_from_member(member: Dict[str, Any], exchange_name: str, 
             if isinstance(val, dict):
                 route_api.update(val)
 
-    json_api_key = _first(route_api.get("api_key"), route_api.get("apiKey"), route_api.get("access_key"), route_api.get("accessKey"), route_api.get("connect_key"), route_api.get("connectKey"))
-    json_secret = _first(route_api.get("secret_key"), route_api.get("secretKey"), route_api.get("api_secret"), route_api.get("apiSecret"), route_api.get("secret"))
-    json_password = _first(route_api.get("password"), route_api.get("passphrase"), route_api.get("api_password"), route_api.get("apiPassword"))
+    # ============================================================
+    # API 키 우선순위 패치
+    # 1순위: domestic_apis / foreign_apis JSON 내부 거래소별 키
+    # 2순위: 거래소별 개별 컬럼
+    # 3순위: 과거 legacy 공통 컬럼
+    #
+    # 이유:
+    # 재등록 시 JSON에는 최신 키가 저장되고 legacy 컬럼에는 예전 키가 남을 수 있음.
+    # 따라서 BITHUMB/MEXC/BINGX 등 모든 거래소는 JSON route_api를 최우선으로 사용한다.
+    # ============================================================
+    json_api_key = (
+        route_api.get("api_key")
+        or route_api.get("apiKey")
+        or route_api.get("access_key")
+        or route_api.get("accessKey")
+        or ""
+    )
+    json_secret = (
+        route_api.get("secret_key")
+        or route_api.get("secretKey")
+        or route_api.get("api_secret")
+        or route_api.get("secret")
+        or ""
+    )
+    json_password = route_api.get("password") or route_api.get("passphrase") or route_api.get("api_password") or ""
 
     if market_type == "spot":
-        api_key = _first(
-            member.get(f"{prefix}_api_key"), member.get(f"{prefix}_access_key"), member.get(f"{prefix}_connect_key"),
-            member.get("domestic_api_key"), member.get("domestic_access_key"), member.get("domestic_connect_key"),
-            json_api_key,
-        )
-        secret = _first(
-            member.get(f"{prefix}_secret_key"), member.get(f"{prefix}_api_secret"), member.get(f"{prefix}_secret"),
-            member.get("domestic_api_secret"), member.get("domestic_secret_key"), member.get("domestic_secret"),
-            json_secret,
-        )
+        legacy_api_key = member.get(f"{prefix}_api_key") or member.get(f"{prefix}_access_key") or member.get("domestic_api_key")
+        legacy_secret = member.get(f"{prefix}_secret_key") or member.get(f"{prefix}_secret") or member.get("domestic_api_secret")
     else:
-        api_key = _first(
-            member.get(f"{prefix}_api_key"), member.get(f"{prefix}_access_key"), member.get(f"{prefix}_connect_key"),
-            member.get("foreign_api_key"), member.get("foreign_access_key"), member.get("foreign_connect_key"),
-            json_api_key,
-        )
-        secret = _first(
-            member.get(f"{prefix}_secret_key"), member.get(f"{prefix}_api_secret"), member.get(f"{prefix}_secret"),
-            member.get("foreign_api_secret"), member.get("foreign_secret_key"), member.get("foreign_secret"),
-            json_secret,
-        )
+        # foreign_exchange가 현재 거래소와 다르면 legacy foreign_api_key는 다른 거래소 키일 수 있으므로 사용하지 않음
+        foreign_exchange = str(member.get("foreign_exchange") or "").lower().replace(" ", "")
+        allow_legacy_foreign = (not foreign_exchange) or (foreign_exchange in {name, prefix, ccxt_id, "gateio" if name in ("gate", "gateio") else name})
+        if allow_legacy_foreign:
+            legacy_api_key = member.get(f"{prefix}_api_key") or member.get(f"{prefix}_access_key") or member.get("foreign_api_key")
+            legacy_secret = member.get(f"{prefix}_secret_key") or member.get(f"{prefix}_secret") or member.get("foreign_api_secret")
+        else:
+            print(f"[API진단 라우팅 스킵] exchange={exchange_name} foreign_exchange={foreign_exchange} legacy_foreign_key_skip=True")
+            legacy_api_key = member.get(f"{prefix}_api_key") or member.get(f"{prefix}_access_key")
+            legacy_secret = member.get(f"{prefix}_secret_key") or member.get(f"{prefix}_secret")
 
-    password = _first(member.get(f"{prefix}_password"), member.get(f"{prefix}_passphrase"), member.get("foreign_api_password"), member.get("foreign_passphrase"), json_password)
+    api_key = json_api_key or legacy_api_key or ""
+    secret = json_secret or legacy_secret or ""
+    password = json_password or member.get(f"{prefix}_password") or member.get(f"{prefix}_passphrase") or ""
+
+    source = "json_route_api" if json_api_key else "legacy_columns"
+    if name == "bithumb":
+        print(f"[BITHUMB API 우선순위] source={source} key_head={str(api_key)[:4]} key_tail={str(api_key)[-4:]} key_len={len(str(api_key or ''))} member_id={member.get('id')} chat_id={get_member_chat_id(member) if 'get_member_chat_id' in globals() else member.get('tg_chat_id')}")
+    elif name in ("bingx", "bitget", "gate", "gateio", "mexc"):
+        print(f"[{name.upper()} API 우선순위] source={source} key_head={str(api_key)[:4]} key_tail={str(api_key)[-4:]} key_len={len(str(api_key or ''))} password_set={bool(password)} member_id={member.get('id')}")
 
     if not api_key or not secret:
         print(f"[실거래 API 미등록] exchange={exchange_name} type={market_type} prefix={prefix}")
@@ -2356,6 +2359,218 @@ def build_user_exchange_from_member(member: Dict[str, Any], exchange_name: str, 
         params["password"] = password
     return klass(params)
 
+
+
+# ============================================================
+# BITHUMB API 2.0 직접 잔고조회 / 최신 승인 row 필터
+# - ccxt.bithumb.fetch_balance()가 API 2.0 키에서 실패하는 경우가 있어
+#   단독 테스트 성공 방식과 동일한 JWT /v1/accounts 직접조회로 국내 KRW 잔고를 확인한다.
+# ============================================================
+def _kedge_json_obj(v: Any) -> Dict[str, Any]:
+    if isinstance(v, dict):
+        return v
+    if isinstance(v, str) and v.strip():
+        try:
+            obj = json.loads(v)
+            return obj if isinstance(obj, dict) else {}
+        except Exception:
+            return {}
+    return {}
+
+
+def get_api_credentials_priority(member: Dict[str, Any], exchange_name: str, market_type: str = "spot") -> Dict[str, Any]:
+    name = str(exchange_name or "").lower().replace(" ", "")
+    if name == "gate.io":
+        name = "gate"
+    prefix = name
+
+    route_map = _kedge_json_obj(member.get("domestic_apis" if market_type == "spot" else "foreign_apis"))
+    aliases = [name]
+    if name == "bithumb": aliases += ["BITHUMB"]
+    if name == "mexc": aliases += ["MEXC"]
+    if name == "bingx": aliases += ["BINGX"]
+    if name == "bitget": aliases += ["BITGET"]
+    if name in ("gate", "gateio"): aliases += ["gateio", "gate.io", "GATE"]
+
+    route_api = {}
+    for a in aliases:
+        if isinstance(route_map.get(a), dict):
+            route_api = route_map.get(a) or {}
+            break
+
+    json_api_key = (
+        route_api.get("api_key")
+        or route_api.get("apiKey")
+        or route_api.get("access_key")
+        or route_api.get("accessKey")
+        or ""
+    )
+    json_secret = (
+        route_api.get("secret_key")
+        or route_api.get("secretKey")
+        or route_api.get("api_secret")
+        or route_api.get("secret")
+        or ""
+    )
+    json_password = route_api.get("password") or route_api.get("passphrase") or route_api.get("api_password") or ""
+
+    if market_type == "spot":
+        legacy_api_key = member.get(f"{prefix}_api_key") or member.get(f"{prefix}_access_key") or member.get("domestic_api_key") or ""
+        legacy_secret = member.get(f"{prefix}_secret_key") or member.get(f"{prefix}_secret") or member.get("domestic_api_secret") or ""
+    else:
+        foreign_exchange = str(member.get("foreign_exchange") or "").lower().replace(" ", "")
+        allow_legacy = (not foreign_exchange) or (foreign_exchange in {name, prefix, "gateio" if name in ("gate", "gateio") else name})
+        legacy_api_key = (member.get(f"{prefix}_api_key") or member.get(f"{prefix}_access_key") or (member.get("foreign_api_key") if allow_legacy else "") or "")
+        legacy_secret = (member.get(f"{prefix}_secret_key") or member.get(f"{prefix}_secret") or (member.get("foreign_api_secret") if allow_legacy else "") or "")
+
+    api_key = str(json_api_key or legacy_api_key or "").strip()
+    secret = str(json_secret or legacy_secret or "").strip()
+    password = str(json_password or member.get(f"{prefix}_password") or member.get(f"{prefix}_passphrase") or "").strip()
+    source = "json_route_api" if json_api_key else "legacy_columns"
+    return {"api_key": api_key, "secret": secret, "password": password, "source": source}
+
+
+def bithumb_v2_accounts_direct(api_key: str, secret: str) -> Dict[str, Any]:
+    import base64, hashlib, hmac, uuid
+
+    api_key = str(api_key or "").strip()
+    secret = str(secret or "").strip()
+    if not api_key or not secret:
+        raise Exception("BITHUMB API KEY/SECRET empty")
+
+    header = {"alg": "HS256", "typ": "JWT"}
+    payload = {
+        "access_key": api_key,
+        "nonce": str(uuid.uuid4()),
+        "timestamp": int(time.time() * 1000),
+    }
+
+    def b64url(obj: Any) -> str:
+        raw = json.dumps(obj, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        return base64.urlsafe_b64encode(raw).rstrip(b"=").decode("ascii")
+
+    signing_input = f"{b64url(header)}.{b64url(payload)}"
+    sig = hmac.new(secret.encode("utf-8"), signing_input.encode("ascii"), hashlib.sha256).digest()
+    token = signing_input + "." + base64.urlsafe_b64encode(sig).rstrip(b"=").decode("ascii")
+
+    url = "https://api.bithumb.com/v1/accounts"
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    res = requests.get(url, headers=headers, timeout=15)
+    print(f"[BITHUMB v2 직접잔고 응답] http={res.status_code} body={res.text[:500]}")
+    if res.status_code != 200:
+        raise Exception(f"BITHUMB v2 직접잔고 실패 http={res.status_code} body={res.text[:300]}")
+    data = res.json()
+    krw_free = 0.0
+    if isinstance(data, list):
+        for item in data:
+            if str(item.get("currency") or "").upper() == "KRW":
+                krw_free = safe_float(item.get("balance"))
+                break
+    return {"free": {"KRW": krw_free}, "total": {"KRW": krw_free}, "raw": data}
+
+
+
+def bithumb_v2_order_direct(api_key: str, secret: str, coin: str, side: str, krw_amount: float = 0.0, volume: float = 0.0) -> Dict[str, Any]:
+    """Bithumb API 2.0 직접 주문.
+
+    side='buy': KRW 시장가 매수 (ord_type=price, price=KRW 금액)
+    side='sell': 코인 시장가 매도 (ord_type=market, volume=코인수량)
+    """
+    import base64, hashlib, hmac, uuid
+    from urllib.parse import urlencode
+
+    api_key = str(api_key or "").strip()
+    secret = str(secret or "").strip()
+    coin = normalize_symbol(coin)
+    if not api_key or not secret:
+        raise Exception("BITHUMB API KEY/SECRET empty")
+    if not coin:
+        raise Exception("BITHUMB coin empty")
+
+    market = f"KRW-{coin}"
+    side = str(side or "").lower().strip()
+    if side == "buy":
+        price = int(max(0, safe_float(krw_amount)))
+        if price <= 0:
+            raise Exception(f"BITHUMB buy price invalid: {krw_amount}")
+        params = {
+            "market": market,
+            "side": "bid",
+            "price": str(price),
+            "ord_type": "price",
+        }
+    elif side == "sell":
+        vol = safe_float(volume)
+        if vol <= 0:
+            raise Exception(f"BITHUMB sell volume invalid: {volume}")
+        params = {
+            "market": market,
+            "side": "ask",
+            "volume": ("%.12f" % vol).rstrip("0").rstrip("."),
+            "ord_type": "market",
+        }
+    else:
+        raise Exception(f"BITHUMB unsupported side: {side}")
+
+    query_string = urlencode(params).encode("utf-8")
+    query_hash = hashlib.sha512(query_string).hexdigest()
+
+    header = {"alg": "HS256", "typ": "JWT"}
+    payload = {
+        "access_key": api_key,
+        "nonce": str(uuid.uuid4()),
+        "timestamp": int(time.time() * 1000),
+        "query_hash": query_hash,
+        "query_hash_alg": "SHA512",
+    }
+
+    def b64url(obj: Any) -> str:
+        raw = json.dumps(obj, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        return base64.urlsafe_b64encode(raw).rstrip(b"=").decode("ascii")
+
+    signing_input = f"{b64url(header)}.{b64url(payload)}"
+    sig = hmac.new(secret.encode("utf-8"), signing_input.encode("ascii"), hashlib.sha256).digest()
+    token = signing_input + "." + base64.urlsafe_b64encode(sig).rstrip(b"=").decode("ascii")
+
+    url = "https://api.bithumb.com/v1/orders"
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    print(f"[BITHUMB v2 직접주문 요청] side={side} market={market} params={params} key_head={api_key[:4]} key_tail={api_key[-4:]}")
+    res = requests.post(url, headers=headers, json=params, timeout=15)
+    print(f"[BITHUMB v2 직접주문 응답] http={res.status_code} body={res.text[:800]}")
+    if res.status_code not in (200, 201):
+        raise Exception(f"BITHUMB v2 직접주문 실패 http={res.status_code} body={res.text[:500]}")
+    try:
+        return {"raw": res.json(), "http": res.status_code, "params": params}
+    except Exception:
+        return {"raw_text": res.text, "http": res.status_code, "params": params}
+
+def filter_latest_approved_member_rows(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    if not isinstance(rows, list):
+        return []
+    latest: Dict[str, Dict[str, Any]] = {}
+    skipped = 0
+    for row in rows:
+        chat = get_member_chat_id(row) if 'get_member_chat_id' in globals() else str(row.get('tg_chat_id') or '')
+        email = str(row.get('email') or '').strip().lower()
+        key = chat or email or str(row.get('id') or '')
+        stamp = str(row.get('approved_at') or row.get('created_at') or '')
+        old = latest.get(key)
+        old_stamp = str((old or {}).get('approved_at') or (old or {}).get('created_at') or '')
+        if old is None or stamp >= old_stamp:
+            if old is not None:
+                skipped += 1
+            latest[key] = row
+        else:
+            skipped += 1
+    result = list(latest.values())
+    if len(rows) != len(result):
+        print(f"[최신 승인회원 필터] raw={len(rows)} / active={len(result)} / skipped_old={skipped}")
+        for r in result[:5]:
+            print("[최신 승인회원 사용]", {
+                "id": r.get("id"), "email": r.get("email"), "chat_id": get_member_chat_id(r) if 'get_member_chat_id' in globals() else r.get('tg_chat_id'),
+                "approved_at": r.get("approved_at"), "created_at": r.get("created_at")
+            })
+    return result
 
 def find_member_by_telegram_id(user_id: str) -> Optional[Dict[str, Any]]:
     for member in supabase_get_approved_members():
@@ -2557,7 +2772,12 @@ def check_entry_balances(user_id: str, signal: Dict[str, Any], amount_krw: int) 
         )
 
     try:
-        domestic_balance = domestic_ex.fetch_balance()
+        if domestic == "bithumb":
+            creds = get_api_credentials_priority(member, "BITHUMB", "spot")
+            print(f"[BITHUMB 직접잔고 사용] source={creds.get('source')} key_head={creds.get('api_key','')[:4]} key_tail={creds.get('api_key','')[-4:]} key_len={len(creds.get('api_key',''))} member_id={member.get('id')} chat_id={get_member_chat_id(member)}")
+            domestic_balance = bithumb_v2_accounts_direct(creds.get("api_key"), creds.get("secret"))
+        else:
+            domestic_balance = domestic_ex.fetch_balance()
         krw_free = safe_float((domestic_balance.get("free") or {}).get("KRW"))
     except Exception as e:
         return False, f"❌ 국내 잔고 조회 실패\n\n{signal.get('domestic')} API 권한 또는 키를 확인해주세요.\n오류: {e}"
@@ -3279,7 +3499,12 @@ def execute_real_entry_orders(user_id: str, member: Dict[str, Any], signal: Dict
             print(f"[실거래 레버리지 설정 경고] {e}")
 
         print(f"[실거래 주문 시작] spot_buy {spot_market} amount={spot_amount} / future_short {future_market} amount={future_amount}")
-        spot_order = domestic_ex.create_order(spot_market, "market", "buy", spot_amount)
+        if domestic == "bithumb":
+            creds = get_api_credentials_priority(member_full, "BITHUMB", "spot")
+            print(f"[BITHUMB 직접주문 사용] source={creds.get('source')} key_head={creds.get('api_key','')[:4]} key_tail={creds.get('api_key','')[-4:]} krw={domestic_entry_krw} coin={coin}")
+            spot_order = bithumb_v2_order_direct(creds.get("api_key"), creds.get("secret"), coin, "buy", krw_amount=domestic_entry_krw)
+        else:
+            spot_order = domestic_ex.create_order(spot_market, "market", "buy", spot_amount)
         result["domestic_order"] = spot_order
         print(f"[실거래 국내매수 성공] {spot_order}")
 
@@ -3296,7 +3521,11 @@ def execute_real_entry_orders(user_id: str, member: Dict[str, Any], signal: Dict
         # 국내 현물만 체결되고 해외 숏 실패한 경우 가능한 시장가 매도 되돌림
         if result.get("domestic_order") and not result.get("foreign_order"):
             try:
-                rollback = domestic_ex.create_order(spot_market, "market", "sell", spot_amount)
+                if domestic == "bithumb":
+                    creds = get_api_credentials_priority(member_full, "BITHUMB", "spot")
+                    rollback = bithumb_v2_order_direct(creds.get("api_key"), creds.get("secret"), coin, "sell", volume=spot_amount)
+                else:
+                    rollback = domestic_ex.create_order(spot_market, "market", "sell", spot_amount)
                 result["domestic_rollback_order"] = rollback
                 err += " / 국내 매수 되돌림 매도 시도 완료"
                 print(f"[실거래 롤백 국내매도 성공] {rollback}")
