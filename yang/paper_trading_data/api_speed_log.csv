@@ -943,3 +943,5 @@
 2026-05-29 00:09:15,MEXC,BCH/USDT:USDT,15.108,True,
 2026-05-29 00:14:45,MEXC,B3/USDT:USDT,0.26,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
 2026-05-29 00:15:00,MEXC,TRAC/USDT:USDT,15.0679,True,
+2026-05-29 00:18:36,MEXC,JTO/USDT:USDT,0.2339,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-05-29 00:18:51,MEXC,REQ/USDT:USDT,15.0656,True,
