@@ -797,3 +797,7 @@
 2026-05-28 18:26:30,MEXC,PEAQ/USDT:USDT,15.0705,True,
 2026-05-28 18:30:05,MEXC,XAN/USDT:USDT,0.2429,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
 2026-05-28 18:30:20,MEXC,INJ/USDT:USDT,15.071,True,
+2026-05-28 18:35:53,MEXC,PENGU/USDT:USDT,0.2504,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-05-28 18:36:08,MEXC,FF/USDT:USDT,15.0794,True,
+2026-05-28 18:39:45,MEXC,EDGE/USDT:USDT,0.2481,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-05-28 18:40:00,MEXC,MEGA/USDT:USDT,15.0711,True,

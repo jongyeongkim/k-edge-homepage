@@ -439,26 +439,35 @@ document.addEventListener("DOMContentLoaded", function(){
 
 <!-- KEDGE_FINAL_BANK_TXID_FIX_START -->
 <script>
-/* FINAL: 국내 계좌는 TxID 필수 아님. script.js / kedge-supabase-db.js 덮어쓰기까지 최종 차단 */
-window.submitVipRequest = async function(){
-  const SUPABASE_URL = window.KEDGE_SUPABASE_URL || "https://qakhbihueonefzifrmct.supabase.co";
-  const SUPABASE_ANON_KEY = window.KEDGE_SUPABASE_ANON_KEY || "sb_publishable_XboBFueAITcieSL75B2S5g_qlm4XmOm";
+/* K-EDGE FINAL PAYMENT FIX 2026-05-28
+   - 빗썸 API 입력값 강제 인식
+   - 구 컬럼(domestic_api_key 등) + 새 JSON(domestic_apis 등) 동시 저장
+   - 국내 계좌는 TxID 필수 아님
+   - script.js/kedge-supabase-db.js가 만든 submitVipRequest를 최종 덮어쓰기
+*/
+(function(){
+  const SUPABASE_URL_DEFAULT = "https://qakhbihueonefzifrmct.supabase.co";
+  const SUPABASE_ANON_KEY_DEFAULT = "sb_publishable_XboBFueAITcieSL75B2S5g_qlm4XmOm";
 
-  const qs = (id) => document.getElementById(id);
-  const val = (id) => (qs(id)?.value || "").trim();
+  function qs(id){ return document.getElementById(id); }
+  function val(id){ return (qs(id)?.value || "").trim(); }
+  function checked(id){ return !!qs(id)?.checked; }
 
   function msg(text, type){
     const el = qs("vipRequestMsg");
-    if(!el) return alert(text);
+    if(!el){ alert(text); return; }
     el.textContent = text;
     el.className = "form-msg " + (type || "error");
   }
 
   function readApi(checkId, keyId, secretId){
+    const key = val(keyId);
+    const secret = val(secretId);
     return {
-      enabled: !!qs(checkId)?.checked,
-      api_key: val(keyId),
-      secret_key: val(secretId)
+      enabled: checked(checkId),
+      api_key: key,
+      secret_key: secret,
+      api_secret: secret
     };
   }
 
@@ -467,122 +476,148 @@ window.submitVipRequest = async function(){
   }
 
   function hasValidEnabledApi(obj){
-    return enabledList(obj).some(([_, v]) => v.api_key && v.api_secret);
+    return enabledList(obj).some(([_, v]) => (v.api_key || "").trim() && ((v.secret_key || v.api_secret || "").trim()));
   }
 
   function hasInvalidEnabledApi(obj){
-    return enabledList(obj).some(([_, v]) => !v.api_key || !v.api_secret);
+    return enabledList(obj).some(([_, v]) => !(v.api_key || "").trim() || !((v.secret_key || v.api_secret || "").trim()));
   }
 
   function referralData(){
     return {
-      mexc: { enabled: !!qs("refMexcUse")?.checked, uid: val("refMexcUid") },
-      bitget: { enabled: !!qs("refBitgetUse")?.checked, uid: val("refBitgetUid") },
-      bingx: { enabled: !!qs("refBingxUse")?.checked, uid: val("refBingxUid") },
-      gate: { enabled: !!qs("refGateUse")?.checked, uid: val("refGateUid") }
+      mexc: { enabled: checked("refMexcUse"), uid: val("refMexcUid") },
+      bitget: { enabled: checked("refBitgetUse"), uid: val("refBitgetUid") },
+      bingx: { enabled: checked("refBingxUse"), uid: val("refBingxUid") },
+      gate: { enabled: checked("refGateUse"), uid: val("refGateUid") }
     };
   }
 
-  if(!window.supabase) return msg("❌ Supabase 라이브러리 로드 실패");
+  window.submitVipRequest = async function(){
+    const SUPABASE_URL = window.KEDGE_SUPABASE_URL || SUPABASE_URL_DEFAULT;
+    const SUPABASE_ANON_KEY = window.KEDGE_SUPABASE_ANON_KEY || SUPABASE_ANON_KEY_DEFAULT;
 
-  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    if(!window.supabase) return msg("❌ Supabase 라이브러리 로드 실패");
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  let user = null;
-  try{
-    if(typeof window.getCurrentUser === "function") user = await window.getCurrentUser();
-  }catch(e){}
-
-  if(!user || !user.email){
+    let user = null;
     try{
-      const { data } = await db.auth.getUser();
-      if(data && data.user){
-        user = {
-          email: data.user.email,
-          telegram: data.user.user_metadata?.telegram || "미등록"
-        };
-      }
+      if(typeof window.getCurrentUser === "function") user = await window.getCurrentUser();
     }catch(e){}
-  }
 
-  if(!user || !user.email) return msg("❌ 로그인 후 등록 신청할 수 있습니다.");
+    if(!user || !user.email){
+      try{
+        const { data } = await db.auth.getUser();
+        if(data && data.user){
+          user = {
+            email: data.user.email,
+            telegram: data.user.user_metadata?.telegram || "미등록"
+          };
+        }
+      }catch(e){}
+    }
 
-  const product = "AUTO";
-  const payType = val("payType") || "USDT";
-  const payName = val("payName");
-  const memo = val("txidInput");
+    if(!user || !user.email) return msg("❌ 로그인 후 등록 신청할 수 있습니다.");
 
-  if(!payName) return msg("❌ 입금자명 또는 보내는 사람 이름을 입력해주세요.");
+    const product = "AUTO";
+    const payType = val("payType") || "USDT";
+    const payName = val("payName");
+    const memo = val("txidInput");
+    const tgChatId = val("payChatId");
+    const telegramId = val("payTelegramId");
 
-  // 핵심 수정: 국내 계좌는 TxID/메모 필수 아님
-  if(payType !== "BANK" && !memo){
-    return msg("❌ TxID / 입금 메모 / 확인용 내용을 입력해주세요.");
-  }
+    if(!payName) return msg("❌ 입금자명 또는 보내는 사람 이름을 입력해주세요.");
+    if(payType !== "BANK" && !memo) return msg("❌ TxID / 입금 메모 / 확인용 내용을 입력해주세요.");
+    if(!tgChatId) return msg("❌ AUTO는 CHAT ID가 필요합니다. 먼저 @Kedge0203bot에서 /start 후 CHAT ID를 입력해주세요.");
 
-  const tgChatId = val("payChatId");
-  const telegramId = val("payTelegramId");
+    const domestic_apis = {
+      bithumb: readApi("payBithumbUse", "payBithumbApiKey", "payBithumbApiSecret")
+    };
 
-  if(!tgChatId) return msg("❌ AUTO는 CHAT ID가 필요합니다. 먼저 @Kedge0203bot에서 /start 후 CHAT ID를 입력해주세요.");
+    const foreign_apis = {
+      mexc: readApi("payMexcUse", "payMexcApiKey", "payMexcApiSecret"),
+      gate: readApi("payGateUse", "payGateApiKey", "payGateApiSecret"),
+      bitget: readApi("payBitgetUse", "payBitgetApiKey", "payBitgetApiSecret"),
+      bingx: readApi("payBingxUse", "payBingxApiKey", "payBingxApiSecret")
+    };
 
-  const domestic_apis = {
-    bithumb: readApi("payBithumbUse", "payBithumbApiKey", "payBithumbApiSecret")
+    const bKeyLen = domestic_apis.bithumb.api_key.length;
+    const bSecLen = (domestic_apis.bithumb.secret_key || domestic_apis.bithumb.api_secret || "").length;
+
+    if(!hasValidEnabledApi(domestic_apis)){
+      return msg(`❌ 빗썸 API KEY와 SECRET을 입력해주세요. 현재 감지값: KEY ${bKeyLen}자 / SECRET ${bSecLen}자`);
+    }
+    if(!hasValidEnabledApi(foreign_apis)) return msg("❌ 해외 거래소 API를 1개 이상 입력해주세요.");
+    if(hasInvalidEnabledApi(domestic_apis)) return msg("❌ 체크된 국내 거래소는 KEY와 SECRET을 모두 입력해야 합니다.");
+    if(hasInvalidEnabledApi(foreign_apis)) return msg("❌ 체크된 해외 거래소는 KEY와 SECRET을 모두 입력해야 합니다.");
+
+    const refs = referralData();
+    const referral_count = Math.min(Object.values(refs).filter(x => x.enabled && x.uid).length, 4);
+    const referral_discount_percent = referral_count * 10;
+    const base_price_krw = 200000;
+    const final_price_krw = base_price_krw * (100 - referral_discount_percent) / 100;
+
+    const firstForeign = enabledList(foreign_apis)[0] || ["", {}];
+    const firstForeignName = String(firstForeign[0] || "").toUpperCase();
+    const firstForeignApi = firstForeign[1] || {};
+
+    const payload = {
+      email: user.email,
+      telegram: telegramId || user.telegram || "미등록",
+      product,
+      pay_type: payType,
+      pay_name: payName,
+      memo: payType === "BANK" ? "" : memo,
+      status: "PENDING",
+      tg_chat_id: tgChatId,
+
+      domestic_apis,
+      foreign_apis,
+
+      domestic_exchange: "BITHUMB",
+      domestic_api_key: domestic_apis.bithumb.api_key || "",
+      domestic_api_secret: domestic_apis.bithumb.secret_key || domestic_apis.bithumb.api_secret || "",
+      foreign_exchange: firstForeignName,
+      foreign_api_key: firstForeignApi.api_key || "",
+      foreign_api_secret: firstForeignApi.secret_key || firstForeignApi.api_secret || "",
+
+      referral_uids: refs,
+      referral_count,
+      referral_discount_percent,
+      base_price_krw,
+      final_price_krw
+    };
+
+    let { error } = await db.from("kedge_requests").insert(payload);
+
+    if(error && String(error.message || "").toLowerCase().includes("column")){
+      console.warn("[K-EDGE] legacy column insert failed, retry JSON-only", error);
+      const retryPayload = {...payload};
+      delete retryPayload.domestic_exchange;
+      delete retryPayload.domestic_api_key;
+      delete retryPayload.domestic_api_secret;
+      delete retryPayload.foreign_exchange;
+      delete retryPayload.foreign_api_key;
+      delete retryPayload.foreign_api_secret;
+      const retry = await db.from("kedge_requests").insert(retryPayload);
+      error = retry.error;
+    }
+
+    if(error){
+      console.error(error);
+      return msg("❌ 신청 저장 실패: " + error.message);
+    }
+
+    msg("✅ AUTO 신청 완료. 관리자 승인 후 알람 수신이 활성화됩니다.", "success");
+    if(qs("payName")) qs("payName").value = "";
+    if(qs("txidInput")) qs("txidInput").value = "";
   };
-
-  const foreign_apis = {
-    mexc: readApi("payMexcUse", "payMexcApiKey", "payMexcApiSecret"),
-    gate: readApi("payGateUse", "payGateApiKey", "payGateApiSecret"),
-    bitget: readApi("payBitgetUse", "payBitgetApiKey", "payBitgetApiSecret"),
-    bingx: readApi("payBingxUse", "payBingxApiKey", "payBingxApiSecret")
-  };
-
-  if(!hasValidEnabledApi(domestic_apis)) return msg("❌ 빗썸 API KEY와 SECRET을 입력해주세요.");
-  if(!hasValidEnabledApi(foreign_apis)) return msg("❌ 해외 거래소 API를 1개 이상 입력해주세요.");
-  if(hasInvalidEnabledApi(domestic_apis)) return msg("❌ 체크된 국내 거래소는 KEY와 SECRET을 모두 입력해야 합니다.");
-  if(hasInvalidEnabledApi(foreign_apis)) return msg("❌ 체크된 해외 거래소는 KEY와 SECRET을 모두 입력해야 합니다.");
-
-  const refs = referralData();
-  const referral_count = Math.min(Object.values(refs).filter(x => x.enabled && x.uid).length, 4);
-  const referral_discount_percent = referral_count * 10;
-  const base_price_krw = 200000;
-  const final_price_krw = base_price_krw * (100 - referral_discount_percent) / 100;
-
-  const payload = {
-    email: user.email,
-    telegram: telegramId || user.telegram || "미등록",
-    product,
-    pay_type: payType,
-    pay_name: payName,
-    memo: payType === "BANK" ? "" : memo,
-    status: "PENDING",
-    tg_chat_id: tgChatId,
-    domestic_apis,
-    foreign_apis,
-    referral_uids: refs,
-    referral_count,
-    referral_discount_percent,
-    base_price_krw,
-    final_price_krw
-  };
-
-  const { error } = await db.from("kedge_requests").insert(payload);
-  if(error){
-    console.error(error);
-    return msg("❌ 신청 저장 실패: " + error.message);
-  }
-
-  msg("✅ AUTO 신청 완료. 관리자 승인 후 알람 수신이 활성화됩니다.", "success");
-  if(qs("payName")) qs("payName").value = "";
-  if(qs("txidInput")) qs("txidInput").value = "";
-};
-
-document.addEventListener("DOMContentLoaded", function(){
-  const payType = document.getElementById("payType");
-  const txidWrap = document.getElementById("txidWrap");
-  const txidInput = document.getElementById("txidInput");
 
   function refreshTxid(){
-    const type = payType?.value || "USDT";
+    const payType = qs("payType")?.value || "USDT";
+    const txidWrap = qs("txidWrap");
+    const txidInput = qs("txidInput");
     if(!txidWrap || !txidInput) return;
-    if(type === "BANK"){
+    if(payType === "BANK"){
       txidWrap.style.display = "none";
       txidInput.value = "";
     }else{
@@ -591,9 +626,14 @@ document.addEventListener("DOMContentLoaded", function(){
     }
   }
 
-  payType?.addEventListener("change", refreshTxid);
-  refreshTxid();
-});
+  document.addEventListener("DOMContentLoaded", function(){
+    qs("payType")?.addEventListener("change", refreshTxid);
+    refreshTxid();
+    const btn = document.querySelector('button[onclick="submitVipRequest()"]');
+    if(btn) btn.onclick = window.submitVipRequest;
+    console.log("[K-EDGE] payment final API fix loaded");
+  });
+})();
 </script>
 <!-- KEDGE_FINAL_BANK_TXID_FIX_END -->
 
