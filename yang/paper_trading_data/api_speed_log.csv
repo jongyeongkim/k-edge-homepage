@@ -769,3 +769,21 @@
 2026-05-28 17:27:04,MEXC,IRYS/USDT:USDT,15.0647,True,
 2026-05-28 17:32:35,MEXC,WLD/USDT:USDT,0.2736,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
 2026-05-28 17:32:50,MEXC,XLM/USDT:USDT,15.0786,True,
+2026-05-28 17:36:24,MEXC,WLD/USDT:USDT,0.2447,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-05-28 17:36:39,MEXC,XLM/USDT:USDT,15.0799,True,
+2026-05-28 17:39:37,BITGET,SAHARA/USDT:USDT,2.1857,True,
+2026-05-28 17:39:38,MEXC,ADA/USDT:USDT,2.8171,True,
+2026-05-28 17:40:21,MEXC,ONDO/USDT:USDT,1.1425,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-05-28 17:40:37,MEXC,SOL/USDT:USDT,15.1774,True,
+2026-05-28 17:42:11,MEXC,DBR/USDT:USDT,0.2486,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-05-28 17:42:26,MEXC,SAND/USDT:USDT,15.0641,True,
+2026-05-28 17:47:57,MEXC,REQ/USDT:USDT,0.248,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-05-28 17:48:12,MEXC,SAHARA/USDT:USDT,15.0743,True,
+2026-05-28 17:55:38,MEXC,SOL/USDT:USDT,0.2516,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-05-28 17:55:53,MEXC,DOGE/USDT:USDT,15.0974,True,
+2026-05-28 17:59:29,MEXC,CFG/USDT:USDT,0.2514,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-05-28 17:59:44,MEXC,SAND/USDT:USDT,15.0781,True,
+2026-05-28 18:05:13,MEXC,JTO/USDT:USDT,0.2607,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-05-28 18:05:28,MEXC,IRYS/USDT:USDT,15.0657,True,
+2026-05-28 18:10:59,MEXC,TRX/USDT:USDT,0.2459,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-05-28 18:11:14,MEXC,ALT/USDT:USDT,15.0696,True,

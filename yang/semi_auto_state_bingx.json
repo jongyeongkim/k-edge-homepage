@@ -269,6 +269,51 @@
       "usd_krw": 1502.99,
       "entry_status": "READY",
       "status": "V8.8_FAST_PAPER_ENTRY"
+    },
+    "SAHARA_BITHUMB_BINGX_1779958375": {
+      "signal_id": "SAHARA_BITHUMB_BINGX_1779958375",
+      "ts": 1779958375.375562,
+      "time": "17:52",
+      "created_at": "2026-05-28 17:52:55",
+      "coin": "SAHARA",
+      "domestic": "BITHUMB",
+      "domestic_exchange": "BITHUMB",
+      "domestic_market": "SAHARA_KRW",
+      "foreign": "BINGX",
+      "foreign_exchange": "BINGX",
+      "foreign_market": "SAHARA/USDT:USDT",
+      "coin_gap": 3.39,
+      "btc_gap": 1.6,
+      "real_edge": 1.79,
+      "expected_profit_min": 0.79,
+      "expected_profit_max": 1.79,
+      "funding_rate": 0.005,
+      "recommended_leverage": "x1 기본 / x2 최대 권장",
+      "stop_edge": 3.79,
+      "spot_wall_krw": 6664567,
+      "futures_wall_krw": 30788163,
+      "real_fill_krw": 6664567,
+      "futures_position_limit_krw": 1502740,
+      "futures_position_limit_source": "default_safe_limit",
+      "min_retain_edge_percent": 1.5,
+      "allowed_slippage_percent": 0.29,
+      "slippage_tiers_text": "0.29%: 국내 666.5만 / 해외 3078.8만 / 최종 150.3만",
+      "max_user_entry_krw": 0,
+      "paper_domestic_base_krw": 2000000,
+      "paper_foreign_margin_base_krw": 500000,
+      "paper_futures_leverage": 4.0,
+      "roundtrip_fee_percent": 0.14,
+      "funding_simulation_enabled": false,
+      "max_entry_krw": 1502740,
+      "final_entry_krw": 1502740,
+      "used_entry_krw": 0,
+      "remaining_entry_krw": 1502740,
+      "wall_range_percent": 0.287,
+      "executable_krw": 1502740,
+      "krw": 1502740,
+      "usd_krw": 1502.74,
+      "entry_status": "READY",
+      "status": "V8.8_FAST_PAPER_ENTRY"
     }
   },
   "users": {
@@ -295,6 +340,10 @@
     "6870367623:XAN_BITHUMB_BINGX_1779956964": {
       "selected_krw": 0,
       "updated_at": "2026-05-28 17:29:27"
+    },
+    "6870367623:SAHARA_BITHUMB_BINGX_1779958375": {
+      "selected_krw": 0,
+      "updated_at": "2026-05-28 17:52:58"
     }
   },
   "positions": {},
@@ -342,6 +391,12 @@
       "reason": "❌ 국내 잔고 조회 실패\n\nBITHUMB API 권한 또는 키를 확인해주세요.\n오류: bithumb Invalid Apikey",
       "finished_at": "2026-05-28 17:29:27",
       "finished_ts": 1779956967.9717097
+    },
+    "6870367623:SAHARA_BITHUMB_BINGX_1779958375": {
+      "status": "FAILED",
+      "reason": "❌ 국내 잔고 조회 실패\n\nBITHUMB API 권한 또는 키를 확인해주세요.\n오류: bithumb Invalid Apikey",
+      "finished_at": "2026-05-28 17:52:58",
+      "finished_ts": 1779958378.1643145
     }
   }
 }

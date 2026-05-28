@@ -2269,6 +2269,22 @@ def build_user_exchange_from_member(member: Dict[str, Any], exchange_name: str, 
 
     prefix = "gate" if name in ("gate", "gateio") else name
 
+    def _clean(v):
+        """DB의 NULL/빈문자/문자열 'null'을 실제 미등록값으로 처리."""
+        if v is None:
+            return ""
+        s = str(v).strip()
+        if not s or s.lower() in ("null", "none", "undefined", "nan"):
+            return ""
+        return s
+
+    def _first(*vals):
+        for v in vals:
+            s = _clean(v)
+            if s:
+                return s
+        return ""
+
     def _json_obj(v):
         if isinstance(v, dict):
             return v
@@ -2280,6 +2296,9 @@ def build_user_exchange_from_member(member: Dict[str, Any], exchange_name: str, 
                 return {}
         return {}
 
+    # 1) 새 구조: domestic_apis / foreign_apis JSON
+    # 2) 구 구조: domestic_api_key / domestic_api_secret / foreign_api_key / foreign_api_secret
+    # 3) 거래소별 구 구조: bithumb_api_key, mexc_api_key 등
     domestic_apis = _json_obj(member.get("domestic_apis"))
     foreign_apis = _json_obj(member.get("foreign_apis"))
     route_api = {}
@@ -2289,16 +2308,34 @@ def build_user_exchange_from_member(member: Dict[str, Any], exchange_name: str, 
             if isinstance(val, dict):
                 route_api.update(val)
 
-    if market_type == "spot":
-        api_key = member.get(f"{prefix}_api_key") or member.get(f"{prefix}_access_key") or member.get("domestic_api_key")
-        secret = member.get(f"{prefix}_secret_key") or member.get(f"{prefix}_secret") or member.get("domestic_api_secret")
-    else:
-        api_key = member.get(f"{prefix}_api_key") or member.get(f"{prefix}_access_key") or member.get("foreign_api_key")
-        secret = member.get(f"{prefix}_secret_key") or member.get(f"{prefix}_secret") or member.get("foreign_api_secret")
+    json_api_key = _first(route_api.get("api_key"), route_api.get("apiKey"), route_api.get("access_key"), route_api.get("accessKey"), route_api.get("connect_key"), route_api.get("connectKey"))
+    json_secret = _first(route_api.get("secret_key"), route_api.get("secretKey"), route_api.get("api_secret"), route_api.get("apiSecret"), route_api.get("secret"))
+    json_password = _first(route_api.get("password"), route_api.get("passphrase"), route_api.get("api_password"), route_api.get("apiPassword"))
 
-    api_key = api_key or route_api.get("api_key") or route_api.get("apiKey") or route_api.get("access_key") or route_api.get("accessKey")
-    secret = secret or route_api.get("api_secret") or route_api.get("secret") or route_api.get("secret_key") or route_api.get("secretKey")
-    password = member.get(f"{prefix}_password") or member.get(f"{prefix}_passphrase") or route_api.get("password") or route_api.get("passphrase")
+    if market_type == "spot":
+        api_key = _first(
+            member.get(f"{prefix}_api_key"), member.get(f"{prefix}_access_key"), member.get(f"{prefix}_connect_key"),
+            member.get("domestic_api_key"), member.get("domestic_access_key"), member.get("domestic_connect_key"),
+            json_api_key,
+        )
+        secret = _first(
+            member.get(f"{prefix}_secret_key"), member.get(f"{prefix}_api_secret"), member.get(f"{prefix}_secret"),
+            member.get("domestic_api_secret"), member.get("domestic_secret_key"), member.get("domestic_secret"),
+            json_secret,
+        )
+    else:
+        api_key = _first(
+            member.get(f"{prefix}_api_key"), member.get(f"{prefix}_access_key"), member.get(f"{prefix}_connect_key"),
+            member.get("foreign_api_key"), member.get("foreign_access_key"), member.get("foreign_connect_key"),
+            json_api_key,
+        )
+        secret = _first(
+            member.get(f"{prefix}_secret_key"), member.get(f"{prefix}_api_secret"), member.get(f"{prefix}_secret"),
+            member.get("foreign_api_secret"), member.get("foreign_secret_key"), member.get("foreign_secret"),
+            json_secret,
+        )
+
+    password = _first(member.get(f"{prefix}_password"), member.get(f"{prefix}_passphrase"), member.get("foreign_api_password"), member.get("foreign_passphrase"), json_password)
 
     if not api_key or not secret:
         print(f"[실거래 API 미등록] exchange={exchange_name} type={market_type} prefix={prefix}")
