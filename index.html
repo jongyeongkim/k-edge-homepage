@@ -12,6 +12,16 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="K-EDGE">
   <link rel="apple-touch-icon" href="/icon-192.png">
+
+  <style>
+    .kedge-live-board{margin-top:28px;border:1px solid rgba(49,213,255,.28);background:linear-gradient(145deg,rgba(8,20,42,.78),rgba(3,8,20,.92));border-radius:22px;padding:22px;box-shadow:0 18px 60px rgba(0,0,0,.24)}
+    .kedge-live-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:16px}
+    .kedge-live-head h2{margin:0;font-size:26px}.kedge-live-head p{margin:6px 0 0;color:#aeb8c8;font-weight:800;line-height:1.55}
+    .kedge-live-status{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;border:1px solid rgba(41,255,154,.28);background:rgba(41,255,154,.08);color:#29ff9a;font-weight:950;white-space:nowrap}.kedge-live-status.off{border-color:rgba(255,118,118,.35);background:rgba(255,118,118,.08);color:#ff7676}
+    .kedge-live-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0 18px}.kedge-live-summary article{border:1px solid rgba(145,176,255,.18);background:rgba(255,255,255,.04);border-radius:16px;padding:14px}.kedge-live-summary small{display:block;color:#91a0b8;font-weight:900;margin-bottom:7px}.kedge-live-summary b{font-size:22px;color:#fff}
+    .kedge-live-table{display:grid;gap:8px}.kedge-live-row{display:grid;grid-template-columns:1fr .8fr 1fr 1fr .8fr .9fr .9fr;gap:8px;align-items:center;padding:12px;border:1px solid rgba(145,176,255,.14);border-radius:14px;background:rgba(0,0,0,.16);font-weight:850;color:#dce7f7}.kedge-live-row.head{color:#91a0b8;background:transparent;border:none;padding:4px 12px;font-size:13px}.kedge-live-row .up{color:#29ff9a}.kedge-live-row .warn{color:#ffca38}.kedge-live-row .bad{color:#ff7676}.kedge-live-empty{padding:22px;text-align:center;color:#91a0b8;font-weight:900;border:1px dashed rgba(145,176,255,.25);border-radius:16px}
+    @media(max-width:900px){.kedge-live-head{flex-direction:column}.kedge-live-summary{grid-template-columns:1fr 1fr}.kedge-live-row{grid-template-columns:1fr 1fr;font-size:13px}.kedge-live-row.head{display:none}}
+  </style>
 </head>
 <body data-page="home">
   <div class="bg-grid"></div>
@@ -121,6 +131,32 @@
       <article><span>🚀</span><b>자동 진입·청산</b><p>조건 충족 시 진입부터 청산까지 자동화합니다.</p></article>
     </section>
 
+
+
+    <section id="live-dashboard" class="section">
+      <div class="kedge-live-board">
+        <div class="kedge-live-head">
+          <div>
+            <p class="exchange-pill">LIVE DASHBOARD</p>
+            <h2>실시간 AUTO 현황</h2>
+            <p>자동봇이 Supabase에 기록한 후보·진입·청산 상태를 홈페이지에서 실시간으로 표시합니다.</p>
+          </div>
+          <span id="kedgeLiveStatus" class="kedge-live-status off">연동 대기</span>
+        </div>
+
+        <div class="kedge-live-summary">
+          <article><small>봇 상태</small><b id="liveBotStatus">대기</b></article>
+          <article><small>오늘 진입</small><b id="liveTodayEntries">0건</b></article>
+          <article><small>오늘 익절</small><b id="liveTodayTp">0건</b></article>
+          <article><small>최근 스캔</small><b id="liveLastScan">-</b></article>
+        </div>
+
+        <div class="kedge-live-table" id="kedgeLiveRows">
+          <div class="kedge-live-empty">실시간 데이터 연결 대기 중입니다.</div>
+        </div>
+      </div>
+    </section>
+
     <section id="signals" class="section">
       <h2>자동 감지 예시</h2>
       <p class="sub">가격 괴리에서 BTC 괴리를 제외한 실제 엣지를 기준으로 판단합니다.</p>
@@ -174,6 +210,13 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./script.js"></script>
+  
+<script>
+window.KEDGE_SUPABASE_URL = "https://qakhbihueonefzifrmct.supabase.co";
+window.KEDGE_SUPABASE_ANON_KEY = "sb_publishable_XboBFueAITcieSL75B2S5g_qlm4XmOm";
+</script>
+<script src="./kedge-live-dashboard.js?v=20260528_live1"></script>
+
 
 <script>
 if ("serviceWorker" in navigator) {

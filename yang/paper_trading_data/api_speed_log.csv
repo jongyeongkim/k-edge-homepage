@@ -767,3 +767,5 @@
 2026-05-28 17:23:16,MEXC,SHIB/USDT:USDT,15.0618,True,
 2026-05-28 17:26:48,MEXC,BILL/USDT:USDT,0.2566,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
 2026-05-28 17:27:04,MEXC,IRYS/USDT:USDT,15.0647,True,
+2026-05-28 17:32:35,MEXC,WLD/USDT:USDT,0.2736,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-05-28 17:32:50,MEXC,XLM/USDT:USDT,15.0786,True,

@@ -269,6 +269,51 @@
       "usd_krw": 1502.88,
       "entry_status": "READY",
       "status": "V8.8_FAST_PAPER_ENTRY"
+    },
+    "IN_BITHUMB_MEXC_1779957180": {
+      "signal_id": "IN_BITHUMB_MEXC_1779957180",
+      "ts": 1779957180.0998816,
+      "time": "17:33",
+      "created_at": "2026-05-28 17:33:00",
+      "coin": "IN",
+      "domestic": "BITHUMB",
+      "domestic_exchange": "BITHUMB",
+      "domestic_market": "IN_KRW",
+      "foreign": "MEXC",
+      "foreign_exchange": "MEXC",
+      "foreign_market": "IN/USDT:USDT",
+      "coin_gap": 3.22,
+      "btc_gap": 1.54,
+      "real_edge": 1.68,
+      "expected_profit_min": 0.68,
+      "expected_profit_max": 1.68,
+      "funding_rate": null,
+      "recommended_leverage": "x1 기본 / x2 최대 권장",
+      "stop_edge": 3.68,
+      "spot_wall_krw": 3193127,
+      "futures_wall_krw": 1946496,
+      "real_fill_krw": 1946496,
+      "futures_position_limit_krw": 2246056,
+      "futures_position_limit_source": "ccxt_market_limits",
+      "min_retain_edge_percent": 1.5,
+      "allowed_slippage_percent": 0.18,
+      "slippage_tiers_text": "0.18%: 국내 319.3만 / 해외 194.6만 / 최종 194.6만",
+      "max_user_entry_krw": 0,
+      "paper_domestic_base_krw": 2000000,
+      "paper_foreign_margin_base_krw": 500000,
+      "paper_futures_leverage": 4.0,
+      "roundtrip_fee_percent": 0.14,
+      "funding_simulation_enabled": false,
+      "max_entry_krw": 1946496,
+      "final_entry_krw": 1946496,
+      "used_entry_krw": 0,
+      "remaining_entry_krw": 1946496,
+      "wall_range_percent": 0.1833,
+      "executable_krw": 1946496,
+      "krw": 1946496,
+      "usd_krw": 1502.66,
+      "entry_status": "READY",
+      "status": "V8.8_FAST_PAPER_ENTRY"
     }
   },
   "users": {
@@ -287,6 +332,10 @@
     "6870367623:NIL_BITHUMB_MEXC_1779956543": {
       "selected_krw": 0,
       "updated_at": "2026-05-28 17:22:23"
+    },
+    "6870367623:IN_BITHUMB_MEXC_1779957180": {
+      "selected_krw": 0,
+      "updated_at": "2026-05-28 17:33:01"
     }
   },
   "positions": {
@@ -350,6 +399,12 @@
       "reason": "❌ 진입 취소\n\n사유: 현재 실제엣지 부족\n\n알림 당시: +1.63%\n현재: +1.19%\n최소 유지엣지: +1.50% 이상",
       "finished_at": "2026-05-28 17:22:23",
       "finished_ts": 1779956543.7470965
+    },
+    "6870367623:IN_BITHUMB_MEXC_1779957180": {
+      "status": "FAILED",
+      "reason": "❌ 국내 잔고 조회 실패\n\nBITHUMB API 권한 또는 키를 확인해주세요.\n오류: bithumb Invalid Apikey",
+      "finished_at": "2026-05-28 17:33:01",
+      "finished_ts": 1779957181.7247808
     }
   }
 }
