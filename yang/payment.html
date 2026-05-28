@@ -446,6 +446,13 @@ window.submitVipRequest = async function(){
 
   const qs = (id) => document.getElementById(id);
   const val = (id) => (qs(id)?.value || "").trim();
+  const valAny = (ids) => {
+    for(const id of ids){
+      const v = val(id);
+      if(v) return v;
+    }
+    return "";
+  };
 
   function msg(text, type){
     const el = qs("vipRequestMsg");
@@ -455,11 +462,23 @@ window.submitVipRequest = async function(){
   }
 
   function readApi(checkId, keyId, secretId){
+    const secretValue = val(secretId);
     return {
       enabled: !!qs(checkId)?.checked,
       api_key: val(keyId),
-      secret_key: val(secretId),
-      api_secret: val(secretId) // 기존/관리자 화면 호환용
+      secret_key: secretValue,
+      api_secret: secretValue // 기존/관리자 화면 호환용
+    };
+  }
+
+  function readBithumbApi(){
+    const key = valAny(["payBithumbApiKey", "bithumbApiKey", "domesticApiKey", "payDomesticApiKey"]);
+    const secret = valAny(["payBithumbApiSecret", "bithumbApiSecret", "domesticApiSecret", "payDomesticApiSecret"]);
+    return {
+      enabled: !!qs("payBithumbUse")?.checked || !!key || !!secret,
+      api_key: key,
+      secret_key: secret,
+      api_secret: secret
     };
   }
 
@@ -525,7 +544,7 @@ window.submitVipRequest = async function(){
   if(!tgChatId) return msg("❌ AUTO는 CHAT ID가 필요합니다. 먼저 @Kedge0203bot에서 /start 후 CHAT ID를 입력해주세요.");
 
   const domestic_apis = {
-    bithumb: readApi("payBithumbUse", "payBithumbApiKey", "payBithumbApiSecret")
+    bithumb: readBithumbApi()
   };
 
   const foreign_apis = {
@@ -535,7 +554,10 @@ window.submitVipRequest = async function(){
     bingx: readApi("payBingxUse", "payBingxApiKey", "payBingxApiSecret")
   };
 
-  if(!hasValidEnabledApi(domestic_apis)) return msg("❌ 빗썸 API KEY와 SECRET을 입력해주세요.");
+  if(!hasValidEnabledApi(domestic_apis)){
+    const b = domestic_apis.bithumb || {};
+    return msg(`❌ 빗썸 API KEY와 SECRET을 입력해주세요. 현재 감지값: KEY ${String(b.api_key||"").length}자 / SECRET ${String(b.secret_key||b.api_secret||"").length}자`);
+  }
   if(!hasValidEnabledApi(foreign_apis)) return msg("❌ 해외 거래소 API를 1개 이상 입력해주세요.");
   if(hasInvalidEnabledApi(domestic_apis)) return msg("❌ 체크된 국내 거래소는 KEY와 SECRET을 모두 입력해야 합니다.");
   if(hasInvalidEnabledApi(foreign_apis)) return msg("❌ 체크된 해외 거래소는 KEY와 SECRET을 모두 입력해야 합니다.");
