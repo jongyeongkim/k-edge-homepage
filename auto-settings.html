@@ -1,29 +1,346 @@
-<!-- alignment tune patch -->
-<style>
-.auto-settings-card{
-  text-align:left !important;
-}
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="icon" type="image/png" href="./favicon.png" />
+  <title>K-EDGE | AUTO 설정</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0b1020">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="K-EDGE">
+  <link rel="apple-touch-icon" href="/icon-192.png">
 
-.auto-settings-card h1,
-.auto-settings-card .status-title,
-.auto-settings-card .status-desc{
+<style>
+/* ===== K-EDGE AUTO 설정 정렬 안정화 ===== */
+#autoSettingStatus{
   text-align:center !important;
 }
 
-.auto-settings-card label{
-  display:block;
-  text-align:left !important;
-  margin-bottom:6px;
+#autoSettingLocked{
+  text-align:center !important;
 }
 
-.auto-settings-card input,
-.auto-settings-card select{
+#autoSettingForm{
   text-align:left !important;
 }
 
-.auto-settings-card .save-btn-wrap{
-  display:flex;
-  justify-content:center;
-  margin-top:18px;
+#autoSettingForm .auto-setting-card,
+#autoSettingForm .auto-standard-box,
+#autoSettingForm .auto-setting-grid,
+#autoSettingForm .auto-setting-simple{
+  text-align:left !important;
+}
+
+#autoSettingForm h3{
+  text-align:left !important;
+}
+
+#autoSettingForm label,
+#autoSettingForm .mini-desc,
+#autoSettingForm p{
+  text-align:left !important;
+}
+
+#autoSettingForm input,
+#autoSettingForm select{
+  text-align:left !important;
+}
+
+.auto-setting-save{
+  text-align:left !important;
+}
+
+.auto-setting-save button{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
 }
 </style>
+
+</head>
+<body data-page="auto">
+  <div class="bg-grid"></div>
+  <header class="topbar">
+    <a class="brand" href="./index.html"><span class="kmark">K</span><b>K-EDGE</b></a>
+    <nav>
+      <a href="./index.html" data-nav="home">홈</a>
+      <a href="./pricing.html" data-nav="pricing">요금제</a>
+      <a href="./guide.html" data-nav="guide">가이드</a>
+      <a href="./referral.html" data-nav="referral">추천인</a>
+      <a href="./payment.html" data-nav="payment">등록</a>
+      <a href="./auto-settings.html" data-nav="auto">AUTO 설정</a>
+      <a href="./support.html" data-nav="support">문의</a>
+      <a href="./mypage.html" data-nav="mypage">내정보</a>
+    </nav>
+    <div class="top-actions" id="topAuthArea">
+      <a class="login" href="./login.html">로그인</a>
+      <a class="join" href="./join.html">회원가입</a>
+    </div>
+  </header>
+  <main>
+    <section class="page-hero">
+      <p class="exchange-pill">AUTO SETTINGS</p>
+      <h1>K-EDGE AUTO 설정</h1>
+      <p>승인 후 알람은 기본 ON 상태입니다. 자동매매 시작 전 빗썸 총자산 기준 운용금액과 분할 수를 설정하세요.</p>
+    </section>
+    <section class="section auth-section">
+      <div class="auth-status" id="autoSettingStatus"><b>승인 상태 확인 중...</b></div>
+      <div id="autoSettingLocked" class="auth-card center-card" style="display:none;">
+        <h3>🔒 관리자 승인 후 사용 가능</h3>
+        <p>등록 신청 후 관리자가 승인하면 AUTO 설정을 저장할 수 있습니다.</p>
+        <a class="btn primary full" href="./payment.html">등록 페이지로 이동</a>
+        <br><br>
+        <a class="btn ghost full" href="./mypage.html">내정보 확인</a>
+      </div>
+      <div id="autoSettingForm" class="auto-setting-wrap" style="display:none;">
+        <article class="auto-setting-card auto-standard-box">
+          <h3>📌 K-EDGE AUTO 기본 운용 기준</h3>
+          <div class="auto-standard-grid">
+            <div><small>실제 엣지</small><strong>+1.5% 이상 자동 진입</strong></div>
+            <div><small>목표 수익</small><strong>+0.3% 자동 익절</strong></div>
+            <div><small>국내 기준</small><strong>빗썸 총자산 기준 운용</strong><p>자동매매 금액 계산 기준</p></div>
+            <div><small>분할</small><strong>유저 직접 설정</strong></div>
+            <div><small>운용 방식</small><strong>고정금액 / 총자산 복리 선택 가능</strong></div>
+          </div>
+          <div class="warning-note" style="margin-top:16px">※ 진입 / 청산 / 손절 / 필터는 K-EDGE 시스템 기준으로 자동 처리됩니다.</div>
+        </article>
+        <div class="auto-setting-grid auto-setting-simple">
+          <article class="auto-setting-card">
+            <h3>1. 운용 방식</h3>
+            <p class="mini-desc">고정금액은 설정한 1회 진입금액을 유지하고, 총자산 복리는 빗썸 총자산을 분할 수로 나눠 매번 다시 계산합니다.</p>
+            <label class="auto-radio"><input type="radio" name="capitalMode" value="fixed" checked> 고정금액</label>
+            <label class="auto-radio"><input type="radio" name="capitalMode" value="compound"> 총자산 복리</label>
+            <label>총 운용금액 <span class="field-note">(빗썸 총자산 기준)</span></label>
+            <input id="autoCapitalKrw" type="number" min="0" step="10000" value="2000000" oninput="calcAutoEntryAmount()">
+            <p class="mini-desc">※ 빗썸 총자산 기준으로 계산됩니다.</p>
+            <label>분할 수</label>
+            <input id="autoSplitCount" type="number" min="1" max="100" step="1" value="20" oninput="calcAutoEntryAmount()">
+            <div class="auto-result-box">
+              <small>계산된 1회 진입금액</small>
+              <strong id="autoEntryAmountText">100,000원</strong>
+            </div>
+          </article>
+          <article class="auto-setting-card">
+            <h3>2. 자동매매</h3>
+            <p class="mini-desc">승인 직후 알람은 ON이며, 자동매매는 사용자가 직접 ON으로 전환해야 합니다.</p>
+            <label class="auto-switch-line">
+              <span>자동매매</span>
+              <select id="autoEntryEnabled">
+                <option value="OFF">OFF</option>
+                <option value="ON">ON</option>
+              </select>
+            </label>
+            <div class="auto-example-box">
+              <h4>예시</h4>
+              <p>빗썸 총자산 200만원 / 20분할 = 1회 10만원</p>
+              <p>총자산 220만원 증가 시 / 20분할 = 1회 11만원</p>
+            </div>
+          </article>
+        </div>
+        <div class="auto-setting-save">
+          <div>
+            <h3>설정 저장</h3>
+            <p>저장 후 텔레그램 알림과 자동매매 봇에서 이 값을 기준으로 운용합니다.</p>
+          </div>
+          <button class="btn primary" type="button" onclick="saveAutoSettings()">AUTO 설정 저장</button>
+        </div>
+        <p id="autoSettingMsg" class="form-msg"></p>
+      </div>
+    </section>
+  </main>
+  <footer>
+    <b>K-EDGE TEAM</b>
+    <p>Telegram: <a href="https://t.me/listing0517" target="_blank">@listing0517</a></p>
+    <p>본 서비스는 정보 제공 목적이며, 투자 판단과 책임은 이용자 본인에게 있습니다.</p>
+    <p><a href="./referral.html">추천인</a> · <a href="./pricing.html">요금제</a> · <a href="./support.html">문의</a></p>
+  </footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./script.js?v=20260528_auto_fix"></script>
+  <script src="./kedge-supabase-db.js?v=20260528_auto_fix"></script>
+
+
+<!-- KEDGE_AUTO_SETTINGS_DIRECT_APPROVAL_FIX_START -->
+<script>
+(function(){
+  const SUPABASE_URL = window.KEDGE_SUPABASE_URL || "https://qakhbihueonefzifrmct.supabase.co";
+  const SUPABASE_ANON_KEY = window.KEDGE_SUPABASE_ANON_KEY || "sb_publishable_XboBFueAITcieSL75B2S5g_qlm4XmOm";
+  let db = null;
+  let currentUser = null;
+  let latestApprovedRequest = null;
+
+  function $(id){ return document.getElementById(id); }
+  function showStatus(html){ const el=$("autoSettingStatus"); if(el) el.innerHTML = html; }
+  function showMsg(text, type){
+    const el=$("autoSettingMsg");
+    if(!el) return alert(text);
+    el.textContent = text;
+    el.className = "form-msg " + (type || "error");
+  }
+  function getDb(){
+    if(db) return db;
+    if(!window.supabase) return null;
+    db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    return db;
+  }
+  function num(id, fallback){
+    const v = Number(($(id)?.value || "").replace?.(/,/g, "") || $(id)?.value || fallback);
+    return Number.isFinite(v) ? v : fallback;
+  }
+  function selectedCapitalMode(){
+    return document.querySelector('input[name="capitalMode"]:checked')?.value || "fixed";
+  }
+  function setVisible(approved){
+    const locked = $("autoSettingLocked");
+    const form = $("autoSettingForm");
+    if(approved){
+      if(locked) locked.style.display = "none";
+      if(form) form.style.display = "block";
+      showStatus("<b>✅ K-EDGE AUTO 승인완료</b><p>알람은 ON, 자동매매는 기본 OFF입니다. 운용금액과 분할 수를 설정하세요.</p>");
+    }else{
+      if(locked) locked.style.display = "block";
+      if(form) form.style.display = "none";
+      showStatus("<b>🔒 관리자 승인 후 사용 가능</b><p>승인 완료 후 AUTO 설정을 저장할 수 있습니다.</p>");
+    }
+  }
+
+  window.calcAutoEntryAmount = function(){
+    const capital = Math.max(0, num("autoCapitalKrw", 2000000));
+    const split = Math.max(1, num("autoSplitCount", 20));
+    const entry = Math.floor(capital / split);
+    const el = $("autoEntryAmountText");
+    if(el) el.textContent = entry.toLocaleString("ko-KR") + "원";
+    return entry;
+  };
+
+  async function loadSavedSettings(){
+    const client = getDb();
+    if(!client || !currentUser?.email) return;
+    try{
+      const { data, error } = await client
+        .from("auto_settings")
+        .select("*")
+        .eq("email", currentUser.email)
+        .order("updated_at", { ascending:false })
+        .limit(1);
+      if(error || !Array.isArray(data) || !data.length) return;
+      const st = data[0];
+      if($("autoCapitalKrw") && st.capital_krw) $("autoCapitalKrw").value = st.capital_krw;
+      if($("autoSplitCount") && st.split_count) $("autoSplitCount").value = st.split_count;
+      const mode = st.capital_mode || "fixed";
+      const radio = document.querySelector(`input[name="capitalMode"][value="${mode}"]`);
+      if(radio) radio.checked = true;
+      if($("autoEntryEnabled")) $("autoEntryEnabled").value = st.auto_enabled ? "ON" : "OFF";
+      window.calcAutoEntryAmount();
+    }catch(e){ console.log("auto_settings load skipped", e); }
+  }
+
+  window.saveAutoSettings = async function(){
+    const client = getDb();
+    if(!client) return showMsg("❌ Supabase 연결 실패");
+    if(!currentUser?.email) return showMsg("❌ 로그인 정보를 확인할 수 없습니다.");
+    if(!latestApprovedRequest) return showMsg("❌ 관리자 승인 후 저장할 수 있습니다.");
+
+    const capital = Math.max(0, num("autoCapitalKrw", 2000000));
+    const split = Math.max(1, num("autoSplitCount", 20));
+    const entry = Math.floor(capital / split);
+    const autoEnabled = ($("autoEntryEnabled")?.value || "OFF") === "ON";
+    const payload = {
+      email: currentUser.email,
+      request_id: latestApprovedRequest.id,
+      service_enabled: true,
+      alert_enabled: true,
+      auto_enabled: autoEnabled,
+      capital_mode: selectedCapitalMode(),
+      capital_krw: capital,
+      split_count: split,
+      entry_amount_krw: entry,
+      updated_at: new Date().toISOString()
+    };
+
+    try{
+      const { error } = await client.from("auto_settings").upsert(payload, { onConflict:"email" });
+      if(error){
+        console.error(error);
+        return showMsg("❌ 설정 저장 실패: " + error.message);
+      }
+      showMsg("✅ AUTO 설정 저장 완료", "success");
+    }catch(e){
+      console.error(e);
+      showMsg("❌ 설정 저장 실패: " + (e.message || e));
+    }
+  };
+
+  async function initAutoSettingsPage(){
+    const client = getDb();
+    if(!client){
+      showStatus("<b>❌ Supabase 연결 실패</b>");
+      setVisible(false);
+      return;
+    }
+
+    try{
+      const { data:userData } = await client.auth.getUser();
+      currentUser = userData?.user ? { email:userData.user.email, id:userData.user.id } : null;
+      if(!currentUser?.email){
+        showStatus("<b>❌ 로그인이 필요합니다.</b><p>로그인 후 AUTO 설정을 이용할 수 있습니다.</p>");
+        setVisible(false);
+        return;
+      }
+
+      const { data, error } = await client
+        .from("kedge_requests")
+        .select("id,email,product,status,created_at,approved_at,tg_chat_id")
+        .eq("email", currentUser.email)
+        .eq("product", "AUTO")
+        .eq("status", "APPROVED")
+        .order("approved_at", { ascending:false, nullsFirst:false })
+        .order("created_at", { ascending:false })
+        .limit(1);
+
+      if(error){
+        console.error(error);
+        showStatus("<b>❌ 승인상태 확인 실패</b><p>" + error.message + "</p>");
+        setVisible(false);
+        return;
+      }
+
+      latestApprovedRequest = Array.isArray(data) && data.length ? data[0] : null;
+      if(!latestApprovedRequest){
+        setVisible(false);
+        return;
+      }
+
+      setVisible(true);
+      await loadSavedSettings();
+      window.calcAutoEntryAmount();
+    }catch(e){
+      console.error(e);
+      showStatus("<b>❌ 승인상태 확인 오류</b><p>" + (e.message || e) + "</p>");
+      setVisible(false);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", function(){
+    document.querySelectorAll('input[name="capitalMode"]').forEach(el=>el.addEventListener("change", window.calcAutoEntryAmount));
+    $("autoCapitalKrw")?.addEventListener("input", window.calcAutoEntryAmount);
+    $("autoSplitCount")?.addEventListener("input", window.calcAutoEntryAmount);
+    setTimeout(initAutoSettingsPage, 150);
+  });
+})();
+</script>
+<!-- KEDGE_AUTO_SETTINGS_DIRECT_APPROVAL_FIX_END -->
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("/service-worker.js").catch(function (err) {
+      console.log("Service Worker registration failed:", err);
+    });
+  });
+}
+</script>
+</body>
+</html>
