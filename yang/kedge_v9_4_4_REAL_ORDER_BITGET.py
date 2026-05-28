@@ -355,7 +355,7 @@ PAPER_DAILY_STATS_JSON = os.path.join(PAPER_DATA_DIR, "daily_stats.json")
 # 기본은 실전가상 자동진입 ON. 실제주문은 REAL_ORDER_ENABLED=True일 때만 나가도록 유지.
 AUTO_ENTRY_ENABLED = True  # V8.8 감지즉시 페이퍼 재검사/저장 + 결과DM ON
 AUTO_ENTRY_DEFAULT_KRW = int(os.getenv("AUTO_ENTRY_DEFAULT_KRW", "100000"))  # 홈페이지 설정 없을 때 fallback
-AUTO_ENTRY_MIN_KRW = int(os.getenv("AUTO_ENTRY_MIN_KRW", "1000"))  # 홈페이지 계산금액과 불일치 방지
+AUTO_ENTRY_MIN_KRW = int(os.getenv("AUTO_ENTRY_MIN_KRW", "5000"))  # 빗썸 최소주문금액 방어
 
 # ============================================================
 # V9.2 국내 복리 / 안전 / 통계 보강 설정

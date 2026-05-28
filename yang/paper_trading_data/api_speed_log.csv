@@ -902,3 +902,11 @@
 2026-05-28 21:50:46,MEXC,ORBS/USDT:USDT,15.1055,True,
 2026-05-28 21:56:19,MEXC,LINK/USDT:USDT,0.2493,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
 2026-05-28 21:56:34,MEXC,BCH/USDT:USDT,15.0921,True,
+2026-05-28 22:02:09,MEXC,GPS/USDT:USDT,0.2582,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-05-28 22:02:24,MEXC,INJ/USDT:USDT,15.0754,True,
+2026-05-28 22:19:31,MEXC,MEGA/USDT:USDT,0.2498,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-05-28 22:19:46,MEXC,LINK/USDT:USDT,15.0747,True,
+2026-05-28 22:23:20,MEXC,EUL/USDT:USDT,0.241,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-05-28 22:23:35,MEXC,NIL/USDT:USDT,15.0945,True,
+2026-05-28 22:29:09,MEXC,XAN/USDT:USDT,0.2403,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-05-28 22:29:24,MEXC,INJ/USDT:USDT,15.0829,True,

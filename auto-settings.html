@@ -129,8 +129,27 @@ async function loadPage(){
   if(error || !reqs || !reqs.length){ qs('memberInfo').innerHTML = '<span class="err">승인된 AUTO 신청 내역이 없습니다.</span>'; return; }
   latestRequest = reqs[0];
   qs('memberInfo').innerHTML = `<span class="pill">APPROVED</span><br>이메일: ${user.email}<br>요청ID: ${latestRequest.id}<br>CHAT ID: ${latestRequest.tg_chat_id||'-'}`;
-  const {data:sets} = await db.from('auto_settings').select('*').eq('request_id', latestRequest.id).order('updated_at',{ascending:false}).limit(1);
+  // 같은 이메일은 auto_settings_email_key unique 제약이 있으므로 이메일 기준으로 먼저 조회한다.
+  // request_id는 재등록 때마다 바뀔 수 있어 기존 설정을 못 찾고 duplicate insert가 날 수 있다.
+  let {data:sets, error:setErr} = await db
+    .from('auto_settings')
+    .select('*')
+    .eq('email', user.email)
+    .order('updated_at',{ascending:false})
+    .limit(1);
+
   existingSetting = sets && sets[0] ? sets[0] : null;
+
+  // 과거 데이터 호환: email 조회가 안 될 때만 request_id로 보조 조회
+  if(!existingSetting){
+    const r = await db
+      .from('auto_settings')
+      .select('*')
+      .eq('request_id', latestRequest.id)
+      .order('updated_at',{ascending:false})
+      .limit(1);
+    existingSetting = r.data && r.data[0] ? r.data[0] : null;
+  }
   if(existingSetting){
     const mode = existingSetting.capital_mode || existingSetting.operation_mode || 'compound';
     document.querySelector(`input[name="capitalMode"][value="${mode}"]`)?.click();
@@ -207,15 +226,35 @@ async function saveAutoSettings(){
     entry_amount_krw: Math.floor(entry),
     updated_at: new Date().toISOString()
   };
-  let error = null;
-  if(existingSetting?.id){
-    ({error} = await db.from('auto_settings').update(payload).eq('id', existingSetting.id));
-  }else{
-    ({error} = await db.from('auto_settings').insert(payload));
+  // email unique 충돌 방지: 같은 이메일이면 insert가 아니라 upsert/update로 처리한다.
+  // 재가입/재등록으로 request_id가 바뀌어도 email 기준 기존 설정을 갱신한다.
+  let result = await db
+    .from('auto_settings')
+    .upsert(payload, { onConflict: 'email' })
+    .select('*')
+    .single();
+
+  let error = result.error;
+
+  // 승인 row도 AUTO ON/OFF와 동기화한다. 봇은 service_enabled OFF면 자동진입을 스킵한다.
+  if(!error){
+    await db.from('kedge_requests')
+      .update({
+        service_enabled: payload.auto_enabled,
+        running: payload.auto_enabled,
+        auto_config_done: true,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', latestRequest.id);
   }
+
   qs('saveMsg').style.display='block';
-  if(error){ qs('saveMsg').innerHTML='<span class="err">❌ 저장 실패: '+error.message+'</span>'; }
-  else { qs('saveMsg').innerHTML='<span class="ok">✅ AUTO 설정 저장 완료</span><br>자동매매: '+(payload.auto_enabled?'ON':'OFF')+'<br>1회 진입금액: '+won(entry); existingSetting = payload; }
+  if(error){
+    qs('saveMsg').innerHTML='<span class="err">❌ 저장 실패: '+error.message+'</span>';
+  } else {
+    existingSetting = result.data || payload;
+    qs('saveMsg').innerHTML='<span class="ok">✅ AUTO 설정 저장 완료</span><br>자동매매: '+(payload.auto_enabled?'ON':'OFF')+'<br>1회 진입금액: '+won(entry)+'<br><span class="small">같은 이메일 기존 설정은 자동으로 업데이트됩니다.</span>';
+  }
 }
 
 loadPage();
