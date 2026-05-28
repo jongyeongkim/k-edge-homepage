@@ -793,3 +793,7 @@
 2026-05-28 18:18:53,MEXC,SUI/USDT:USDT,15.0616,True,
 2026-05-28 18:22:26,MEXC,SAHARA/USDT:USDT,0.253,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
 2026-05-28 18:22:41,MEXC,TRX/USDT:USDT,15.0682,True,
+2026-05-28 18:26:15,MEXC,ADA/USDT:USDT,0.2394,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-05-28 18:26:30,MEXC,PEAQ/USDT:USDT,15.0705,True,
+2026-05-28 18:30:05,MEXC,XAN/USDT:USDT,0.2429,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-05-28 18:30:20,MEXC,INJ/USDT:USDT,15.071,True,
