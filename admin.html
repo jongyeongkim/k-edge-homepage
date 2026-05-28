@@ -151,7 +151,16 @@ function apiSummary(apiObj){
   if(typeof obj === "string"){
     try{ obj = JSON.parse(obj); }catch(e){ obj = {}; }
   }
-  const rows = Object.entries(obj).filter(([_, v]) => v && v.enabled).map(([k, v]) => `${labels[k] || k}: ${mask(v.api_key)} / ${mask(v.api_secret)}`);
+
+  // K-EDGE API 저장 키 통일: api_key / secret_key
+  // 기존 신청 데이터 호환을 위해 api_secret도 표시만 지원합니다.
+  const rows = Object.entries(obj)
+    .filter(([_, v]) => v && v.enabled)
+    .map(([k, v]) => {
+      const key = v.api_key || v.apiKey || "";
+      const secret = v.secret_key || v.api_secret || v.secretKey || "";
+      return `${labels[k] || k}: ${mask(key)} / ${mask(secret)}`;
+    });
   return rows.length ? rows.join("<br>") : "미등록";
 }
 
@@ -220,7 +229,7 @@ function renderAdminRequests(){
           <p><small>결제방식</small><strong>${req.pay_type || "-"}</strong></p>
           <p><small>입금자명</small><strong>${req.pay_name || "-"}</strong></p>
           <p><small>TxID/메모</small><strong>${req.memo || "-"}</strong></p>
-          <p><small>BOT TOKEN</small><strong>${mask(req.tg_bot_token)}</strong></p>
+          <p><small>알림봇</small><strong>@Kedge0203bot 공용봇</strong></p>
           <p><small>CHAT ID</small><strong>${req.tg_chat_id || "미등록"}</strong></p>
           <p><small>국내 API</small><strong>${apiSummary(req.domestic_apis)}</strong></p>
           <p><small>해외 API</small><strong>${apiSummary(req.foreign_apis)}</strong></p>

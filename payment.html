@@ -347,12 +347,12 @@ function collectPaymentExtra(product){
     upbit:{
       enabled: !!document.getElementById("payUpbitUse")?.checked,
       api_key: (document.getElementById("payUpbitApiKey")?.value || "").trim(),
-      api_secret: (document.getElementById("payUpbitApiSecret")?.value || "").trim()
+      secret_key: (document.getElementById("payUpbitApiSecret")?.value || "").trim()
     },
     bithumb:{
       enabled: !!document.getElementById("payBithumbUse")?.checked,
       api_key: (document.getElementById("payBithumbApiKey")?.value || "").trim(),
-      api_secret: (document.getElementById("payBithumbApiSecret")?.value || "").trim()
+      secret_key: (document.getElementById("payBithumbApiSecret")?.value || "").trim()
     },
     
   };
@@ -361,22 +361,22 @@ function collectPaymentExtra(product){
     mexc:{
       enabled: !!document.getElementById("payMexcUse")?.checked,
       api_key: (document.getElementById("payMexcApiKey")?.value || "").trim(),
-      api_secret: (document.getElementById("payMexcApiSecret")?.value || "").trim()
+      secret_key: (document.getElementById("payMexcApiSecret")?.value || "").trim()
     },
     gate:{
       enabled: !!document.getElementById("payGateUse")?.checked,
       api_key: (document.getElementById("payGateApiKey")?.value || "").trim(),
-      api_secret: (document.getElementById("payGateApiSecret")?.value || "").trim()
+      secret_key: (document.getElementById("payGateApiSecret")?.value || "").trim()
     },
     bitget:{
       enabled: !!document.getElementById("payBitgetUse")?.checked,
       api_key: (document.getElementById("payBitgetApiKey")?.value || "").trim(),
-      api_secret: (document.getElementById("payBitgetApiSecret")?.value || "").trim()
+      secret_key: (document.getElementById("payBitgetApiSecret")?.value || "").trim()
     },
     bingx:{
       enabled: !!document.getElementById("payBingxUse")?.checked,
       api_key: (document.getElementById("payBingxApiKey")?.value || "").trim(),
-      api_secret: (document.getElementById("payBingxApiSecret")?.value || "").trim()
+      secret_key: (document.getElementById("payBingxApiSecret")?.value || "").trim()
     }
   };
 
@@ -458,7 +458,7 @@ window.submitVipRequest = async function(){
     return {
       enabled: !!qs(checkId)?.checked,
       api_key: val(keyId),
-      api_secret: val(secretId)
+      secret_key: val(secretId)
     };
   }
 

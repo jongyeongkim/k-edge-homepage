@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# [K-EDGE V9.2] BINGX ROUTE - 복리/OPEN복구/정지복구/FX파일캐시/안전장치 적용
+# [K-EDGE V9.2] MEXC ROUTE - 복리/OPEN복구/정지복구/FX파일캐시/안전장치 적용
 """
 국내 현물 → 해외 선물 괴리 감시봇 - 빠른 테스트 모드
 
@@ -132,7 +132,7 @@ ALERT_COOLDOWN_SEC = 60 * 10
 SYMBOL_ALERT_COOLDOWN_SEC = 60 * 30
 
 # 너무 많은 검사 방지
-MAX_SPOT_ITEMS = 140
+MAX_SPOT_ITEMS = int(os.getenv("MEXC_MAX_SPOT_ITEMS", "70"))  # V9.3.2 MEXC 전용 저속모드
 
 # 0.5% 벽 기준: 현물/선물 각각 100만원 이상이어야 알림
 MIN_SPOT_WALL_KRW = 1_000_000
@@ -156,7 +156,7 @@ ENABLE_FOREIGN_SPOT_SCAN = False
 
 # 국내 거래소별 최대 후보 수
 MAX_UPBIT_ITEMS = 0
-MAX_BITHUMB_ITEMS = 140
+MAX_BITHUMB_ITEMS = int(os.getenv("MEXC_MAX_BITHUMB_ITEMS", "70"))  # V9.3.2 MEXC 전용 저속모드
 MAX_GOPAX_ITEMS = 40
 MAX_COINONE_ITEMS = 0
 MAX_KORBIT_ITEMS = 40
@@ -257,7 +257,7 @@ SUPABASE_MEMBER_TELEGRAM_ID_COLUMN = os.getenv("SUPABASE_MEMBER_TELEGRAM_ID_COLU
 
 # AUTO 설정 테이블명. 홈페이지 AUTO 설정 저장값을 봇이 읽는다.
 SUPABASE_AUTO_SETTINGS_TABLE = os.getenv("SUPABASE_AUTO_SETTINGS_TABLE", "auto_settings").strip()
-AUTO_SETTINGS_CACHE_TTL_SEC = int(os.getenv("AUTO_SETTINGS_CACHE_TTL_SEC", "60"))
+AUTO_SETTINGS_CACHE_TTL_SEC = int(os.getenv("AUTO_SETTINGS_CACHE_TTL_SEC", "20"))
 
 # 승인회원 개인 DM/정지·재시작 버튼은 공용봇 1개(@Kedge0203bot)로만 발송한다.
 # 유저별 BOT TOKEN은 더 이상 사용하지 않는다.
@@ -284,7 +284,7 @@ BALANCE_SAFETY_BUFFER_PERCENT = 5.0
 
 # 자동청산 감시 설정
 # 실제 주문 함수가 연결되기 전에는 안전상 REAL_ORDER_ENABLED=False 권장.
-REAL_ORDER_ENABLED = False  # V8.3 가상테스트 전용: 실제 주문 강제 OFF
+REAL_ORDER_ENABLED = True  # V9.4.4 실거래 모드: 실제 주문 ON
 AUTO_CLOSE_ENABLED = os.getenv("AUTO_CLOSE_ENABLED", "true").lower() == "true"
 
 # 익절은 유연하게: +0.5% 이하부터 청산 시도, +0.3% 이하 강제 청산권
@@ -317,7 +317,7 @@ SEMI_AUTO_STATE_PATH = os.path.join(BASE_DIR, "semi_auto_state_bingx.json")
 # 텔레그램 callback offset
 # 4파일 동시 실행 시 callback poller는 반드시 1개만 켠다.
 # 여러 파일이 동시에 getUpdates를 잡으면 버튼 1회 클릭이 2~4회 누적될 수 있다.
-ENABLE_CALLBACK_POLLER = os.getenv("ENABLE_CALLBACK_POLLER", "false").lower() == "true"
+ENABLE_CALLBACK_POLLER = os.getenv("ENABLE_CALLBACK_POLLER", "true").lower() == "true"
 last_update_id: int = 0
 
 # 승인회원 캐시: 양방 루프마다 DB 전원조회하지 않고 5분마다 갱신
@@ -342,7 +342,7 @@ GLOBAL_FUTURE_EXS: Dict[str, Any] = {}
 # ============================================================
 # REAL_ORDER_ENABLED=False 상태에서 버튼으로 진입하면 실제 주문은 나가지 않고
 # 가상 진입/가상 청산 결과를 CSV/JSON으로 저장한다.
-PAPER_TRADING_ENABLED = True  # V8.3 가상테스트 전용: 실전가상 저장 강제 ON
+PAPER_TRADING_ENABLED = False  # V9.4.4 실거래 모드: 가상 저장 OFF
 PAPER_DATA_DIR = os.path.join(BASE_DIR, "paper_trading_data")
 PAPER_ENTRIES_CSV = os.path.join(PAPER_DATA_DIR, "paper_entries.csv")
 PAPER_RESULTS_CSV = os.path.join(PAPER_DATA_DIR, "trade_results.csv")
@@ -354,8 +354,8 @@ PAPER_DAILY_STATS_JSON = os.path.join(PAPER_DATA_DIR, "daily_stats.json")
 # ============================================================
 # 기본은 실전가상 자동진입 ON. 실제주문은 REAL_ORDER_ENABLED=True일 때만 나가도록 유지.
 AUTO_ENTRY_ENABLED = True  # V8.8 감지즉시 페이퍼 재검사/저장 + 결과DM ON
-AUTO_ENTRY_DEFAULT_KRW = 100_000  # V8.3 고정 자동진입금액: 10만원
-AUTO_ENTRY_MIN_KRW = 100_000  # V8.3 10만원 미만이면 스킵
+AUTO_ENTRY_DEFAULT_KRW = int(os.getenv("AUTO_ENTRY_DEFAULT_KRW", "100000"))  # 홈페이지 설정 없을 때 fallback
+AUTO_ENTRY_MIN_KRW = int(os.getenv("AUTO_ENTRY_MIN_KRW", "1000"))  # 홈페이지 계산금액과 불일치 방지
 
 # ============================================================
 # V9.2 국내 복리 / 안전 / 통계 보강 설정
@@ -419,6 +419,43 @@ API_SPEED_LOG_ONLY_SLOW = os.getenv("API_SPEED_LOG_ONLY_SLOW", "true").lower() =
 API_SPEED_LOG_SAVE_NORMAL = os.getenv("API_SPEED_LOG_SAVE_NORMAL", "false").lower() == "true"
 API_SLOW_WARN_SEC = float(os.getenv("API_SLOW_WARN_SEC", "1.5"))
 API_SPEED_CSV = os.path.join(PAPER_DATA_DIR, "api_speed_log.csv")
+
+# ============================================================
+# V9.3.2 MEXC 전용 저속/순환 안정화
+# - MEXC code=510 Requests are too frequent 방지
+# - MEXC 파일만 적용, 다른 거래소 파일은 기존 속도 유지
+# ============================================================
+MEXC_SLOW_MODE = os.getenv("MEXC_SLOW_MODE", "true").lower() == "true"
+MEXC_REQUEST_INTERVAL_SEC = float(os.getenv("MEXC_REQUEST_INTERVAL_SEC", "0.25"))
+MEXC_RATE_LIMIT_COOLDOWN_SEC = float(os.getenv("MEXC_RATE_LIMIT_COOLDOWN_SEC", "15"))
+MEXC_SKIP_TICKER_AND_FUNDING_IN_SCAN = os.getenv("MEXC_SKIP_TICKER_AND_FUNDING_IN_SCAN", "true").lower() == "true"
+_MEXC_NEXT_ALLOWED_AT = 0.0
+_MEXC_RATE_LOCK = threading.Lock()
+
+
+def _mexc_rate_wait(market: str = "") -> None:
+    """MEXC 요청 간 최소 간격/쿨다운 적용."""
+    global _MEXC_NEXT_ALLOWED_AT
+    if not MEXC_SLOW_MODE:
+        return
+    with _MEXC_RATE_LOCK:
+        now_ts = time.time()
+        wait_sec = max(0.0, _MEXC_NEXT_ALLOWED_AT - now_ts)
+        if wait_sec > 0:
+            time.sleep(wait_sec)
+        _MEXC_NEXT_ALLOWED_AT = time.time() + MEXC_REQUEST_INTERVAL_SEC
+
+
+def _mexc_rate_cooldown(error_text: str = "") -> None:
+    """MEXC 510/rate limit 감지 시 잠시 쉬기."""
+    global _MEXC_NEXT_ALLOWED_AT
+    if not MEXC_SLOW_MODE:
+        return
+    msg = str(error_text or "").lower()
+    if "510" in msg or "too frequent" in msg or "rate" in msg:
+        with _MEXC_RATE_LOCK:
+            _MEXC_NEXT_ALLOWED_AT = max(_MEXC_NEXT_ALLOWED_AT, time.time() + MEXC_RATE_LIMIT_COOLDOWN_SEC)
+        print(f"[MEXC 저속모드] rate limit 감지 → {MEXC_RATE_LIMIT_COOLDOWN_SEC:.0f}초 쿨다운")
 
 # 선물 강청/헤지붕괴 감지 자리. 실주문 연결 전까지는 상태/경고/CSV만 동작.
 FUTURES_LIQUIDATION_GUARD_ENABLED = os.getenv("FUTURES_LIQUIDATION_GUARD_ENABLED", "true").lower() == "true"
@@ -1039,7 +1076,7 @@ SPOT_EXCHANGES = []
 
 # 홈페이지 레퍼럴 연결 거래소만 사용
 # 알림 품질/전환율을 위해 Binance / OKX / Bybit는 기본 제외
-# 4파일 분리 속도 모드: 이 파일은 BITHUMB -> BINGX 만 검사
+# 4파일 분리 속도 모드: 이 파일은 BITHUMB -> MEXC 만 검사
 FUTURES_EXCHANGES = [
     ("BINGX", "bingx"),
 ]
@@ -1755,7 +1792,7 @@ def _bool_from_any(v: Any, default: bool = False) -> bool:
 
 def _setting_identity_keys(member: Dict[str, Any]) -> List[str]:
     keys: List[str] = []
-    for k in ("user_id", "member_id", "request_id", "id", "uid", "telegram_id", "telegram_user_id", "tg_chat_id", "chat_id"):
+    for k in ("email", "user_email", "user_id", "member_id", "request_id", "id", "uid", "telegram_id", "telegram_user_id", "tg_chat_id", "chat_id"):
         v = member.get(k)
         if v is not None and str(v).strip():
             keys.append(str(v).strip())
@@ -1787,7 +1824,7 @@ def supabase_get_auto_settings_uncached() -> Dict[str, Dict[str, Any]]:
         for row in rows:
             if not isinstance(row, dict):
                 continue
-            for k in ("user_id", "member_id", "request_id", "id", "uid", "telegram_id", "telegram_user_id", "tg_chat_id", "chat_id"):
+            for k in ("email", "user_email", "user_id", "member_id", "request_id", "id", "uid", "telegram_id", "telegram_user_id", "tg_chat_id", "chat_id"):
                 v = row.get(k)
                 if v is not None and str(v).strip():
                     indexed[str(v).strip()] = row
@@ -1808,6 +1845,36 @@ def supabase_get_auto_settings(force_refresh: bool = False) -> Dict[str, Dict[st
         _AUTO_SETTINGS_CACHE_AT = now_ts
         return dict(_AUTO_SETTINGS_CACHE)
 
+
+
+
+def debug_auto_settings_startup_check() -> None:
+    """V9.4.3b: 봇 시작 직후 auto_settings 테이블 연결/저장값을 강제 확인한다."""
+    try:
+        settings_map = supabase_get_auto_settings(force_refresh=True)
+        rows = {}
+        for _k, _row in settings_map.items():
+            if isinstance(_row, dict):
+                rid = str(_row.get("id") or _row.get("email") or _row.get("tg_chat_id") or _k)
+                rows[rid] = _row
+        print(f"[auto_settings 테스트 조회] indexed={len(settings_map)} rows={len(rows)} table={SUPABASE_AUTO_SETTINGS_TABLE}")
+        if not rows:
+            print("[auto_settings 테스트 조회] 저장된 설정 없음 또는 조회 실패")
+            return
+        for i, row in enumerate(list(rows.values())[:5], start=1):
+            print(
+                "[auto_settings 테스트 row] "
+                f"#{i} email={row.get('email') or row.get('user_email') or '-'} "
+                f"tg={row.get('tg_chat_id') or row.get('chat_id') or '-'} "
+                f"auto_enabled={row.get('auto_enabled')} "
+                f"alert_enabled={row.get('alert_enabled')} "
+                f"capital={row.get('capital_krw')} "
+                f"split={row.get('split_count')} "
+                f"entry={row.get('entry_amount_krw')} "
+                f"request_id={row.get('request_id') or '-'}"
+            )
+    except Exception as e:
+        print("[auto_settings 테스트 조회 예외]", e)
 
 def get_auto_settings_for_member(member: Dict[str, Any]) -> Dict[str, Any]:
     settings_map = supabase_get_auto_settings()
@@ -1895,7 +1962,7 @@ def _semi_state_known_paths() -> List[str]:
         os.path.join(BASE_DIR, "semi_auto_state_mexc.json"),
         os.path.join(BASE_DIR, "semi_auto_state_gate.json"),
         os.path.join(BASE_DIR, "semi_auto_state_bitget.json"),
-        os.path.join(BASE_DIR, "semi_auto_state_bingx.json"),
+        os.path.join(BASE_DIR, "semi_auto_state_mexc.json"),
     ]
     out = []
     for p in paths:
@@ -2037,7 +2104,7 @@ def build_member_dm_message(signal: Dict[str, Any], selected_krw: int = 0) -> st
 코인: {signal.get('coin')}
 경로: {signal.get('domestic')} → {signal.get('foreign')}
 모드: {AUTO_ENTRY_MODE_LABEL}
-실제주문: OFF / 실전가상 저장: ON
+실제주문: {"ON" if REAL_ORDER_ENABLED else "OFF"} / 실전가상 저장: {"ON" if PAPER_TRADING_ENABLED else "OFF"}
 
 ━━━━━━━━━━━━━━
 
@@ -2201,11 +2268,40 @@ def build_user_exchange_from_member(member: Dict[str, Any], exchange_name: str, 
         return None
 
     prefix = "gate" if name in ("gate", "gateio") else name
-    api_key = member.get(f"{prefix}_api_key") or member.get(f"{prefix}_access_key")
-    secret = member.get(f"{prefix}_secret_key") or member.get(f"{prefix}_secret")
-    password = member.get(f"{prefix}_password") or member.get(f"{prefix}_passphrase")
+
+    def _json_obj(v):
+        if isinstance(v, dict):
+            return v
+        if isinstance(v, str) and v.strip():
+            try:
+                d = json.loads(v)
+                return d if isinstance(d, dict) else {}
+            except Exception:
+                return {}
+        return {}
+
+    domestic_apis = _json_obj(member.get("domestic_apis"))
+    foreign_apis = _json_obj(member.get("foreign_apis"))
+    route_api = {}
+    for src in (domestic_apis, foreign_apis):
+        for key in (prefix, prefix.upper(), name, name.upper(), ccxt_id, ccxt_id.upper()):
+            val = src.get(key)
+            if isinstance(val, dict):
+                route_api.update(val)
+
+    if market_type == "spot":
+        api_key = member.get(f"{prefix}_api_key") or member.get(f"{prefix}_access_key") or member.get("domestic_api_key")
+        secret = member.get(f"{prefix}_secret_key") or member.get(f"{prefix}_secret") or member.get("domestic_api_secret")
+    else:
+        api_key = member.get(f"{prefix}_api_key") or member.get(f"{prefix}_access_key") or member.get("foreign_api_key")
+        secret = member.get(f"{prefix}_secret_key") or member.get(f"{prefix}_secret") or member.get("foreign_api_secret")
+
+    api_key = api_key or route_api.get("api_key") or route_api.get("apiKey") or route_api.get("access_key") or route_api.get("accessKey")
+    secret = secret or route_api.get("api_secret") or route_api.get("secret") or route_api.get("secret_key") or route_api.get("secretKey")
+    password = member.get(f"{prefix}_password") or member.get(f"{prefix}_passphrase") or route_api.get("password") or route_api.get("passphrase")
 
     if not api_key or not secret:
+        print(f"[실거래 API 미등록] exchange={exchange_name} type={market_type} prefix={prefix}")
         return None
 
     klass = getattr(ccxt, ccxt_id, None)
@@ -2948,16 +3044,44 @@ def calc_domestic_compound_entry_krw() -> int:
     return int(amount)
 
 
-def calc_auto_entry_amount_for_member(member: Dict[str, Any], signal: Dict[str, Any]) -> int:
-    """V9.2 자동진입 금액 계산.
+def get_member_capital_mode(member: Dict[str, Any]) -> str:
+    mode = str(member.get("capital_mode") or member.get("operation_mode") or member.get("amount_mode") or "compound").strip().lower()
+    if mode in ("fixed", "fix", "고정", "fixed_amount"):
+        return "fixed"
+    return "compound"
 
-    기존 고정 10만원 대신 국내 복리 /20을 적용한다.
-    신규 진입마다 국내 총운용자산(국내 잔고 + OPEN 국내진입금액)을 재계산하는 구조다.
-    PAPER 모드에서는 실제 잔고 API 대신 초기 국내운용금 + 실현손익으로 계산한다.
+
+def get_member_entry_amount_krw(member: Dict[str, Any]) -> int:
+    for k in ("entry_amount_krw", "fixed_entry_krw", "one_entry_amount_krw", "amount_krw"):
+        v = member.get(k)
+        if v is not None and safe_float(v) > 0:
+            return int(safe_float(v))
+    return int(AUTO_ENTRY_DEFAULT_KRW)
+
+
+def calc_auto_entry_amount_for_member(member: Dict[str, Any], signal: Dict[str, Any]) -> int:
+    """홈페이지 AUTO 설정 기준으로 자동진입 금액 계산.
+
+    V9.4.4 수정:
+    - 기존 코드가 AUTO_ENTRY_MIN_KRW=10만원을 강제로 적용해서
+      화면의 계산금액 1,000원이어도 실제 알림은 10만원으로 표시되는 문제가 있었다.
+    - 이제 고정금액 모드는 entry_amount_krw를 그대로 사용한다.
+    - 총자산 복리 모드는 capital_krw / split_count를 사용한다.
+    - 최소 주문 제한은 AUTO_ENTRY_MIN_KRW 환경변수만 사용하고 기본값은 1,000원이다.
     """
-    capital_krw = get_member_capital_krw(member)
+    mode = get_member_capital_mode(member)
     split_count = get_member_split_count(member)
-    target = int(max(AUTO_ENTRY_MIN_KRW, (capital_krw / max(1, split_count)) // 10000 * 10000))
+    if mode == "fixed":
+        target = get_member_entry_amount_krw(member)
+    else:
+        capital_krw = get_member_capital_krw(member)
+        target = int((capital_krw / max(1, split_count)) // 1000 * 1000)
+
+    min_order = int(max(0, safe_float(AUTO_ENTRY_MIN_KRW)))
+    if target < min_order:
+        print(f"[자동진입 금액부족] mode={mode} target={fmt_man_krw(target)} min={fmt_man_krw(min_order)}")
+        return 0
+
     max_entry = int(safe_float(signal.get("max_entry_krw") or signal.get("final_entry_krw")))
     remaining = int(safe_float(signal.get("remaining_entry_krw", max_entry)))
 
@@ -2971,18 +3095,18 @@ def calc_auto_entry_amount_for_member(member: Dict[str, Any], signal: Dict[str, 
 
     amount = int(max(0, min(limits)))
 
-    # V9.3.1: 해외 거래소별 증거금 50만 / 레버리지 4배 한도 적용.
-    # 해외 필요 증거금 = 국내 진입금액 / 레버리지.
+    # 실전가상 테스트 자금모드일 때만 해외 증거금 제한 적용.
+    # 실거래 모드에서는 실제 잔고 조회가 최종 방어선이다.
     foreign = str(signal.get("foreign") or signal.get("foreign_exchange") or "").upper().strip()
-    if TEST_CAP_FEE_MODE and foreign:
+    if TEST_CAP_FEE_MODE and PAPER_TRADING_ENABLED and not REAL_ORDER_ENABLED and foreign:
         remaining_margin = get_foreign_margin_remaining_krw(foreign)
         max_domestic_by_margin = int(remaining_margin * max(1.0, safe_float(PAPER_FUTURES_LEVERAGE, 4.0)))
         amount = min(amount, max_domestic_by_margin)
 
-    if amount < AUTO_ENTRY_MIN_KRW:
+    if amount < min_order:
         return 0
+    print(f"[자동진입 금액계산] mode={mode} target={fmt_man_krw(target)} final={fmt_man_krw(amount)} split={split_count}")
     return amount
-
 
 def check_entry_for_auto_fast_paper(user_id: str, signal: Dict[str, Any], amount_krw: int) -> Tuple[bool, str, float]:
     """V8.8 자동진입 전용 초고속 재검사.
@@ -3007,6 +3131,144 @@ def check_entry_for_auto_fast_paper(user_id: str, signal: Dict[str, Any], amount
     except Exception as e:
         elapsed = time.time() - t0
         return False, f"❌ 진입 취소\n\n사유: 자동진입 초고속 재검사 예외\n{e}\n\n재검사 소요: {elapsed:.2f}초", elapsed
+
+def _safe_load_markets(ex: Any) -> None:
+    try:
+        if not getattr(ex, "markets", None):
+            ex.load_markets()
+    except Exception:
+        pass
+
+
+def _resolve_spot_market_for_order(ex: Any, domestic: str, coin: str) -> str:
+    _safe_load_markets(ex)
+    coin = normalize_symbol(coin)
+    candidates = [f"{coin}/KRW", f"{coin}_KRW", f"KRW-{coin}"]
+    for m in candidates:
+        try:
+            if m in getattr(ex, "markets", {}):
+                return m
+        except Exception:
+            pass
+    return f"{coin}/KRW"
+
+
+def _calc_spot_base_amount_from_krw(signal: Dict[str, Any], krw_amount: float) -> float:
+    price = safe_float(signal.get("spot_best_ask") or signal.get("domestic_best_ask") or signal.get("spot_ask") or signal.get("best_ask"))
+    if price <= 0:
+        book = fetch_current_domestic_book_for_signal(signal)
+        price = safe_float((book or {}).get("best_ask"))
+    if price <= 0:
+        raise RuntimeError("국내 현물 현재가 계산 실패")
+    return max(0.0, safe_float(krw_amount) / price)
+
+
+def _calc_future_contract_amount(signal: Dict[str, Any], foreign_entry_krw: float) -> float:
+    usd_krw = safe_float(signal.get("usd_krw"), FALLBACK_USD_KRW)
+    future_name = str(signal.get("foreign") or signal.get("foreign_exchange") or "").upper()
+    coin = normalize_symbol(signal.get("coin") or "")
+    fex = GLOBAL_FUTURE_EXS.get(future_name)
+    if not fex:
+        raise RuntimeError(f"해외 선물 거래소 객체 없음: {future_name}")
+    market = signal.get("foreign_market") or find_future_market(fex, coin)
+    if not market:
+        raise RuntimeError(f"해외 선물 마켓 없음: {future_name} {coin}")
+    book = fetch_ccxt_book(fex, market, is_future=True)
+    bid = safe_float((book or {}).get("best_bid"))
+    if bid <= 0:
+        bid = safe_float(signal.get("future_best_bid") or signal.get("futures_best_bid"))
+    if bid <= 0:
+        raise RuntimeError("해외 선물 현재가 계산 실패")
+    contract_size = 1.0
+    try:
+        m = fex.markets.get(market) or {}
+        contract_size = safe_float(m.get("contractSize"), 1.0) or 1.0
+    except Exception:
+        pass
+    notional_usdt = safe_float(foreign_entry_krw) / max(1.0, usd_krw)
+    return max(0.0, notional_usdt / max(1e-12, bid * contract_size))
+
+
+def execute_real_entry_orders(user_id: str, member: Dict[str, Any], signal: Dict[str, Any], domestic_entry_krw: int, foreign_entry_krw: int) -> Tuple[bool, str, Dict[str, Any]]:
+    """실거래 진입: 국내 현물 시장가 매수 + 해외 선물 시장가 숏.
+
+    안전 원칙:
+    - REAL_ORDER_ENABLED=True일 때만 실행
+    - 한쪽 주문 실패 시 성공한 쪽을 가능한 범위에서 되돌리려고 시도하고 실패 내역을 DM/로그에 남긴다.
+    - 거래소별 최소주문/정밀도 차이는 ccxt amount_to_precision으로 보정한다.
+    """
+    if not REAL_ORDER_ENABLED:
+        return False, "REAL_ORDER_ENABLED=False", {}
+
+    domestic = str(signal.get("domestic") or "").lower()
+    foreign = str(signal.get("foreign") or "").lower()
+    coin = normalize_symbol(signal.get("coin") or "")
+    result: Dict[str, Any] = {"domestic_order": None, "foreign_order": None}
+
+    member_full = find_member_by_telegram_id(user_id) or member
+    domestic_ex = build_user_exchange_from_member(member_full, domestic, "spot")
+    foreign_ex = build_user_exchange_from_member(member_full, foreign, "future")
+    if domestic_ex is None:
+        return False, f"국내 API 미등록/생성 실패: {signal.get('domestic')}", result
+    if foreign_ex is None:
+        return False, f"해외 선물 API 미등록/생성 실패: {signal.get('foreign')}", result
+
+    spot_market = _resolve_spot_market_for_order(domestic_ex, domestic, coin)
+    future_market = signal.get("foreign_market") or find_future_market(foreign_ex, coin)
+    if not future_market:
+        return False, f"해외 선물 마켓 없음: {signal.get('foreign')} {coin}", result
+
+    spot_amount = _calc_spot_base_amount_from_krw(signal, domestic_entry_krw)
+    future_amount = _calc_future_contract_amount(signal, foreign_entry_krw)
+    try:
+        spot_amount = float(domestic_ex.amount_to_precision(spot_market, spot_amount))
+    except Exception:
+        pass
+    try:
+        future_amount = float(foreign_ex.amount_to_precision(future_market, future_amount))
+    except Exception:
+        pass
+    if spot_amount <= 0 or future_amount <= 0:
+        return False, f"주문수량 계산 실패 spot={spot_amount} future={future_amount}", result
+
+    leverage = safe_float(member_full.get("semi_auto_leverage") or member_full.get("leverage"), PAPER_FUTURES_LEVERAGE)
+    leverage = max(1.0, leverage)
+
+    try:
+        try:
+            foreign_ex.set_leverage(int(leverage), future_market)
+            print(f"[실거래 레버리지 설정] {signal.get('foreign')} {future_market} x{int(leverage)}")
+        except Exception as e:
+            print(f"[실거래 레버리지 설정 경고] {e}")
+
+        print(f"[실거래 주문 시작] spot_buy {spot_market} amount={spot_amount} / future_short {future_market} amount={future_amount}")
+        spot_order = domestic_ex.create_order(spot_market, "market", "buy", spot_amount)
+        result["domestic_order"] = spot_order
+        print(f"[실거래 국내매수 성공] {spot_order}")
+
+        params = {}
+        # MEXC/대부분 swap: 숏 오픈 시장가 sell. reduceOnly는 신규 숏에서는 넣지 않는다.
+        future_order = foreign_ex.create_order(future_market, "market", "sell", future_amount, None, params)
+        result["foreign_order"] = future_order
+        print(f"[실거래 해외숏 성공] {future_order}")
+        return True, "실거래 주문 성공", result
+
+    except Exception as e:
+        err = str(e)
+        print(f"[실거래 주문 실패] {err}")
+        # 국내 현물만 체결되고 해외 숏 실패한 경우 가능한 시장가 매도 되돌림
+        if result.get("domestic_order") and not result.get("foreign_order"):
+            try:
+                rollback = domestic_ex.create_order(spot_market, "market", "sell", spot_amount)
+                result["domestic_rollback_order"] = rollback
+                err += " / 국내 매수 되돌림 매도 시도 완료"
+                print(f"[실거래 롤백 국내매도 성공] {rollback}")
+            except Exception as re:
+                result["domestic_rollback_error"] = str(re)
+                err += f" / 국내 매수 되돌림 실패: {re}"
+                print(f"[실거래 롤백 국내매도 실패] {re}")
+        return False, err, result
+
 
 def perform_auto_entry_for_member(member: Dict[str, Any], signal: Dict[str, Any]) -> Tuple[bool, str]:
     """신호 발생 즉시 승인회원별 자동진입. 현재는 REAL_ORDER_ENABLED=False면 실전가상 저장."""
@@ -3071,11 +3333,36 @@ def perform_auto_entry_for_member(member: Dict[str, Any], signal: Dict[str, Any]
         domestic_entry_krw, foreign_entry_krw, final_entry_krw = calc_domestic_foreign_entry_amounts(signal, amount)
         used_after, remaining_after = update_signal_usage(signal_id, final_entry_krw)
 
-        # 실제 주문 ON이면 이 지점에 국내 현물 매수 + 해외 선물 숏 동시 실행을 연결한다.
-        # 현재 파일은 주문 함수가 아직 없으므로 REAL_ORDER_ENABLED=False 실전가상 저장을 안전 기본값으로 둔다.
+        order_detail = ""
+        order_result = {}
+        if REAL_ORDER_ENABLED:
+            ok_order, order_detail, order_result = execute_real_entry_orders(
+                tg_id, member, signal, int(domestic_entry_krw), int(foreign_entry_krw)
+            )
+            if not ok_order:
+                # 실제 주문 실패면 포지션 등록/성공 DM 금지. 실패 사유만 전송.
+                set_user_selected_amount(tg_id, signal_id, 0)
+                release_processing_lock_on_failure(tg_id, signal_id, order_detail)
+                paper_record_auto_attempt(tg_id, signal, final_entry_krw, "FAIL_REAL_ORDER", order_detail)
+                telegram_send_private(
+                    tg_id,
+                    f"""❌ 실거래 자동진입 실패
+
+코인: {signal.get('coin')}
+경로: {signal.get('domestic')} ↔ {signal.get('foreign')}
+국내 예정금액: {fmt_man_krw(domestic_entry_krw)}
+해외 예정명목: {fmt_man_krw(foreign_entry_krw)}
+
+사유: {order_detail}
+
+※ 한쪽 주문만 체결되었을 가능성이 있으면 거래소에서 즉시 직접 확인하세요."""
+                )
+                return False, order_detail
+            signal["real_order_result"] = order_result
+
         pos_id = register_semi_auto_position(tg_id, signal, final_entry_krw)
         finish_processing_lock(tg_id, signal_id, "DONE", pos_id)
-        paper_record_auto_attempt(tg_id, signal, final_entry_krw, "SUCCESS", f"pos_id={pos_id}")
+        paper_record_auto_attempt(tg_id, signal, final_entry_krw, "SUCCESS", f"pos_id={pos_id} / {order_detail}")
 
         if AUTO_ENTRY_SEND_DM_RESULT:
             telegram_send_private(
@@ -3087,7 +3374,7 @@ def perform_auto_entry_for_member(member: Dict[str, Any], signal: Dict[str, Any]
                 + f"경로: {signal.get('domestic')} ↔ {signal.get('foreign')}\n\n"
                 + f"국내 진입: {fmt_man_krw(domestic_entry_krw)}\n"
                 + f"해외 선물 명목: {fmt_man_krw(foreign_entry_krw)}\n"
-                + f"해외 증거금(4배): {fmt_man_krw(calc_required_foreign_margin_krw(domestic_entry_krw))}\n"
+                + f"해외 예상증거금(x{safe_float(member.get("semi_auto_leverage") or member.get("leverage"), PAPER_FUTURES_LEVERAGE):g}): {fmt_man_krw(calc_required_foreign_margin_krw(domestic_entry_krw))}\n"
                 + f"최종 기준금액: {fmt_man_krw(final_entry_krw)}\n\n"
                 + f"진입 실제엣지: {safe_float(signal.get('real_edge')):+.2f}%\n"
                 + f"최소 유지엣지: {safe_float(signal.get('min_retain_edge_percent'), MIN_RETAIN_EDGE_PERCENT):+.2f}%\n"
@@ -3099,7 +3386,7 @@ def perform_auto_entry_for_member(member: Dict[str, Any], signal: Dict[str, Any]
                 + f"재검사 소요: {recheck_elapsed:.2f}초\n"
                 + f"포지션ID: {pos_id}\n\n"
                 + "※ 자동진입은 신호별 1회 LOCK 처리되어 중복 실행을 차단합니다.\n"
-                + ("실제 주문 OFF / 가상 진입 데이터 저장 완료" if not REAL_ORDER_ENABLED else "실제 주문 ON")
+                + ("실제 주문 OFF / 가상 진입 데이터 저장 완료" if not REAL_ORDER_ENABLED else "실제 주문 ON / 거래소 주문 전송 성공")
             )
         return True, pos_id
 
@@ -3111,28 +3398,99 @@ def perform_auto_entry_for_member(member: Dict[str, Any], signal: Dict[str, Any]
         return False, reason
 
 
-def auto_entry_approved_members(signal: Dict[str, Any]) -> None:
-    """AUTO 전용: 승인회원 + auto_settings를 읽어 알림/자동진입을 분기한다."""
-    if not AUTO_ENTRY_ENABLED:
-        print("[AUTO] AUTO_ENTRY_ENABLED=False")
-        return
-    if not is_auto_entry_currently_enabled():
-        print("[AUTO] 전체 정지 상태 - 신규 자동진입 스킵")
-        return
+def send_approved_member_signal_dm(tg_id: str, signal: Dict[str, Any], member: Dict[str, Any], mode_text: str = "") -> bool:
+    """승인회원 개인 DM 신호 알림.
 
+    중요:
+    - 유료방/VIP 알림이 뜬 신호는 승인회원 개인 DM에도 발송한다.
+    - auto_enabled는 자동진입 여부만 결정하고, 개인 알림 발송 여부를 막지 않는다.
+    """
+    try:
+        auto_on = is_member_auto_enabled(member)
+        funding = signal.get("funding_rate")
+        funding_text = "조회불가" if funding is None else f"{safe_float(funding):+.4f}%"
+        status_line = "자동매매: ON - 조건 통과 시 자동진입 검사 진행" if auto_on else "자동매매: OFF - 알림만 전송"
+        if mode_text:
+            status_line = f"{status_line}\n{mode_text}"
+        msg = f"""📡 K-EDGE AUTO 신호 감지
+
+코인: {signal.get('coin')}
+경로: {signal.get('domestic')} ↔ {signal.get('foreign')}
+
+예상 수익구간: {safe_float(signal.get('expected_profit_min')):+.2f}%~{safe_float(signal.get('expected_profit_max')):+.2f}%
+실제엣지: {safe_float(signal.get('real_edge')):+.2f}%
+최소 유지엣지: {safe_float(signal.get('min_retain_edge_percent'), MIN_RETAIN_EDGE_PERCENT):+.2f}%
+허용 슬리피지: {safe_float(signal.get('allowed_slippage_percent')):.2f}%
+
+최종 진입가능: {fmt_man_krw(signal.get('max_entry_krw'))}
+남은 가능금액: {fmt_man_krw(signal.get('remaining_entry_krw', signal.get('max_entry_krw')))}
+국내 최종벽: {fmt_man_krw(signal.get('spot_wall_krw'))}
+해외 최종벽: {fmt_man_krw(signal.get('futures_wall_krw'))}
+거래소 MAX: {fmt_man_krw(signal.get('futures_position_limit_krw'))}
+펀딩: {funding_text}
+
+{status_line}
+
+🕒 {now_str()}
+"""
+        ok = telegram_send_private(str(tg_id), msg)
+        if ok:
+            print(f"[개인DM 신호알림 성공] tg={tg_id} / {signal.get('coin')} / auto_enabled={auto_on}")
+        else:
+            print(f"[개인DM 신호알림 실패] tg={tg_id} / {signal.get('coin')} / auto_enabled={auto_on}")
+        return ok
+    except Exception as e:
+        print(f"[개인DM 신호알림 예외] tg={tg_id} / {signal.get('coin')} / {e}")
+        return False
+
+
+def auto_entry_approved_members(signal: Dict[str, Any]) -> None:
+    """AUTO 전용: 유저 개인 DM은 실제 계정 영향 이벤트만 보낸다.
+
+    V9.4.5 핵심:
+    - 후보 감지/진입 전 신호는 유료방과 홈페이지에만 표시한다.
+    - 유저 개인 DM 후보 알림은 보내지 않는다.
+    - 개인 DM은 perform_auto_entry_for_member() 내부의 진입 성공/실패 DM,
+      자동익절/위험경고/정지·재시작 알림만 사용한다.
+    - auto_enabled=true + 전체 자동진입 가능 상태일 때만 자동진입을 시도한다.
+    """
     members = supabase_get_approved_members()
     if not members:
         print("[AUTO] 승인회원 없음")
         return
 
+    global_auto_available = bool(AUTO_ENTRY_ENABLED and is_auto_entry_currently_enabled())
+    if not AUTO_ENTRY_ENABLED:
+        print("[AUTO] AUTO_ENTRY_ENABLED=False - 후보 개인DM 차단 / 자동진입 스킵")
+    elif not is_auto_entry_currently_enabled():
+        print("[AUTO] 전체 정지 상태 - 후보 개인DM 차단 / 자동진입 스킵")
+
     ok_count = 0
     fail_count = 0
-    alert_only_count = 0
+    candidate_dm_blocked_count = 0
     seen_tg_ids = set()
+
     for raw_member in members:
+        raw_tg_id = str(get_member_chat_id(raw_member) or "").strip()
         member = merge_member_auto_settings(raw_member)
-        tg_id = str(get_member_chat_id(member) or "").strip()
+
+        # auto_settings row에 tg_chat_id가 비어 있으면 merged.update(settings)로 승인회원 chat_id가 사라질 수 있다.
+        # 개인 DM/자동진입 대상 식별은 반드시 승인회원 kedge_requests의 tg_chat_id를 우선 사용한다.
+        tg_id = raw_tg_id or str(get_member_chat_id(member) or "").strip()
+        if raw_tg_id and not str(member.get("tg_chat_id") or member.get("chat_id") or "").strip():
+            member["tg_chat_id"] = raw_tg_id
+
+        print(
+            f"[auto_settings 적용] tg={tg_id or '-'} "
+            f"found={member.get('_auto_settings_found')} "
+            f"auto_enabled={member.get('auto_enabled')} "
+            f"capital={member.get('capital_krw')} "
+            f"split={member.get('split_count')} "
+            f"email={member.get('email','-')}"
+        )
+
         if not tg_id:
+            print(f"[AUTO SKIP] tg_chat_id 없음 email={member.get('email','-')}")
             continue
         if tg_id in seen_tg_ids:
             print(f"[AUTO SKIP] 중복 tg_chat_id {tg_id}")
@@ -3143,10 +3501,16 @@ def auto_entry_approved_members(signal: Dict[str, Any]) -> None:
             print(f"[AUTO SKIP] service_enabled OFF tg={tg_id}")
             continue
 
+        # 후보/진입 전 알림은 유저 개인 DM으로 보내지 않는다.
+        # 유저 DM은 실제 자동진입 성공/실패, 익절, 위험경고, 정지/재시작만 보낸다.
+        candidate_dm_blocked_count += 1
+        print(f"[개인DM 후보알림 차단] tg={tg_id} / {signal.get('coin')} / auto_enabled={is_member_auto_enabled(member)}")
+
+        if not global_auto_available:
+            continue
+
         if not is_member_auto_enabled(member):
-            alert_only_count += 1
-            print(f"[AUTO 알림만] auto_enabled OFF tg={tg_id} / {signal.get('coin')}")
-            send_signal_alert_only_dm(tg_id, signal, "auto_enabled=OFF")
+            print(f"[AUTO SKIP] auto_enabled OFF tg={tg_id} / {signal.get('coin')} - 후보DM도 차단")
             continue
 
         ok, detail = perform_auto_entry_for_member(member, signal)
@@ -3157,8 +3521,10 @@ def auto_entry_approved_members(signal: Dict[str, Any]) -> None:
             fail_count += 1
             print(f"[AUTO 진입 스킵/실패] tg={tg_id} / {signal.get('coin')} / {detail}")
 
-    print(f"[AUTO 결과] 진입성공 {ok_count} / 실패·스킵 {fail_count} / 알림만 {alert_only_count} / {signal.get('coin')} {signal.get('foreign')}")
-
+    print(
+        f"[AUTO 결과] 후보DM차단 {candidate_dm_blocked_count} / "
+        f"진입성공 {ok_count} / 실패·스킵 {fail_count} / {signal.get('coin')} {signal.get('foreign')}"
+    )
 
 def process_callback_query(cb: Dict[str, Any]) -> None:
     cb_id = cb.get("id")
@@ -3396,9 +3762,9 @@ def send_startup_test_dm_to_approved_members() -> None:
 
 현재 모드:
 - 자동진입: ON
-- 실제주문: OFF
-- 실전가상 저장: ON
-- 자동진입 금액: 10만원 고정
+- 실제주문: {"ON" if REAL_ORDER_ENABLED else "OFF"}
+- 실전가상 저장: {"ON" if PAPER_TRADING_ENABLED else "OFF"}
+- 자동진입 금액: 홈페이지 AUTO 설정 기준
 
 이 메시지가 오면:
 - Supabase 승인회원 조회 정상
@@ -3441,81 +3807,79 @@ paper_trading_data/paper_entries.csv
 
 def sync_approved_member_telegram_connection() -> None:
     """
-    관리자 페이지에서 승인된 회원을 Supabase에서 읽어와
-    최초 1회 개인 텔레그램 DM으로 연결 완료/테스트 메시지를 보낸다.
+    승인완료 유저에게 @Kedge0203bot 공용봇으로 승인 완료 DM을 보낸다.
 
-    동작 조건:
-    - 홈페이지 관리자 승인 버튼이 Supabase 회원 테이블의 status=approved 로 변경
-    - 해당 row에 telegram_id 또는 telegram_user_id 또는 chat_id 존재
-    - 사용자가 봇에게 /start 를 한 번 눌러 DM 수신 가능 상태
+    중요:
+    - 관리자 페이지에서 직접 Telegram API를 호출하면 브라우저/CORS/토큰노출 문제가 생길 수 있다.
+    - 따라서 실제 DM 발송은 AUTO 봇(MEXC callback poller 담당 파일)에서 처리한다.
+    - MEXC 파일만 ENABLE_CALLBACK_POLLER=true 이므로 중복 발송을 방지한다.
+    - state 파일의 approval_dm_v2_members 기준으로 유저별 1회만 보낸다.
     """
-    members = supabase_get_approved_members()
+    if not ENABLE_CALLBACK_POLLER:
+        return
+
+    now_ts = time.time()
+    last_ts = float(getattr(sync_approved_member_telegram_connection, "_last_run_ts", 0.0) or 0.0)
+    # 너무 자주 Supabase를 때리지 않도록 최소 30초 간격으로만 확인
+    if now_ts - last_ts < 30:
+        return
+    setattr(sync_approved_member_telegram_connection, "_last_run_ts", now_ts)
+
+    members = supabase_get_approved_members(force_refresh=True)
     if not members:
+        print("[승인완료DM] 승인회원 없음")
         return
 
     state = _read_semi_state()
-    connected = state.setdefault("connected_members", {})
+    sent_map = state.setdefault("approval_dm_v2_members", {})
     changed = False
 
     for member in members:
         tg_id = get_member_chat_id(member)
         if not tg_id:
-            print("[승인회원 SKIP] tg_chat_id/chat_id 없음", member)
+            print("[승인완료DM SKIP] tg_chat_id/chat_id 없음", member.get("id"), member.get("email"))
             continue
 
-        tg_id = str(tg_id)
-        if connected.get(tg_id) and not FORCE_APPROVAL_DM_EVERY_START:
-            print(f"[승인회원 이미 연결됨 - 스킵] telegram_id={tg_id}")
+        tg_id = str(tg_id).strip()
+        if sent_map.get(tg_id) and not FORCE_APPROVAL_DM_EVERY_START:
+            print(f"[승인완료DM 이미 전송됨 - 스킵] telegram_id={tg_id}")
             continue
-        elif connected.get(tg_id) and FORCE_APPROVAL_DM_EVERY_START:
-            print(f"[승인회원 재전송 테스트] telegram_id={tg_id}")
 
-        name = member.get("name") or member.get("nickname") or member.get("display_name") or "승인회원"
-        plan = "AUTO-PAPER-100K"  # V8.5: SEMI 등 기존 상품명 대신 자동가상테스트 라벨 고정
+        text = f"""🎉 K-EDGE AUTO 승인 완료
 
-        text = f"""✅ K-EDGE 완전자동 연결 완료
+텔레그램 알람이 활성화되었습니다.
 
-{name}님 승인 확인되었습니다.
-상품: {plan}
+현재 상태
+알람 : ON
+자동매매 : OFF
 
-현재 모드:
-- 자동진입 ON
-- 실제주문 OFF
-- 실전가상 저장 ON
-- 자동진입 금액 10만원 고정
+AUTO 설정에서
+운용금액 / 분할 / 자동매매를 설정해주세요.
 
-양방 조건이 뜨면 이 개인 텔레그램으로
-금액 선택 없이 자동 재검사 후 진입 결과가 전송됩니다.
+AUTO 설정:
+https://jongyeongkim.github.io/k-edge-homepage/auto-settings.html
 
-※ 안내
-@Kedge0203bot /start가 되어 있어야 개인 알림과 정지 버튼이 작동합니다.
-
-버튼:
-🛑 자동매매 정지
-
-정지 시:
-- 신규 자동진입 중단
-- 현재 보유 중인 가상 포지션 전체 종료 처리
-- 실전 전환 시에는 국내 현물 매도 + 해외 선물 청산 대상
-
-반자동 금액버튼 / [진입 실행] 버튼은 사용하지 않습니다.
+※ 자동매매는 사용자가 AUTO 설정에서 직접 ON으로 변경해야 시작됩니다.
+※ @Kedge0203bot /start가 되어 있어야 개인 알림과 정지 버튼이 작동합니다.
 
 🕒 {now_str()}"""
 
-        ok = _telegram_send_with_keyboard(SEMI_AUTO_BOT_TOKEN, tg_id, text, build_stop_keyboard("GLOBAL"), "완전자동연결DM")
+        ok = _telegram_send_with_keyboard(SEMI_AUTO_BOT_TOKEN, tg_id, text, build_stop_keyboard("GLOBAL"), "승인완료DM")
         if ok:
-            connected[tg_id] = {
-                "connected_at": now_str(),
+            sent_map[tg_id] = {
+                "sent_at": now_str(),
                 "telegram_id": tg_id,
-                "plan": plan,
+                "email": member.get("email") or "",
+                "status": member.get(SUPABASE_MEMBER_STATUS_COLUMN) or member.get("status") or "APPROVED",
             }
             changed = True
-            print(f"[승인회원 연결 완료] telegram_id={tg_id}")
+            print(f"[승인완료DM 전송 성공] telegram_id={tg_id}")
         else:
-            print(f"[승인회원 연결 실패] telegram_id={tg_id} - 사용자가 봇 /start 필요 가능")
+            print(f"[승인완료DM 전송 실패] telegram_id={tg_id} - /start 또는 chat_id 확인 필요")
 
     if changed:
         _write_semi_state(state)
+
 
 def poll_semi_auto_updates() -> None:
     """텔레그램 버튼(callback_query)을 빠르게 처리한다."""
@@ -4400,6 +4764,8 @@ def fetch_ccxt_book(ex: Any, market: str, is_future: bool = False) -> Optional[D
     t0 = time.time()
     ex_name = str(getattr(ex, "id", "UNKNOWN")).upper()
     try:
+        if MEXC_SLOW_MODE and "MEXC" in ex_name:
+            _mexc_rate_wait(market)
         ob = ex.fetch_order_book(market, limit=50)
         bids = [[safe_float(x[0]), safe_float(x[1])] for x in (ob.get("bids") or []) if len(x) >= 2]
         asks = [[safe_float(x[0]), safe_float(x[1])] for x in (ob.get("asks") or []) if len(x) >= 2]
@@ -4419,25 +4785,29 @@ def fetch_ccxt_book(ex: Any, market: str, is_future: bool = False) -> Optional[D
             return None
 
         volume_usdt = 0.0
-        try:
-            t = ex.fetch_ticker(market)
-            volume_usdt = safe_float(t.get("quoteVolume"))
-            if volume_usdt <= 0:
-                volume_usdt = safe_float(t.get("baseVolume")) * safe_float(t.get("last"))
-        except Exception:
-            pass
-
         funding_rate_percent = None
         next_funding_time = None
-        if is_future:
+
+        # V9.3.2: MEXC는 오더북 외 추가 ticker/funding 호출까지 붙으면 code=510이 자주 발생한다.
+        # 스캔 단계에서는 속도/안정 우선으로 추가 호출을 생략한다.
+        if not (MEXC_SLOW_MODE and "MEXC" in ex_name and MEXC_SKIP_TICKER_AND_FUNDING_IN_SCAN):
             try:
-                fr = ex.fetch_funding_rate(market)
-                raw_rate = fr.get("fundingRate")
-                if raw_rate is not None:
-                    funding_rate_percent = safe_float(raw_rate) * 100.0
-                next_funding_time = fr.get("fundingDatetime") or fr.get("nextFundingDatetime")
+                t = ex.fetch_ticker(market)
+                volume_usdt = safe_float(t.get("quoteVolume"))
+                if volume_usdt <= 0:
+                    volume_usdt = safe_float(t.get("baseVolume")) * safe_float(t.get("last"))
             except Exception:
-                funding_rate_percent = None
+                pass
+
+            if is_future:
+                try:
+                    fr = ex.fetch_funding_rate(market)
+                    raw_rate = fr.get("fundingRate")
+                    if raw_rate is not None:
+                        funding_rate_percent = safe_float(raw_rate) * 100.0
+                    next_funding_time = fr.get("fundingDatetime") or fr.get("nextFundingDatetime")
+                except Exception:
+                    funding_rate_percent = None
 
         elapsed = time.time() - t0
         _record_api_speed(ex_name, market, elapsed, True)
@@ -4453,7 +4823,10 @@ def fetch_ccxt_book(ex: Any, market: str, is_future: bool = False) -> Optional[D
             "asks": asks,
         }
     except Exception as e:
-        _record_api_speed(ex_name, market, time.time() - t0, False, str(e))
+        err_text = str(e)
+        if MEXC_SLOW_MODE and "MEXC" in ex_name:
+            _mexc_rate_cooldown(err_text)
+        _record_api_speed(ex_name, market, time.time() - t0, False, err_text)
         return None
 
 
@@ -4669,9 +5042,9 @@ def scan_once(spot_exs: Dict[str, Any], future_exs: Dict[str, Any]) -> None:
 
     btc_baseline_map = build_btc_baseline_map(domestic_spots, future_exs, usd_krw)
 
-    workers = int(os.getenv("KEDGE_FAST_SCAN_WORKERS", "4"))
+    workers = int(os.getenv("MEXC_FAST_SCAN_WORKERS", os.getenv("KEDGE_FAST_SCAN_WORKERS", "1")))
     workers = max(1, min(workers, 12))
-    print(f"[V8.8 병렬스캔] workers={workers} / 대상={len(all_spots)}개 / 자동진입금액={fmt_man_krw(AUTO_ENTRY_DEFAULT_KRW)}")
+    print(f"[V9.3.2 MEXC 저속스캔] workers={workers} / 대상={len(all_spots)}개 / 요청간격={MEXC_REQUEST_INTERVAL_SEC:.2f}s / 510쿨다운={MEXC_RATE_LIMIT_COOLDOWN_SEC:.0f}s / 자동진입금액={fmt_man_krw(AUTO_ENTRY_DEFAULT_KRW)}")
 
     dispatch_lock = threading.Lock()
     stats_lock = threading.Lock()
@@ -5108,10 +5481,13 @@ def main() -> None:
     # V8.5: 초기 DM은 "완전자동 연결 완료" 1개만 보낸다.
     # 기존 자동모드시작DM + 연결완료DM 2중 전송 방지.
     sync_approved_member_telegram_connection()
+    # V9.4.3c: 시작 직후 AUTO 설정 연결 상태 확인
+    debug_auto_settings_startup_check()
 
     while True:
         try:
-            # V8.5: 승인회원 연결 DM은 시작 시 1회만 처리한다. 루프 중 반복 DM/반자동 문구 방지.
+            # 승인완료 DM은 MEXC callback poller 담당 파일에서만 30초 간격으로 확인/전송한다.
+            sync_approved_member_telegram_connection()
             scan_once(spot_exs, future_exs)
         except KeyboardInterrupt:
             print("사용자 중지")
