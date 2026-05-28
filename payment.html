@@ -35,7 +35,10 @@
     @media(max-width:760px){
       .recommend-grid,.discount-summary{grid-template-columns:1fr}
     }
-  </style>
+  
+    .guide-link{display:inline-block;margin:8px 0 4px;padding:9px 12px;border-radius:10px;background:rgba(66,133,244,.18);border:1px solid rgba(111,166,255,.35);color:#d9e8ff;text-decoration:none;font-weight:900}
+    .guide-note{margin-top:8px;color:#b9c6d8;font-size:13px;line-height:1.55}
+</style>
 </head>
 <body data-page="payment">
   <div class="bg-grid"></div>
@@ -182,6 +185,7 @@
               <input id="payBitgetApiKey" placeholder="Bitget API KEY">
               <input id="payBitgetApiSecret" placeholder="Bitget SECRET KEY">
               <input id="payBitgetPassphrase" placeholder="Bitget Passphrase / API 비밀번호">
+              <div class="mini-desc">※ Bitget은 API KEY / SECRET / Passphrase 3개가 모두 필요합니다.</div>
 <button type="button" class="mini-guide-btn warning" onclick="openKedgeGuide('bitget')">📘 Bitget API 가이드</button>
             </div>
 
@@ -372,10 +376,7 @@ function collectPaymentExtra(product){
     bitget:{
       enabled: !!document.getElementById("payBitgetUse")?.checked,
       api_key: (document.getElementById("payBitgetApiKey")?.value || "").trim(),
-      api_secret: (document.getElementById("payBitgetApiSecret")?.value || "").trim(),
-      secret_key: (document.getElementById("payBitgetApiSecret")?.value || "").trim(),
-      passphrase: (document.getElementById("payBitgetPassphrase")?.value || "").trim(),
-      password: (document.getElementById("payBitgetPassphrase")?.value || "").trim()
+      api_secret: (document.getElementById("payBitgetApiSecret")?.value || "").trim()
     },
     bingx:{
       enabled: !!document.getElementById("payBingxUse")?.checked,
@@ -459,19 +460,17 @@ window.submitVipRequest = async function(){
   }
 
   function readApi(checkId, keyId, secretId, passId){
-    const secret = val(secretId);
-    const passphrase = passId ? val(passId) : "";
-    const out = {
+    const item = {
       enabled: !!qs(checkId)?.checked,
       api_key: val(keyId),
-      api_secret: secret,
-      secret_key: secret
+      api_secret: val(secretId),
+      secret_key: val(secretId)
     };
     if(passId){
-      out.passphrase = passphrase;
-      out.password = passphrase;
+      item.passphrase = val(passId);
+      item.password = val(passId);
     }
-    return out;
+    return item;
   }
 
   function enabledList(obj){
@@ -550,7 +549,9 @@ window.submitVipRequest = async function(){
   if(!hasValidEnabledApi(foreign_apis)) return msg("❌ 해외 거래소 API를 1개 이상 입력해주세요.");
   if(hasInvalidEnabledApi(domestic_apis)) return msg("❌ 체크된 국내 거래소는 KEY와 SECRET을 모두 입력해야 합니다.");
   if(hasInvalidEnabledApi(foreign_apis)) return msg("❌ 체크된 해외 거래소는 KEY와 SECRET을 모두 입력해야 합니다.");
-  if(foreign_apis.bitget?.enabled && !foreign_apis.bitget?.passphrase) return msg("❌ Bitget은 Passphrase / API 비밀번호를 반드시 입력해야 합니다.");
+  if(foreign_apis.bitget?.enabled && (!foreign_apis.bitget.passphrase || !foreign_apis.bitget.password)){
+    return msg("❌ Bitget은 Passphrase / API 비밀번호까지 입력해야 합니다.");
+  }
 
   const refs = referralData();
   const referral_count = Math.min(Object.values(refs).filter(x => x.enabled && x.uid).length, 4);
@@ -705,6 +706,9 @@ document.addEventListener("DOMContentLoaded", function(){
   color:#fff;
   word-break:break-all;
 }
+
+    .guide-link{display:inline-block;margin:8px 0 4px;padding:9px 12px;border-radius:10px;background:rgba(66,133,244,.18);border:1px solid rgba(111,166,255,.35);color:#d9e8ff;text-decoration:none;font-weight:900}
+    .guide-note{margin-top:8px;color:#b9c6d8;font-size:13px;line-height:1.55}
 </style>
 
 <div id="kedgeGuideModal" class="kedge-guide-modal">
@@ -747,19 +751,23 @@ window.openKedgeGuide = function(type){
     bithumb: {
       title: "📘 빗썸 API 가이드",
       body: `
+        <a class="guide-link" href="https://www.bithumb.com/react/settings/api-management" target="_blank">🔗 빗썸 API 관리 바로가기</a>
         <ol>
           <li>빗썸 로그인 후 <b>API 관리</b> 메뉴로 이동합니다.</li>
-          <li>API KEY / SECRET KEY를 생성합니다.</li>
-          <li><b>거래 권한 ON</b>으로 설정합니다.</li>
+          <li><b>API 2.0</b> 기준으로 API KEY / SECRET KEY를 생성합니다.</li>
+          <li><b>자산조회 / 주문조회 / 주문하기 ON</b>으로 설정합니다.</li>
           <li><b>출금 권한은 반드시 OFF</b>로 설정합니다.</li>
+          <li>IP 제한 사용 시 <b>현재 봇이 실행되는 PC 또는 VPS 공인 IP</b>를 등록합니다.</li>
           <li>생성된 KEY / SECRET을 복사해 입력합니다.</li>
         </ol>
         <p class="guide-danger">🚫 출금 권한은 절대 켜지 마세요.</p>
+        <p class="guide-note">※ VPS에서 운영할 경우 집 PC IP가 아니라 VPS 공인 IP를 등록해야 합니다.</p>
       `
     },
     mexc: {
       title: "📘 MEXC API 가이드",
       body: `
+        <a class="guide-link" href="https://www.mexc.com/user/openapi" target="_blank">🔗 MEXC API 관리 바로가기</a>
         <ol>
           <li>MEXC 로그인 후 API 관리 메뉴로 이동합니다.</li>
           <li>선물 거래가 가능한 API를 생성합니다.</li>
@@ -767,11 +775,13 @@ window.openKedgeGuide = function(type){
           <li>API KEY / SECRET을 복사해 입력합니다.</li>
         </ol>
         <p class="guide-danger">🚫 출금 권한은 절대 켜지 마세요.</p>
+        <p class="guide-note">※ VPS 운영 시 API 허용 IP에는 VPS 공인 IP를 등록하세요.</p>
       `
     },
     gate: {
       title: "📘 Gate.io API 가이드",
       body: `
+        <a class="guide-link" href="https://www.gate.io/myaccount/api_management" target="_blank">🔗 Gate.io API 관리 바로가기</a>
         <ol>
           <li>Gate.io 로그인 후 API 관리 메뉴로 이동합니다.</li>
           <li>선물 거래 권한이 포함된 API를 생성합니다.</li>
@@ -779,31 +789,37 @@ window.openKedgeGuide = function(type){
           <li>API KEY / SECRET을 복사해 입력합니다.</li>
         </ol>
         <p class="guide-danger">🚫 출금 권한은 절대 켜지 마세요.</p>
+        <p class="guide-note">※ VPS 운영 시 API 허용 IP에는 VPS 공인 IP를 등록하세요.</p>
       `
     },
     bitget: {
       title: "📘 Bitget API 가이드",
       body: `
+        <a class="guide-link" href="https://www.bitget.com/account/newapi" target="_blank">🔗 Bitget API 관리 바로가기</a>
         <ol>
           <li>Bitget 로그인 후 API 관리 메뉴로 이동합니다.</li>
           <li>선물 거래 권한이 포함된 API를 생성합니다.</li>
           <li><b>거래 권한 ON</b>, <b>출금 권한 OFF</b>로 설정합니다.</li>
-          <li>API KEY / SECRET / Passphrase(API 비밀번호)를 복사해 입력합니다.</li>
-          <li><b>Passphrase</b>는 Bitget API 생성 시 직접 정한 API 비밀번호입니다.</li>
+          <li><b>API KEY / SECRET / Passphrase(API 비밀번호)</b> 3개를 모두 복사해 입력합니다.</li>
         </ol>
         <p class="guide-danger">🚫 출금 권한은 절대 켜지 마세요.</p>
+        <p class="guide-warn">⚠️ Bitget은 Passphrase/API 비밀번호가 없으면 선물 잔고조회와 주문이 실패합니다.</p>
+        <p class="guide-note">※ VPS 운영 시 API 허용 IP에는 VPS 공인 IP를 등록하세요.</p>
       `
     },
     bingx: {
       title: "📘 BingX API 가이드",
       body: `
+        <a class="guide-link" href="https://bingx.com/en/account/api" target="_blank">🔗 BingX API 관리 바로가기</a>
         <ol>
           <li>BingX 로그인 후 API 관리 메뉴로 이동합니다.</li>
-          <li>선물 거래 권한이 포함된 API를 생성합니다.</li>
-          <li><b>거래 권한 ON</b>, <b>출금 권한 OFF</b>로 설정합니다.</li>
-          <li>API KEY / SECRET을 복사해 입력합니다.</li>
+          <li><b>Read / Spot Trading / Perpetual Futures Trading</b> 권한을 켭니다.</li>
+          <li><b>출금 권한은 반드시 OFF</b>로 설정합니다.</li>
+          <li>초기 테스트 단계에서는 IP 제한을 풀고 API 정상 여부를 먼저 확인합니다.</li>
+          <li>실전 VPS 운영 시에는 <b>VPS 공인 IP</b>를 허용 IP에 등록합니다.</li>
         </ol>
         <p class="guide-danger">🚫 출금 권한은 절대 켜지 마세요.</p>
+        <p class="guide-warn">⚠️ 테스트 완료 후 VPS 고정 IP 기준으로 IP 제한을 켜는 것을 권장합니다.</p>
       `
     }
   };

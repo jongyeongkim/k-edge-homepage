@@ -1304,6 +1304,51 @@
       "usd_krw": 1501.78,
       "entry_status": "READY",
       "status": "V8.8_FAST_PAPER_ENTRY"
+    },
+    "IN_BITHUMB_BITGET_1779975666": {
+      "signal_id": "IN_BITHUMB_BITGET_1779975666",
+      "ts": 1779975666.1115003,
+      "time": "22:41",
+      "created_at": "2026-05-28 22:41:06",
+      "coin": "IN",
+      "domestic": "BITHUMB",
+      "domestic_exchange": "BITHUMB",
+      "domestic_market": "IN_KRW",
+      "foreign": "BITGET",
+      "foreign_exchange": "BITGET",
+      "foreign_market": "IN/USDT:USDT",
+      "coin_gap": 3.29,
+      "btc_gap": 1.63,
+      "real_edge": 1.66,
+      "expected_profit_min": 0.66,
+      "expected_profit_max": 1.66,
+      "funding_rate": 0.005,
+      "recommended_leverage": "x1 기본 / x2 최대 권장",
+      "stop_edge": 3.66,
+      "spot_wall_krw": 26121923,
+      "futures_wall_krw": 10998656,
+      "real_fill_krw": 10998656,
+      "futures_position_limit_krw": 1502110,
+      "futures_position_limit_source": "default_safe_limit",
+      "min_retain_edge_percent": 1.5,
+      "allowed_slippage_percent": 0.16,
+      "slippage_tiers_text": "0.16%: 국내 2612.2만 / 해외 1099.9만 / 최종 150.2만",
+      "max_user_entry_krw": 0,
+      "paper_domestic_base_krw": 2000000,
+      "paper_foreign_margin_base_krw": 500000,
+      "paper_futures_leverage": 4.0,
+      "roundtrip_fee_percent": 0.14,
+      "funding_simulation_enabled": false,
+      "max_entry_krw": 1502110,
+      "final_entry_krw": 1502110,
+      "used_entry_krw": 0,
+      "remaining_entry_krw": 1502110,
+      "wall_range_percent": 0.1556,
+      "executable_krw": 1502110,
+      "krw": 1502110,
+      "usd_krw": 1502.11,
+      "entry_status": "READY",
+      "status": "V8.8_FAST_PAPER_ENTRY"
     }
   },
   "users": {
@@ -1474,6 +1519,10 @@
     "654270878:SAHARA_BITHUMB_BITGET_1779972297": {
       "selected_krw": 0,
       "updated_at": "2026-05-28 21:45:03"
+    },
+    "6870367623:IN_BITHUMB_BITGET_1779975666": {
+      "selected_krw": 0,
+      "updated_at": "2026-05-28 22:41:07"
     }
   },
   "positions": {},
@@ -1737,6 +1786,12 @@
       "reason": "❌ 해외 잔고 조회 실패\n\nBITGET 선물 API 권한 또는 키를 확인해주세요.\n오류: bitget requires \"password\" credential",
       "finished_at": "2026-05-28 21:45:03",
       "finished_ts": 1779972303.4793353
+    },
+    "6870367623:IN_BITHUMB_BITGET_1779975666": {
+      "status": "FAILED",
+      "reason": "❌ 진입 취소\n\n사유: 현재 실제엣지 부족\n\n알림 당시: +1.66%\n현재: +1.45%\n최소 유지엣지: +1.50% 이상",
+      "finished_at": "2026-05-28 22:41:07",
+      "finished_ts": 1779975667.6369786
     }
   }
 }
