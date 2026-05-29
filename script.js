@@ -1,33 +1,8 @@
+// K-EDGE LIVE DASHBOARD
+// 기존 JSON(data/stats.json, data/signals.json) 기반 데모 대시보드 비활성화.
+// 실제 메인 대시보드는 kedge-live-dashboard.js가 Supabase(kedge_live_summary/events)를 읽어 갱신한다.
 async function loadLiveDashboard(){
-  try{
-    const stats=await (await fetch("./data/stats.json?t="+Date.now())).json();
-    const cards=document.querySelectorAll(".stats-panel article b");
-    if(cards[0]) cards[0].textContent=(stats.today||0)+"건";
-    if(cards[1]) cards[1].textContent="+"+Number(stats.avg_edge||0).toFixed(2)+"%";
-    if(cards[2]) cards[2].textContent=(stats.vip||0)+"건";
-    if(cards[3]) cards[3].textContent="+"+Number(stats.max_edge||0).toFixed(2)+"%";
-
-    const rows=await (await fetch("./data/signals.json?t="+Date.now())).json();
-    if(Array.isArray(rows) && rows.length){
-      const last=rows[0];
-      const live=document.querySelector(".live-edge-card");
-      const edgeNum = Number(last.real_edge || 0);
-      if(live){
-        live.innerHTML=`<div class="live-head"><span>실시간 추가 수익 기회</span><b>+${edgeNum.toFixed(2)}%</b></div>
-        <h3>🚨 ${last.coin || "-"} 양방 후보</h3>
-        <p>국내: ${last.domestic_exchange || last.domestic || "-"} · 해외선물: ${last.foreign_exchange || last.foreign || "-"}</p>
-        <div class="live-metrics">
-          <div><small>가격 차이</small><strong>+${Number(last.coin_gap || 0).toFixed(2)}%</strong></div>
-          <div><small>시장 영향</small><strong>${Number(last.btc_gap || 0).toFixed(2)}%</strong></div>
-          <div><small>실체결</small><strong>${Number(last.krw || last.executable_krw || 0).toLocaleString()}원</strong></div>
-          <div><small>기준</small><strong>최근 감지</strong></div>
-        </div>
-        <a class="btn primary full" href="./payment.html">서비스 시작</a>`;
-      }
-    }
-  }catch(e){
-    console.log(e);
-  }
+  return;
 }
 
 /* =========================

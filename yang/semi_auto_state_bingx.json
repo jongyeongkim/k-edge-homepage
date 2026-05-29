@@ -3104,6 +3104,96 @@
       "usd_krw": 1508.22,
       "entry_status": "READY",
       "status": "V8.8_FAST_PAPER_ENTRY"
+    },
+    "ALLO_BITHUMB_BINGX_1780044308": {
+      "signal_id": "ALLO_BITHUMB_BINGX_1780044308",
+      "ts": 1780044308.099516,
+      "time": "17:45",
+      "created_at": "2026-05-29 17:45:08",
+      "coin": "ALLO",
+      "domestic": "BITHUMB",
+      "domestic_exchange": "BITHUMB",
+      "domestic_market": "ALLO_KRW",
+      "foreign": "BINGX",
+      "foreign_exchange": "BINGX",
+      "foreign_market": "ALLO/USDT:USDT",
+      "coin_gap": 4.3,
+      "btc_gap": 1.98,
+      "real_edge": 2.33,
+      "expected_profit_min": 1.33,
+      "expected_profit_max": 2.33,
+      "funding_rate": -0.0981,
+      "recommended_leverage": "x1 기본 / x2 최대 권장",
+      "stop_edge": 4.33,
+      "spot_wall_krw": 58342246,
+      "futures_wall_krw": 80035576,
+      "real_fill_krw": 58342246,
+      "futures_position_limit_krw": 1509080,
+      "futures_position_limit_source": "default_safe_limit",
+      "min_retain_edge_percent": 1.5,
+      "allowed_slippage_percent": 0.83,
+      "slippage_tiers_text": "0.50%: 국내 578.6만 / 해외 4227.8만 / 최종 150.9만\n0.83%: 국내 5834.2만 / 해외 8003.6만 / 최종 150.9만",
+      "max_user_entry_krw": 0,
+      "paper_domestic_base_krw": 2000000,
+      "paper_foreign_margin_base_krw": 500000,
+      "paper_futures_leverage": 4.0,
+      "roundtrip_fee_percent": 0.14,
+      "funding_simulation_enabled": false,
+      "max_entry_krw": 1509080,
+      "final_entry_krw": 1509080,
+      "used_entry_krw": 0,
+      "remaining_entry_krw": 1509080,
+      "wall_range_percent": 0.8264,
+      "executable_krw": 1509080,
+      "krw": 1509080,
+      "usd_krw": 1509.08,
+      "entry_status": "READY",
+      "status": "V8.8_FAST_PAPER_ENTRY"
+    },
+    "IN_BITHUMB_BINGX_1780044344": {
+      "signal_id": "IN_BITHUMB_BINGX_1780044344",
+      "ts": 1780044344.47643,
+      "time": "17:45",
+      "created_at": "2026-05-29 17:45:44",
+      "coin": "IN",
+      "domestic": "BITHUMB",
+      "domestic_exchange": "BITHUMB",
+      "domestic_market": "IN_KRW",
+      "foreign": "BINGX",
+      "foreign_exchange": "BINGX",
+      "foreign_market": "IN/USDT:USDT",
+      "coin_gap": 3.59,
+      "btc_gap": 1.98,
+      "real_edge": 1.61,
+      "expected_profit_min": 0.61,
+      "expected_profit_max": 1.61,
+      "funding_rate": 0.0035,
+      "recommended_leverage": "x1 기본 / x2 최대 권장",
+      "stop_edge": 3.61,
+      "spot_wall_krw": 1566575,
+      "futures_wall_krw": 1421053,
+      "real_fill_krw": 1421053,
+      "futures_position_limit_krw": 1509080,
+      "futures_position_limit_source": "default_safe_limit",
+      "min_retain_edge_percent": 1.5,
+      "allowed_slippage_percent": 0.11,
+      "slippage_tiers_text": "0.11%: 국내 156.7만 / 해외 142.1만 / 최종 142.1만",
+      "max_user_entry_krw": 0,
+      "paper_domestic_base_krw": 2000000,
+      "paper_foreign_margin_base_krw": 500000,
+      "paper_futures_leverage": 4.0,
+      "roundtrip_fee_percent": 0.14,
+      "funding_simulation_enabled": false,
+      "max_entry_krw": 1421053,
+      "final_entry_krw": 1421053,
+      "used_entry_krw": 0,
+      "remaining_entry_krw": 1421053,
+      "wall_range_percent": 0.113,
+      "executable_krw": 1421053,
+      "krw": 1421053,
+      "usd_krw": 1509.08,
+      "entry_status": "READY",
+      "status": "V8.8_FAST_PAPER_ENTRY"
     }
   },
   "users": {
@@ -3530,6 +3620,18 @@
     "8958522411:SAHARA_BITHUMB_BINGX_1780043409": {
       "selected_krw": 0,
       "updated_at": "2026-05-29 17:30:10"
+    },
+    "8958522411:ALLO_BITHUMB_BINGX_1780044308": {
+      "selected_krw": 0,
+      "updated_at": "2026-05-29 17:45:09"
+    },
+    "6870367623:ALLO_BITHUMB_BINGX_1780044308": {
+      "selected_krw": 0,
+      "updated_at": "2026-05-29 17:45:13"
+    },
+    "8958522411:IN_BITHUMB_BINGX_1780044344": {
+      "selected_krw": 0,
+      "updated_at": "2026-05-29 17:45:46"
     }
   },
   "positions": {
@@ -4311,6 +4413,24 @@
       "reason": "❌ 해외 API 미등록\n\nBINGX 선물 API 등록 후 사용 가능합니다.\n홈페이지 AUTO 신청/설정에서 해외 선물 API를 먼저 등록해주세요.",
       "finished_at": "2026-05-29 17:30:10",
       "finished_ts": 1780043410.7822728
+    },
+    "8958522411:ALLO_BITHUMB_BINGX_1780044308": {
+      "status": "FAILED",
+      "reason": "❌ 진입 취소\n\n사유: 현재 실제엣지 부족\n\n알림 당시: +2.33%\n현재: +1.05%\n최소 유지엣지: +1.50% 이상",
+      "finished_at": "2026-05-29 17:45:09",
+      "finished_ts": 1780044309.7713704
+    },
+    "6870367623:ALLO_BITHUMB_BINGX_1780044308": {
+      "status": "FAILED",
+      "reason": "❌ 진입 취소\n\n사유: 현재 실제엣지 부족\n\n알림 당시: +2.33%\n현재: +0.84%\n최소 유지엣지: +1.50% 이상",
+      "finished_at": "2026-05-29 17:45:13",
+      "finished_ts": 1780044313.1631181
+    },
+    "8958522411:IN_BITHUMB_BINGX_1780044344": {
+      "status": "FAILED",
+      "reason": "❌ 진입 취소\n\n사유: 현재 실제엣지 부족\n\n알림 당시: +1.61%\n현재: +0.91%\n최소 유지엣지: +1.50% 이상",
+      "finished_at": "2026-05-29 17:45:46",
+      "finished_ts": 1780044346.1542556
     }
   }
 }
