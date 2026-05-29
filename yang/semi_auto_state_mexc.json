@@ -3464,6 +3464,96 @@
       "usd_krw": 1508.48,
       "entry_status": "READY",
       "status": "V8.8_FAST_PAPER_ENTRY"
+    },
+    "IN_BITHUMB_MEXC_1780044028": {
+      "signal_id": "IN_BITHUMB_MEXC_1780044028",
+      "ts": 1780044028.1788182,
+      "time": "17:40",
+      "created_at": "2026-05-29 17:40:28",
+      "coin": "IN",
+      "domestic": "BITHUMB",
+      "domestic_exchange": "BITHUMB",
+      "domestic_market": "IN_KRW",
+      "foreign": "MEXC",
+      "foreign_exchange": "MEXC",
+      "foreign_market": "IN/USDT:USDT",
+      "coin_gap": 3.59,
+      "btc_gap": 1.99,
+      "real_edge": 1.6,
+      "expected_profit_min": 0.6,
+      "expected_profit_max": 1.6,
+      "funding_rate": null,
+      "recommended_leverage": "x1 기본 / x2 최대 권장",
+      "stop_edge": 3.6,
+      "spot_wall_krw": 2277222,
+      "futures_wall_krw": 1558727,
+      "real_fill_krw": 1558727,
+      "futures_position_limit_krw": 2270622,
+      "futures_position_limit_source": "ccxt_market_limits",
+      "min_retain_edge_percent": 1.5,
+      "allowed_slippage_percent": 0.1,
+      "slippage_tiers_text": "0.10%: 국내 227.7만 / 해외 155.9만 / 최종 155.9만",
+      "max_user_entry_krw": 0,
+      "paper_domestic_base_krw": 2000000,
+      "paper_foreign_margin_base_krw": 500000,
+      "paper_futures_leverage": 4.0,
+      "roundtrip_fee_percent": 0.14,
+      "funding_simulation_enabled": false,
+      "max_entry_krw": 1558727,
+      "final_entry_krw": 1558727,
+      "used_entry_krw": 0,
+      "remaining_entry_krw": 1558727,
+      "wall_range_percent": 0.0968,
+      "executable_krw": 1558727,
+      "krw": 1558727,
+      "usd_krw": 1509.08,
+      "entry_status": "READY",
+      "status": "V8.8_FAST_PAPER_ENTRY"
+    },
+    "NIL_BITHUMB_MEXC_1780044075": {
+      "signal_id": "NIL_BITHUMB_MEXC_1780044075",
+      "ts": 1780044075.3575494,
+      "time": "17:41",
+      "created_at": "2026-05-29 17:41:15",
+      "coin": "NIL",
+      "domestic": "BITHUMB",
+      "domestic_exchange": "BITHUMB",
+      "domestic_market": "NIL_KRW",
+      "foreign": "MEXC",
+      "foreign_exchange": "MEXC",
+      "foreign_market": "NIL/USDT:USDT",
+      "coin_gap": 3.51,
+      "btc_gap": 1.95,
+      "real_edge": 1.55,
+      "expected_profit_min": 0.55,
+      "expected_profit_max": 1.55,
+      "funding_rate": null,
+      "recommended_leverage": "x1 기본 / x2 최대 권장",
+      "stop_edge": 3.55,
+      "spot_wall_krw": 3432169,
+      "futures_wall_krw": 2088355,
+      "real_fill_krw": 2088355,
+      "futures_position_limit_krw": 32529637,
+      "futures_position_limit_source": "ccxt_market_limits",
+      "min_retain_edge_percent": 1.5,
+      "allowed_slippage_percent": 0.05,
+      "slippage_tiers_text": "0.05%: 국내 343.2만 / 해외 208.8만 / 최종 208.8만",
+      "max_user_entry_krw": 0,
+      "paper_domestic_base_krw": 2000000,
+      "paper_foreign_margin_base_krw": 500000,
+      "paper_futures_leverage": 4.0,
+      "roundtrip_fee_percent": 0.14,
+      "funding_simulation_enabled": false,
+      "max_entry_krw": 2088355,
+      "final_entry_krw": 2088355,
+      "used_entry_krw": 0,
+      "remaining_entry_krw": 2088355,
+      "wall_range_percent": 0.0547,
+      "executable_krw": 2088355,
+      "krw": 2088355,
+      "usd_krw": 1508.46,
+      "entry_status": "READY",
+      "status": "V8.8_FAST_PAPER_ENTRY"
     }
   },
   "users": {
@@ -3898,6 +3988,22 @@
     "6870367623:INJ_BITHUMB_MEXC_1780043550": {
       "selected_krw": 0,
       "updated_at": "2026-05-29 17:32:31"
+    },
+    "8958522411:IN_BITHUMB_MEXC_1780044028": {
+      "selected_krw": 0,
+      "updated_at": "2026-05-29 17:40:28"
+    },
+    "6870367623:IN_BITHUMB_MEXC_1780044028": {
+      "selected_krw": 0,
+      "updated_at": "2026-05-29 17:40:35"
+    },
+    "8958522411:NIL_BITHUMB_MEXC_1780044075": {
+      "selected_krw": 0,
+      "updated_at": "2026-05-29 17:41:15"
+    },
+    "6870367623:NIL_BITHUMB_MEXC_1780044075": {
+      "selected_krw": 0,
+      "updated_at": "2026-05-29 17:41:17"
     }
   },
   "positions": {
@@ -4597,6 +4703,30 @@
       "reason": "❌ 진입 취소\n\n사유: 현재 실제엣지 부족\n\n알림 당시: +1.54%\n현재: +1.06%\n최소 유지엣지: +1.50% 이상",
       "finished_at": "2026-05-29 17:32:31",
       "finished_ts": 1780043551.7787354
+    },
+    "8958522411:IN_BITHUMB_MEXC_1780044028": {
+      "status": "FAILED",
+      "reason": "❌ 해외 API 미등록\n\nMEXC 선물 API 등록 후 사용 가능합니다.\n홈페이지 AUTO 신청/설정에서 해외 선물 API를 먼저 등록해주세요.",
+      "finished_at": "2026-05-29 17:40:28",
+      "finished_ts": 1780044028.753795
+    },
+    "6870367623:IN_BITHUMB_MEXC_1780044028": {
+      "status": "FAILED",
+      "reason": "❌ 진입 불가\n\n사유: 국내 현물 KRW 잔고 부족\n\n선택금액: 7,000원\n필요 KRW: 7,350원\n현재 KRW: 2,181원",
+      "finished_at": "2026-05-29 17:40:35",
+      "finished_ts": 1780044035.1540966
+    },
+    "8958522411:NIL_BITHUMB_MEXC_1780044075": {
+      "status": "FAILED",
+      "reason": "❌ 진입 취소\n\n사유: 현재 실제엣지 부족\n\n알림 당시: +1.55%\n현재: +1.15%\n최소 유지엣지: +1.50% 이상",
+      "finished_at": "2026-05-29 17:41:15",
+      "finished_ts": 1780044075.8875241
+    },
+    "6870367623:NIL_BITHUMB_MEXC_1780044075": {
+      "status": "FAILED",
+      "reason": "❌ 진입 취소\n\n사유: 현재 실제엣지 부족\n\n알림 당시: +1.55%\n현재: +1.14%\n최소 유지엣지: +1.50% 이상",
+      "finished_at": "2026-05-29 17:41:17",
+      "finished_ts": 1780044077.1617906
     }
   }
 }

@@ -3644,6 +3644,51 @@
       "usd_krw": 1507.88,
       "entry_status": "READY",
       "status": "V8.8_FAST_PAPER_ENTRY"
+    },
+    "IN_BITHUMB_BITGET_1780044048": {
+      "signal_id": "IN_BITHUMB_BITGET_1780044048",
+      "ts": 1780044048.3562834,
+      "time": "17:40",
+      "created_at": "2026-05-29 17:40:48",
+      "coin": "IN",
+      "domestic": "BITHUMB",
+      "domestic_exchange": "BITHUMB",
+      "domestic_market": "IN_KRW",
+      "foreign": "BITGET",
+      "foreign_exchange": "BITGET",
+      "foreign_market": "IN/USDT:USDT",
+      "coin_gap": 3.67,
+      "btc_gap": 1.99,
+      "real_edge": 1.69,
+      "expected_profit_min": 0.69,
+      "expected_profit_max": 1.69,
+      "funding_rate": 0.005,
+      "recommended_leverage": "x1 기본 / x2 최대 권장",
+      "stop_edge": 3.69,
+      "spot_wall_krw": 1239326,
+      "futures_wall_krw": 13821545,
+      "real_fill_krw": 1239326,
+      "futures_position_limit_krw": 1509080,
+      "futures_position_limit_source": "default_safe_limit",
+      "min_retain_edge_percent": 1.5,
+      "allowed_slippage_percent": 0.19,
+      "slippage_tiers_text": "0.19%: 국내 123.9만 / 해외 1382.2만 / 최종 123.9만",
+      "max_user_entry_krw": 0,
+      "paper_domestic_base_krw": 2000000,
+      "paper_foreign_margin_base_krw": 500000,
+      "paper_futures_leverage": 4.0,
+      "roundtrip_fee_percent": 0.14,
+      "funding_simulation_enabled": false,
+      "max_entry_krw": 1239326,
+      "final_entry_krw": 1239326,
+      "used_entry_krw": 0,
+      "remaining_entry_krw": 1239326,
+      "wall_range_percent": 0.1867,
+      "executable_krw": 1239326,
+      "krw": 1239326,
+      "usd_krw": 1509.08,
+      "entry_status": "READY",
+      "status": "V8.8_FAST_PAPER_ENTRY"
     }
   },
   "users": {
@@ -4182,6 +4227,14 @@
     "6870367623:OPG_BITHUMB_BITGET_1780043455": {
       "selected_krw": 0,
       "updated_at": "2026-05-29 17:30:57"
+    },
+    "8958522411:IN_BITHUMB_BITGET_1780044048": {
+      "selected_krw": 0,
+      "updated_at": "2026-05-29 17:40:48"
+    },
+    "6870367623:IN_BITHUMB_BITGET_1780044048": {
+      "selected_krw": 0,
+      "updated_at": "2026-05-29 17:40:52"
     }
   },
   "positions": {},
@@ -5003,6 +5056,18 @@
       "reason": "❌ 진입 취소\n\n사유: 현재 실제엣지 부족\n\n알림 당시: +1.59%\n현재: +1.22%\n최소 유지엣지: +1.50% 이상",
       "finished_at": "2026-05-29 17:30:57",
       "finished_ts": 1780043457.418672
+    },
+    "8958522411:IN_BITHUMB_BITGET_1780044048": {
+      "status": "FAILED",
+      "reason": "❌ 해외 API 미등록\n\nBITGET 선물 API 등록 후 사용 가능합니다.\n홈페이지 AUTO 신청/설정에서 해외 선물 API를 먼저 등록해주세요.",
+      "finished_at": "2026-05-29 17:40:49",
+      "finished_ts": 1780044049.0120764
+    },
+    "6870367623:IN_BITHUMB_BITGET_1780044048": {
+      "status": "FAILED",
+      "reason": "❌ 진입 불가\n\n사유: 국내 현물 KRW 잔고 부족\n\n선택금액: 7,000원\n필요 KRW: 7,350원\n현재 KRW: 2,181원",
+      "finished_at": "2026-05-29 17:40:52",
+      "finished_ts": 1780044052.7068682
     }
   }
 }

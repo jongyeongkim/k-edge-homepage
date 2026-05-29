@@ -9,6 +9,13 @@
     if(!v) return '-';
     try{return new Date(v).toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});}catch(e){return String(v);}
   };
+  const fmtKrwShort = (n) => {
+    const v = Number(n || 0);
+    if(!v) return '0원';
+    if(v >= 100000000) return (v / 100000000).toFixed(1).replace(/\.0$/, '') + '억';
+    if(v >= 10000) return (v / 10000).toFixed(1).replace(/\.0$/, '') + '만';
+    return fmtNum(v) + '원';
+  };
 
   function setStatus(text, ok){
     const el = $('kedgeLiveStatus');
@@ -17,12 +24,62 @@
     el.className = 'kedge-live-status' + (ok ? '' : ' off');
   }
 
+  function isToday(v){
+    if(!v) return false;
+    try{
+      const d = new Date(v);
+      const n = new Date();
+      return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate();
+    }catch(e){ return false; }
+  }
+
+  function eventType(row){
+    return String((row && (row.event_type || row.status)) || '').toUpperCase();
+  }
+
   function renderSummary(row){
     if(!row) return;
     if($('liveBotStatus')) $('liveBotStatus').textContent = row.bot_status || '대기';
     if($('liveTodayEntries')) $('liveTodayEntries').textContent = fmtNum(row.today_entries) + '건';
     if($('liveTodayTp')) $('liveTodayTp').textContent = fmtNum(row.today_tp) + '건';
     if($('liveLastScan')) $('liveLastScan').textContent = fmtTime(row.last_scan_at || row.updated_at);
+  }
+
+  function renderTopStats(summary, rows){
+    const cards = document.querySelectorAll('.stats-panel article');
+    if(!cards || cards.length < 4) return;
+
+    const list = Array.isArray(rows) ? rows : [];
+    const todayRows = list.filter(r => isToday(r.created_at));
+    const publicTodayRows = todayRows.filter(isPublicEvent);
+    const candidateCount = todayRows.filter(r => eventType(r) === 'CANDIDATE').length;
+    const tpCountFromEvents = todayRows.filter(r => eventType(r) === 'TP_SUCCESS').length;
+
+    const edgeSource = (publicTodayRows.length ? publicTodayRows : list.filter(isPublicEvent));
+    let maxEdge = 0;
+    edgeSource.forEach(r => { maxEdge = Math.max(maxEdge, Number(r.real_edge_percent || 0)); });
+
+    const latestPublic = list.find(isPublicEvent) || null;
+    const latestKrw = latestPublic ? Number(latestPublic.executable_krw || 0) : 0;
+    const todayTp = Number((summary && summary.today_tp) || 0) || tpCountFromEvents;
+
+    const items = [
+      { title:'오늘 후보', value:fmtNum(candidateCount) + '건', sub:'실시간 감지 누적' },
+      { title:'최고 엣지', value:fmtPct(maxEdge), sub:'오늘 공개 이벤트 기준' },
+      { title:'최근 실체결', value:fmtKrwShort(latestKrw), sub:'호가벽 기반 가능금액' },
+      { title:'오늘 익절', value:fmtNum(todayTp) + '건', sub:'청산 완료 기준' }
+    ];
+
+    cards.forEach((card, i) => {
+      const item = items[i];
+      if(!item) return;
+      const p = card.querySelector('p');
+      const b = card.querySelector('b');
+      const small = card.querySelector('small');
+      if(p) p.textContent = item.title;
+      if(b) b.textContent = item.value;
+      if(small) small.textContent = item.sub;
+    });
   }
 
   function statusText(s){
@@ -38,13 +95,12 @@
     return 'warn';
   }
 
-  // 공개 홈페이지에는 깔끔하게 후보/진입성공/익절완료만 표시한다.
+  // 공개 홈페이지에는 후보/진입성공/익절완료만 표시한다.
   // ENTRY_FAIL 등 운영 로그는 Supabase DB에는 저장하되 화면에서는 숨긴다.
   const PUBLIC_EVENT_TYPES = new Set(['CANDIDATE', 'ENTRY_SUCCESS', 'TP_SUCCESS']);
 
   function isPublicEvent(row){
-    const type = String((row && (row.event_type || row.status)) || '').toUpperCase();
-    return PUBLIC_EVENT_TYPES.has(type);
+    return PUBLIC_EVENT_TYPES.has(eventType(row));
   }
 
   function renderRows(rows){
@@ -82,8 +138,9 @@
       const { data: summary, error: sErr } = await db.from('kedge_live_summary').select('*').eq('id','main').maybeSingle();
       if(!sErr && summary) renderSummary(summary);
 
-      const { data: events, error: eErr } = await db.from('kedge_live_events').select('*').order('created_at', {ascending:false}).limit(50);
+      const { data: events, error: eErr } = await db.from('kedge_live_events').select('*').order('created_at', {ascending:false}).limit(200);
       if(eErr) throw eErr;
+      renderTopStats(summary, events || []);
       renderRows(events || []);
       setStatus('실시간 연동 ON', true);
     }catch(err){
