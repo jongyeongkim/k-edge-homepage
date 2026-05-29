@@ -1113,6 +1113,100 @@ def safe_float(x, default: float = 0.0) -> float:
         return default
 
 
+
+
+def _short_json_for_log(obj: Any, limit: int = 900) -> str:
+    try:
+        text = json.dumps(obj, ensure_ascii=False, default=str)
+    except Exception:
+        text = str(obj)
+    text = text.replace("\n", " ")
+    return text[:limit]
+
+
+def _walk_dicts(obj: Any):
+    if isinstance(obj, dict):
+        yield obj
+        for v in obj.values():
+            yield from _walk_dicts(v)
+    elif isinstance(obj, list):
+        for it in obj:
+            yield from _walk_dicts(it)
+
+
+def extract_futures_usdt_balance(exchange_name: str, balance: Dict[str, Any]) -> Tuple[float, str]:
+    """거래소별 선물 USDT 잔고 추출 보강.
+    ccxt 응답 구조가 거래소마다 달라 free/total만 보면 0으로 나오는 경우를 방지한다.
+    """
+    ex = str(exchange_name or "").upper()
+    candidates = []
+
+    def add(value, source, priority=50):
+        v = safe_float(value)
+        if v > 0:
+            candidates.append((priority, v, source))
+
+    # ccxt 표준 구조 우선
+    add(((balance.get("free") or {}).get("USDT")), "free.USDT", 10)
+    add(((balance.get("total") or {}).get("USDT")), "total.USDT", 20)
+
+    usdt_obj = balance.get("USDT")
+    if isinstance(usdt_obj, dict):
+        add(usdt_obj.get("free"), "USDT.free", 11)
+        add(usdt_obj.get("total"), "USDT.total", 21)
+        add(usdt_obj.get("available"), "USDT.available", 9)
+        add(usdt_obj.get("availableBalance"), "USDT.availableBalance", 9)
+
+    # info 내부 거래소별 구조 보강
+    info = balance.get("info")
+    preferred_keys = [
+        "available", "availableBalance", "availableMargin", "availableEquity",
+        "free", "freeBalance", "cashBal", "maxWithdrawAmount",
+        "equity", "usdtEquity", "walletBalance", "balance", "total",
+    ]
+    coin_keys = ["currency", "asset", "coin", "marginCoin", "symbol", "token", "ccy"]
+
+    for d in _walk_dicts(info):
+        # USDT 전용 dict 판별: coin/marginCoin/currency 등이 USDT이거나 usdt 관련 키가 있는 경우
+        is_usdt_obj = False
+        for ck in coin_keys:
+            if str(d.get(ck, "")).upper() == "USDT":
+                is_usdt_obj = True
+                break
+        if not is_usdt_obj:
+            # {'usdtEquity': '...'} 같이 명시 키가 있으면 후보로 인정
+            is_usdt_obj = any("usdt" in str(k).lower() for k in d.keys())
+        if not is_usdt_obj:
+            continue
+        for idx, k in enumerate(preferred_keys):
+            if k in d:
+                add(d.get(k), f"info.{k}", 30 + idx)
+
+    if candidates:
+        candidates.sort(key=lambda x: x[0])
+        priority, val, source = candidates[0]
+        return val, source
+
+    return 0.0, "not_found"
+
+
+def log_futures_balance_debug(exchange_name: str, balance: Dict[str, Any], selected: float, source: str) -> None:
+    try:
+        free_usdt = safe_float(((balance.get("free") or {}).get("USDT")))
+        total_usdt = safe_float(((balance.get("total") or {}).get("USDT")))
+        usdt_obj = balance.get("USDT")
+        info = balance.get("info")
+        print(
+            f"[해외잔고진단] exchange={str(exchange_name).upper()} "
+            f"selected={selected:,.4f} source={source} "
+            f"free.USDT={free_usdt:,.4f} total.USDT={total_usdt:,.4f} "
+            f"USDT_obj={_short_json_for_log(usdt_obj, 500)} "
+            f"info={_short_json_for_log(info, 900)}"
+        )
+    except Exception as e:
+        print(f"[해외잔고진단 실패] exchange={exchange_name} error={e}")
+
+
 def normalize_symbol(symbol: str) -> str:
     s = str(symbol).upper().strip()
     s = s.replace("-", "").replace("_", "").replace("/", "")
@@ -1683,6 +1777,127 @@ def supabase_insert_signal(row: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         return None
 
 
+
+
+# ============================================================
+# K-EDGE LIVE DASHBOARD 저장 (홈페이지 실시간 대시보드)
+# ============================================================
+SUPABASE_LIVE_SUMMARY_TABLE = os.getenv("SUPABASE_LIVE_SUMMARY_TABLE", "kedge_live_summary").strip()
+SUPABASE_LIVE_EVENTS_TABLE = os.getenv("SUPABASE_LIVE_EVENTS_TABLE", "kedge_live_events").strip()
+
+
+def _iso_now_utc() -> str:
+    try:
+        return datetime.utcnow().isoformat() + "Z"
+    except Exception:
+        return now_str()
+
+
+def _live_rest_url(table: str) -> str:
+    return f"{SUPABASE_URL.rstrip('/')}/rest/v1/{table}"
+
+
+def _live_signal_value(obj: Dict[str, Any], *keys: str, default: Any = None) -> Any:
+    for k in keys:
+        try:
+            v = obj.get(k)
+        except Exception:
+            v = None
+        if v not in (None, ""):
+            return v
+    return default
+
+
+def supabase_live_update_summary(bot_status: str = "가동중", inc_entry: int = 0, inc_tp: int = 0) -> None:
+    """홈페이지 LIVE summary 갱신. 실패해도 매매에는 영향 없음."""
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return
+    try:
+        # 현재 카운터 읽기
+        get_url = _live_rest_url(SUPABASE_LIVE_SUMMARY_TABLE)
+        r = session.get(
+            get_url,
+            headers=supabase_headers(),
+            params={"id": "eq.main", "select": "id,today_entries,today_tp,today_pnl_krw"},
+            timeout=5,
+        )
+        today_entries = 0
+        today_tp = 0
+        today_pnl_krw = 0
+        if r.status_code in (200, 206):
+            data = r.json()
+            if isinstance(data, list) and data:
+                today_entries = int(safe_float(data[0].get("today_entries"), 0))
+                today_tp = int(safe_float(data[0].get("today_tp"), 0))
+                today_pnl_krw = safe_float(data[0].get("today_pnl_krw"), 0)
+
+        row = {
+            "id": "main",
+            "updated_at": _iso_now_utc(),
+            "bot_status": bot_status,
+            "today_entries": today_entries + int(inc_entry or 0),
+            "today_tp": today_tp + int(inc_tp or 0),
+            "today_pnl_krw": today_pnl_krw,
+        }
+        # id=main upsert
+        post_headers = dict(supabase_headers())
+        post_headers["Prefer"] = "resolution=merge-duplicates,return=minimal"
+        rr = session.post(
+            _live_rest_url(SUPABASE_LIVE_SUMMARY_TABLE),
+            headers=post_headers,
+            data=json.dumps(row, ensure_ascii=False),
+            timeout=5,
+        )
+        if rr.status_code not in (200, 201, 204):
+            print("[LIVE SUMMARY 저장 실패]", rr.status_code, rr.text[:200])
+    except Exception as e:
+        print("[LIVE SUMMARY 저장 예외]", e)
+
+
+def supabase_live_insert_event(event_type: str, signal: Optional[Dict[str, Any]] = None, pos: Optional[Dict[str, Any]] = None,
+                               amount_krw: Any = None, edge_percent: Any = None, detail: str = "") -> None:
+    """홈페이지 LIVE events 저장. 실패해도 매매에는 영향 없음."""
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return
+    try:
+        src: Dict[str, Any] = {}
+        if isinstance(signal, dict): src.update(signal)
+        if isinstance(pos, dict): src.update(pos)
+
+        symbol = normalize_symbol(_live_signal_value(src, "symbol", "coin", default=""))
+        domestic = str(_live_signal_value(src, "domestic_exchange", "domestic", default="") or "").upper()
+        foreign = str(_live_signal_value(src, "foreign_exchange", "foreign", default="") or "").upper()
+        edge = safe_float(edge_percent if edge_percent is not None else _live_signal_value(src, "real_edge_percent", "real_edge", "entry_edge", "close_edge", default=0), 0)
+        executable = safe_float(amount_krw if amount_krw is not None else _live_signal_value(src, "executable_krw", "max_entry_krw", "amount_krw", "domestic_entry_krw", default=0), 0)
+
+        row = {
+            "created_at": _iso_now_utc(),
+            "event_type": str(event_type or "EVENT"),
+            "symbol": symbol,
+            "domestic_exchange": domestic,
+            "foreign_exchange": foreign,
+            "real_edge_percent": round(edge, 4),
+            "executable_krw": int(executable),
+        }
+
+        r = session.post(
+            _live_rest_url(SUPABASE_LIVE_EVENTS_TABLE),
+            headers=supabase_headers(),
+            data=json.dumps(row, ensure_ascii=False),
+            timeout=5,
+        )
+        if r.status_code not in (200, 201):
+            print("[LIVE EVENT 저장 실패]", r.status_code, r.text[:200])
+        else:
+            print(f"[LIVE EVENT 저장] {event_type} {symbol} {domestic}->{foreign}")
+
+        inc_entry = 1 if str(event_type) == "ENTRY_SUCCESS" else 0
+        inc_tp = 1 if str(event_type) == "TP_SUCCESS" else 0
+        supabase_live_update_summary("가동중", inc_entry=inc_entry, inc_tp=inc_tp)
+    except Exception as e:
+        print("[LIVE EVENT 저장 예외]", e)
+
+
 def get_member_chat_id(member: Dict[str, Any]) -> str:
     """Supabase 승인회원 row에서 텔레그램 chat_id를 안전하게 읽는다."""
     candidates = [
@@ -1769,7 +1984,7 @@ def supabase_get_approved_members(force_refresh: bool = False) -> List[Dict[str,
             return list(_APPROVED_MEMBERS_CACHE)
 
         rows = supabase_get_approved_members_uncached()
-        _APPROVED_MEMBERS_CACHE = rows if isinstance(rows, list) else []
+        _APPROVED_MEMBERS_CACHE = filter_latest_approved_member_rows(rows) if isinstance(rows, list) else []
         _APPROVED_MEMBERS_CACHE_AT = now_ts
         print(f"[승인회원 캐시 갱신] {len(_APPROVED_MEMBERS_CACHE)}명 / TTL {APPROVED_MEMBER_CACHE_TTL_SEC}s")
         return list(_APPROVED_MEMBERS_CACHE)
@@ -2289,16 +2504,56 @@ def build_user_exchange_from_member(member: Dict[str, Any], exchange_name: str, 
             if isinstance(val, dict):
                 route_api.update(val)
 
-    if market_type == "spot":
-        api_key = member.get(f"{prefix}_api_key") or member.get(f"{prefix}_access_key") or member.get("domestic_api_key")
-        secret = member.get(f"{prefix}_secret_key") or member.get(f"{prefix}_secret") or member.get("domestic_api_secret")
-    else:
-        api_key = member.get(f"{prefix}_api_key") or member.get(f"{prefix}_access_key") or member.get("foreign_api_key")
-        secret = member.get(f"{prefix}_secret_key") or member.get(f"{prefix}_secret") or member.get("foreign_api_secret")
+    # ============================================================
+    # API 키 우선순위 패치
+    # 1순위: domestic_apis / foreign_apis JSON 내부 거래소별 키
+    # 2순위: 거래소별 개별 컬럼
+    # 3순위: 과거 legacy 공통 컬럼
+    #
+    # 이유:
+    # 재등록 시 JSON에는 최신 키가 저장되고 legacy 컬럼에는 예전 키가 남을 수 있음.
+    # 따라서 BITHUMB/MEXC/BINGX 등 모든 거래소는 JSON route_api를 최우선으로 사용한다.
+    # ============================================================
+    json_api_key = (
+        route_api.get("api_key")
+        or route_api.get("apiKey")
+        or route_api.get("access_key")
+        or route_api.get("accessKey")
+        or ""
+    )
+    json_secret = (
+        route_api.get("secret_key")
+        or route_api.get("secretKey")
+        or route_api.get("api_secret")
+        or route_api.get("secret")
+        or ""
+    )
+    json_password = route_api.get("password") or route_api.get("passphrase") or route_api.get("api_password") or ""
 
-    api_key = api_key or route_api.get("api_key") or route_api.get("apiKey") or route_api.get("access_key") or route_api.get("accessKey")
-    secret = secret or route_api.get("api_secret") or route_api.get("secret") or route_api.get("secret_key") or route_api.get("secretKey")
-    password = member.get(f"{prefix}_password") or member.get(f"{prefix}_passphrase") or route_api.get("password") or route_api.get("passphrase")
+    if market_type == "spot":
+        legacy_api_key = member.get(f"{prefix}_api_key") or member.get(f"{prefix}_access_key") or member.get("domestic_api_key")
+        legacy_secret = member.get(f"{prefix}_secret_key") or member.get(f"{prefix}_secret") or member.get("domestic_api_secret")
+    else:
+        # foreign_exchange가 현재 거래소와 다르면 legacy foreign_api_key는 다른 거래소 키일 수 있으므로 사용하지 않음
+        foreign_exchange = str(member.get("foreign_exchange") or "").lower().replace(" ", "")
+        allow_legacy_foreign = (not foreign_exchange) or (foreign_exchange in {name, prefix, ccxt_id, "gateio" if name in ("gate", "gateio") else name})
+        if allow_legacy_foreign:
+            legacy_api_key = member.get(f"{prefix}_api_key") or member.get(f"{prefix}_access_key") or member.get("foreign_api_key")
+            legacy_secret = member.get(f"{prefix}_secret_key") or member.get(f"{prefix}_secret") or member.get("foreign_api_secret")
+        else:
+            print(f"[API진단 라우팅 스킵] exchange={exchange_name} foreign_exchange={foreign_exchange} legacy_foreign_key_skip=True")
+            legacy_api_key = member.get(f"{prefix}_api_key") or member.get(f"{prefix}_access_key")
+            legacy_secret = member.get(f"{prefix}_secret_key") or member.get(f"{prefix}_secret")
+
+    api_key = json_api_key or legacy_api_key or ""
+    secret = json_secret or legacy_secret or ""
+    password = json_password or member.get(f"{prefix}_password") or member.get(f"{prefix}_passphrase") or ""
+
+    source = "json_route_api" if json_api_key else "legacy_columns"
+    if name == "bithumb":
+        print(f"[BITHUMB API 우선순위] source={source} key_head={str(api_key)[:4]} key_tail={str(api_key)[-4:]} key_len={len(str(api_key or ''))} member_id={member.get('id')} chat_id={get_member_chat_id(member) if 'get_member_chat_id' in globals() else member.get('tg_chat_id')}")
+    elif name in ("bingx", "bitget", "gate", "gateio", "mexc"):
+        print(f"[{name.upper()} API 우선순위] source={source} key_head={str(api_key)[:4]} key_tail={str(api_key)[-4:]} key_len={len(str(api_key or ''))} password_set={bool(password)} member_id={member.get('id')}")
 
     if not api_key or not secret:
         print(f"[실거래 API 미등록] exchange={exchange_name} type={market_type} prefix={prefix}")
@@ -2319,6 +2574,218 @@ def build_user_exchange_from_member(member: Dict[str, Any], exchange_name: str, 
         params["password"] = password
     return klass(params)
 
+
+
+# ============================================================
+# BITHUMB API 2.0 직접 잔고조회 / 최신 승인 row 필터
+# - ccxt.bithumb.fetch_balance()가 API 2.0 키에서 실패하는 경우가 있어
+#   단독 테스트 성공 방식과 동일한 JWT /v1/accounts 직접조회로 국내 KRW 잔고를 확인한다.
+# ============================================================
+def _kedge_json_obj(v: Any) -> Dict[str, Any]:
+    if isinstance(v, dict):
+        return v
+    if isinstance(v, str) and v.strip():
+        try:
+            obj = json.loads(v)
+            return obj if isinstance(obj, dict) else {}
+        except Exception:
+            return {}
+    return {}
+
+
+def get_api_credentials_priority(member: Dict[str, Any], exchange_name: str, market_type: str = "spot") -> Dict[str, Any]:
+    name = str(exchange_name or "").lower().replace(" ", "")
+    if name == "gate.io":
+        name = "gate"
+    prefix = name
+
+    route_map = _kedge_json_obj(member.get("domestic_apis" if market_type == "spot" else "foreign_apis"))
+    aliases = [name]
+    if name == "bithumb": aliases += ["BITHUMB"]
+    if name == "mexc": aliases += ["MEXC"]
+    if name == "bingx": aliases += ["BINGX"]
+    if name == "bitget": aliases += ["BITGET"]
+    if name in ("gate", "gateio"): aliases += ["gateio", "gate.io", "GATE"]
+
+    route_api = {}
+    for a in aliases:
+        if isinstance(route_map.get(a), dict):
+            route_api = route_map.get(a) or {}
+            break
+
+    json_api_key = (
+        route_api.get("api_key")
+        or route_api.get("apiKey")
+        or route_api.get("access_key")
+        or route_api.get("accessKey")
+        or ""
+    )
+    json_secret = (
+        route_api.get("secret_key")
+        or route_api.get("secretKey")
+        or route_api.get("api_secret")
+        or route_api.get("secret")
+        or ""
+    )
+    json_password = route_api.get("password") or route_api.get("passphrase") or route_api.get("api_password") or ""
+
+    if market_type == "spot":
+        legacy_api_key = member.get(f"{prefix}_api_key") or member.get(f"{prefix}_access_key") or member.get("domestic_api_key") or ""
+        legacy_secret = member.get(f"{prefix}_secret_key") or member.get(f"{prefix}_secret") or member.get("domestic_api_secret") or ""
+    else:
+        foreign_exchange = str(member.get("foreign_exchange") or "").lower().replace(" ", "")
+        allow_legacy = (not foreign_exchange) or (foreign_exchange in {name, prefix, "gateio" if name in ("gate", "gateio") else name})
+        legacy_api_key = (member.get(f"{prefix}_api_key") or member.get(f"{prefix}_access_key") or (member.get("foreign_api_key") if allow_legacy else "") or "")
+        legacy_secret = (member.get(f"{prefix}_secret_key") or member.get(f"{prefix}_secret") or (member.get("foreign_api_secret") if allow_legacy else "") or "")
+
+    api_key = str(json_api_key or legacy_api_key or "").strip()
+    secret = str(json_secret or legacy_secret or "").strip()
+    password = str(json_password or member.get(f"{prefix}_password") or member.get(f"{prefix}_passphrase") or "").strip()
+    source = "json_route_api" if json_api_key else "legacy_columns"
+    return {"api_key": api_key, "secret": secret, "password": password, "source": source}
+
+
+def bithumb_v2_accounts_direct(api_key: str, secret: str) -> Dict[str, Any]:
+    import base64, hashlib, hmac, uuid
+
+    api_key = str(api_key or "").strip()
+    secret = str(secret or "").strip()
+    if not api_key or not secret:
+        raise Exception("BITHUMB API KEY/SECRET empty")
+
+    header = {"alg": "HS256", "typ": "JWT"}
+    payload = {
+        "access_key": api_key,
+        "nonce": str(uuid.uuid4()),
+        "timestamp": int(time.time() * 1000),
+    }
+
+    def b64url(obj: Any) -> str:
+        raw = json.dumps(obj, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        return base64.urlsafe_b64encode(raw).rstrip(b"=").decode("ascii")
+
+    signing_input = f"{b64url(header)}.{b64url(payload)}"
+    sig = hmac.new(secret.encode("utf-8"), signing_input.encode("ascii"), hashlib.sha256).digest()
+    token = signing_input + "." + base64.urlsafe_b64encode(sig).rstrip(b"=").decode("ascii")
+
+    url = "https://api.bithumb.com/v1/accounts"
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    res = requests.get(url, headers=headers, timeout=15)
+    print(f"[BITHUMB v2 직접잔고 응답] http={res.status_code} body={res.text[:500]}")
+    if res.status_code != 200:
+        raise Exception(f"BITHUMB v2 직접잔고 실패 http={res.status_code} body={res.text[:300]}")
+    data = res.json()
+    krw_free = 0.0
+    if isinstance(data, list):
+        for item in data:
+            if str(item.get("currency") or "").upper() == "KRW":
+                krw_free = safe_float(item.get("balance"))
+                break
+    return {"free": {"KRW": krw_free}, "total": {"KRW": krw_free}, "raw": data}
+
+
+
+def bithumb_v2_order_direct(api_key: str, secret: str, coin: str, side: str, krw_amount: float = 0.0, volume: float = 0.0) -> Dict[str, Any]:
+    """Bithumb API 2.0 직접 주문.
+
+    side='buy': KRW 시장가 매수 (ord_type=price, price=KRW 금액)
+    side='sell': 코인 시장가 매도 (ord_type=market, volume=코인수량)
+    """
+    import base64, hashlib, hmac, uuid
+    from urllib.parse import urlencode
+
+    api_key = str(api_key or "").strip()
+    secret = str(secret or "").strip()
+    coin = normalize_symbol(coin)
+    if not api_key or not secret:
+        raise Exception("BITHUMB API KEY/SECRET empty")
+    if not coin:
+        raise Exception("BITHUMB coin empty")
+
+    market = f"KRW-{coin}"
+    side = str(side or "").lower().strip()
+    if side == "buy":
+        price = int(max(0, safe_float(krw_amount)))
+        if price <= 0:
+            raise Exception(f"BITHUMB buy price invalid: {krw_amount}")
+        params = {
+            "market": market,
+            "side": "bid",
+            "price": str(price),
+            "ord_type": "price",
+        }
+    elif side == "sell":
+        vol = safe_float(volume)
+        if vol <= 0:
+            raise Exception(f"BITHUMB sell volume invalid: {volume}")
+        params = {
+            "market": market,
+            "side": "ask",
+            "volume": ("%.12f" % vol).rstrip("0").rstrip("."),
+            "ord_type": "market",
+        }
+    else:
+        raise Exception(f"BITHUMB unsupported side: {side}")
+
+    query_string = urlencode(params).encode("utf-8")
+    query_hash = hashlib.sha512(query_string).hexdigest()
+
+    header = {"alg": "HS256", "typ": "JWT"}
+    payload = {
+        "access_key": api_key,
+        "nonce": str(uuid.uuid4()),
+        "timestamp": int(time.time() * 1000),
+        "query_hash": query_hash,
+        "query_hash_alg": "SHA512",
+    }
+
+    def b64url(obj: Any) -> str:
+        raw = json.dumps(obj, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        return base64.urlsafe_b64encode(raw).rstrip(b"=").decode("ascii")
+
+    signing_input = f"{b64url(header)}.{b64url(payload)}"
+    sig = hmac.new(secret.encode("utf-8"), signing_input.encode("ascii"), hashlib.sha256).digest()
+    token = signing_input + "." + base64.urlsafe_b64encode(sig).rstrip(b"=").decode("ascii")
+
+    url = "https://api.bithumb.com/v1/orders"
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    print(f"[BITHUMB v2 직접주문 요청] side={side} market={market} params={params} key_head={api_key[:4]} key_tail={api_key[-4:]}")
+    res = requests.post(url, headers=headers, json=params, timeout=15)
+    print(f"[BITHUMB v2 직접주문 응답] http={res.status_code} body={res.text[:800]}")
+    if res.status_code not in (200, 201):
+        raise Exception(f"BITHUMB v2 직접주문 실패 http={res.status_code} body={res.text[:500]}")
+    try:
+        return {"raw": res.json(), "http": res.status_code, "params": params}
+    except Exception:
+        return {"raw_text": res.text, "http": res.status_code, "params": params}
+
+def filter_latest_approved_member_rows(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    if not isinstance(rows, list):
+        return []
+    latest: Dict[str, Dict[str, Any]] = {}
+    skipped = 0
+    for row in rows:
+        chat = get_member_chat_id(row) if 'get_member_chat_id' in globals() else str(row.get('tg_chat_id') or '')
+        email = str(row.get('email') or '').strip().lower()
+        key = chat or email or str(row.get('id') or '')
+        stamp = str(row.get('approved_at') or row.get('created_at') or '')
+        old = latest.get(key)
+        old_stamp = str((old or {}).get('approved_at') or (old or {}).get('created_at') or '')
+        if old is None or stamp >= old_stamp:
+            if old is not None:
+                skipped += 1
+            latest[key] = row
+        else:
+            skipped += 1
+    result = list(latest.values())
+    if len(rows) != len(result):
+        print(f"[최신 승인회원 필터] raw={len(rows)} / active={len(result)} / skipped_old={skipped}")
+        for r in result[:5]:
+            print("[최신 승인회원 사용]", {
+                "id": r.get("id"), "email": r.get("email"), "chat_id": get_member_chat_id(r) if 'get_member_chat_id' in globals() else r.get('tg_chat_id'),
+                "approved_at": r.get("approved_at"), "created_at": r.get("created_at")
+            })
+    return result
 
 def find_member_by_telegram_id(user_id: str) -> Optional[Dict[str, Any]]:
     for member in supabase_get_approved_members():
@@ -2520,16 +2987,20 @@ def check_entry_balances(user_id: str, signal: Dict[str, Any], amount_krw: int) 
         )
 
     try:
-        domestic_balance = domestic_ex.fetch_balance()
+        if domestic == "bithumb":
+            creds = get_api_credentials_priority(member, "BITHUMB", "spot")
+            print(f"[BITHUMB 직접잔고 사용] source={creds.get('source')} key_head={creds.get('api_key','')[:4]} key_tail={creds.get('api_key','')[-4:]} key_len={len(creds.get('api_key',''))} member_id={member.get('id')} chat_id={get_member_chat_id(member)}")
+            domestic_balance = bithumb_v2_accounts_direct(creds.get("api_key"), creds.get("secret"))
+        else:
+            domestic_balance = domestic_ex.fetch_balance()
         krw_free = safe_float((domestic_balance.get("free") or {}).get("KRW"))
     except Exception as e:
         return False, f"❌ 국내 잔고 조회 실패\n\n{signal.get('domestic')} API 권한 또는 키를 확인해주세요.\n오류: {e}"
 
     try:
         foreign_balance = foreign_ex.fetch_balance()
-        usdt_free = safe_float((foreign_balance.get("free") or {}).get("USDT"))
-        if usdt_free <= 0:
-            usdt_free = safe_float((foreign_balance.get("total") or {}).get("USDT"))
+        usdt_free, usdt_source = extract_futures_usdt_balance(foreign, foreign_balance)
+        log_futures_balance_debug(foreign, foreign_balance, usdt_free, usdt_source)
     except Exception as e:
         return False, f"❌ 해외 잔고 조회 실패\n\n{signal.get('foreign')} 선물 API 권한 또는 키를 확인해주세요.\n오류: {e}"
 
@@ -2639,20 +3110,113 @@ def mark_position_closed(pos_id: str, status: str, current_edge: float, reason: 
 
 def execute_auto_close_orders(pos: Dict[str, Any], current_edge: float) -> Tuple[bool, str]:
     """
-    자동청산 주문 실행 자리.
-    실제 주문 API를 연결하기 전에는 REAL_ORDER_ENABLED=False라 주문을 내지 않는다.
-    실제 연결 시 여기에서 국내 현물 매도 + 해외 선물 숏 청산(reduceOnly buy)을 실행하면 된다.
+    V9.4.4 청산 패치:
+    - 익절/손절 시 해외 선물 숏 reduceOnly 청산 + 국내 현물 매도 둘 다 실행
+    - 둘 다 성공할 때만 True 반환
+    - 하나라도 실패하면 False 반환하여 ACTIVE 유지
+    - 기존 빗썸 API 조회/잔고/진입 매수 로직은 건드리지 않음
     """
     if not REAL_ORDER_ENABLED:
         return True, "테스트 모드: 실제 청산 주문은 OFF, 자동청산 조건만 감지했습니다."
 
-    # TODO: 실제 주문 연결
-    # 1) 승인회원 API 조회
-    # 2) 국내 현물 보유수량 매도
-    # 3) 해외 선물 숏 reduceOnly 시장가 청산
-    # 4) 체결 결과 저장
-    return False, "REAL_ORDER_ENABLED=True 이지만 실제 청산 주문 함수가 아직 연결되지 않았습니다."
+    result: Dict[str, Any] = {
+        "foreign_close_success": False,
+        "domestic_close_success": False,
+        "foreign_order": None,
+        "domestic_order": None,
+        "foreign_error": "",
+        "domestic_error": "",
+    }
 
+    user_id = str(pos.get("user_id") or "")
+    coin = normalize_symbol(pos.get("coin") or "")
+    domestic = str(pos.get("domestic") or "").lower()
+    foreign = str(pos.get("foreign") or "").lower()
+    domestic_entry_krw = safe_float(pos.get("domestic_entry_krw") or pos.get("amount_krw"))
+    foreign_entry_krw = safe_float(pos.get("foreign_entry_krw") or pos.get("amount_krw"))
+
+    member = find_member_by_telegram_id(user_id)
+    if not member:
+        return False, f"청산 실패: 승인회원/API 정보 조회 실패 user_id={user_id}"
+
+    domestic_ex = build_user_exchange_from_member(member, domestic, "spot")
+    foreign_ex = build_user_exchange_from_member(member, foreign, "future")
+    if domestic_ex is None:
+        return False, f"청산 실패: 국내 API 미등록/생성 실패 {domestic.upper()}"
+    if foreign_ex is None:
+        return False, f"청산 실패: 해외 API 미등록/생성 실패 {foreign.upper()}"
+
+    signal_like = dict(pos)
+    signal_like.setdefault("domestic_exchange", pos.get("domestic"))
+    signal_like.setdefault("foreign_exchange", pos.get("foreign"))
+
+    # 1) 해외 선물 숏 청산 먼저 시도: 숏 포지션을 buy reduceOnly 시장가로 닫는다.
+    try:
+        future_market = pos.get("foreign_market") or find_future_market(foreign_ex, coin)
+        if not future_market:
+            raise Exception(f"해외 선물 마켓 없음: {foreign.upper()} {coin}")
+
+        future_amount = _calc_future_contract_amount(signal_like, foreign_entry_krw)
+        try:
+            future_amount = float(foreign_ex.amount_to_precision(future_market, future_amount))
+        except Exception:
+            pass
+        if future_amount <= 0:
+            raise Exception(f"해외 청산 수량 계산 실패 amount={future_amount}")
+
+        close_params: Dict[str, Any] = {"reduceOnly": True}
+        # BingX/일부 Hedge Mode 거래소는 SHORT 포지션 명시가 필요할 수 있다.
+        if foreign.upper() in ("BINGX", "BITGET"):
+            close_params.update({"positionSide": "SHORT", "holdSide": "short"})
+
+        print(f"[실거래 해외숏 청산 시도] {foreign.upper()} {future_market} buy reduceOnly amount={future_amount}")
+        result["foreign_order"] = foreign_ex.create_order(future_market, "market", "buy", future_amount, None, close_params)
+        result["foreign_close_success"] = True
+        print(f"[실거래 해외숏 청산 성공] {result['foreign_order']}")
+    except Exception as e:
+        result["foreign_error"] = str(e)
+        print(f"[실거래 해외숏 청산 실패] {e}")
+
+    # 2) 국내 현물 매도 시도: 빗썸은 검증된 v2 직접주문 함수를 그대로 사용한다.
+    try:
+        spot_market = pos.get("domestic_market") or _resolve_spot_market_for_order(domestic_ex, domestic, coin)
+        spot_amount = _calc_spot_base_amount_from_krw(signal_like, domestic_entry_krw)
+        # 실제 매도는 보수적으로 0.995 배만 시도해서 수수료/정밀도/소량 오차로 인한 실패를 줄인다.
+        spot_amount = spot_amount * 0.995
+        try:
+            spot_amount = float(domestic_ex.amount_to_precision(spot_market, spot_amount))
+        except Exception:
+            pass
+        if spot_amount <= 0:
+            raise Exception(f"국내 매도 수량 계산 실패 amount={spot_amount}")
+
+        print(f"[실거래 국내현물 매도 시도] {domestic.upper()} {spot_market} sell amount={spot_amount}")
+        if domestic == "bithumb":
+            creds = get_api_credentials_priority(member, "BITHUMB", "spot")
+            print(f"[BITHUMB 직접매도 사용] source={creds.get('source')} key_head={creds.get('api_key','')[:4]} key_tail={creds.get('api_key','')[-4:]} volume={spot_amount} coin={coin}")
+            result["domestic_order"] = bithumb_v2_order_direct(creds.get("api_key"), creds.get("secret"), coin, "sell", volume=spot_amount)
+        else:
+            result["domestic_order"] = domestic_ex.create_order(spot_market, "market", "sell", spot_amount)
+        result["domestic_close_success"] = True
+        print(f"[실거래 국내현물 매도 성공] {result['domestic_order']}")
+    except Exception as e:
+        result["domestic_error"] = str(e)
+        print(f"[실거래 국내현물 매도 실패] {e}")
+
+    # 3) 둘 다 성공해야만 CLOSED 허용
+    if result["foreign_close_success"] and result["domestic_close_success"]:
+        return True, (
+            "실거래 동시청산 성공: 해외 숏 청산 + 국내 현물 매도 완료\n"
+            f"해외주문: {result.get('foreign_order')}\n"
+            f"국내주문: {result.get('domestic_order')}"
+        )
+
+    detail = (
+        "실거래 청산 미완료: ACTIVE 유지 / CLOSED 금지\n"
+        f"해외숏청산 성공={result['foreign_close_success']} 오류={result.get('foreign_error') or '-'}\n"
+        f"국내현물매도 성공={result['domestic_close_success']} 오류={result.get('domestic_error') or '-'}"
+    )
+    return False, detail
 
 def _update_position_fields(pos_id: str, fields: Dict[str, Any]) -> None:
     state = _read_semi_state()
@@ -2720,19 +3284,33 @@ def check_semi_auto_auto_close(symbol: str, domestic: str, foreign: str, current
         # 1) 익절: 유연 청산. 정확히 0.5에 맞추기보다 0.5~0.3 구간에서 체결 우선.
         if current_edge <= take_profit_edge:
             ok, detail = execute_auto_close_orders(pos, current_edge)
-            status = "AUTO_CLOSED" if ok else "CLOSE_FAILED"
-            mark_position_closed(pos_id, status, current_edge, detail)
             force_text = "\n강한 익절권(+0.3% 이하) 도달" if current_edge <= take_profit_force_edge else ""
-            send_pos_msg(
-                "✅ 자동익절 조건 도달",
-                f"결과:\n{detail}{force_text}",
-                vip=True,
-            )
+            if ok:
+                mark_position_closed(pos_id, "AUTO_CLOSED", current_edge, detail)
+                supabase_live_insert_event("TP_SUCCESS", pos=pos, amount_krw=pos.get("amount_krw"), edge_percent=current_edge, detail=detail)
+                send_pos_msg(
+                    "✅ 자동익절 완료",
+                    f"결과:\n{detail}{force_text}",
+                    vip=True,
+                )
+            else:
+                _update_position_fields(pos_id, {
+                    "last_close_failed_at": now_str(),
+                    "last_close_failed_edge": round(current_edge, 4),
+                    "last_close_failed_detail": detail,
+                })
+                supabase_live_insert_event("TP_FAIL", pos=pos, amount_krw=pos.get("amount_krw"), edge_percent=current_edge, detail=detail)
+                send_pos_msg(
+                    "🚨 자동익절 청산 실패 - ACTIVE 유지",
+                    f"둘 다 성공하지 못해 CLOSED 처리하지 않았습니다. 다음 루프에서 재시도합니다.\n\n결과:\n{detail}{force_text}",
+                    vip=True,
+                )
             continue
 
         # 2) 1차 경고
         if current_edge >= warn_edge and not bool(pos.get("warn_sent")):
             _update_position_fields(pos_id, {"warn_sent": True, "warn_sent_at": now_str()})
+            supabase_live_insert_event("SL_WARNING", pos=pos, amount_krw=pos.get("amount_krw"), edge_percent=current_edge, detail="1차 경고")
             send_pos_msg(
                 "⚠️ 자동청산 1차 경고",
                 "진입 대비 실제엣지가 +4% 이상 악화되었습니다.\n급등/급락 윗꼬리 회귀 가능성이 있어 즉시 손절은 하지 않고 감시합니다.",
@@ -2741,6 +3319,7 @@ def check_semi_auto_auto_close(symbol: str, domestic: str, foreign: str, current
         # 3) 2차 강경고
         if current_edge >= strong_warn_edge and not bool(pos.get("strong_warn_sent")):
             _update_position_fields(pos_id, {"strong_warn_sent": True, "strong_warn_sent_at": now_str()})
+            supabase_live_insert_event("SL_STRONG_WARNING", pos=pos, amount_krw=pos.get("amount_krw"), edge_percent=current_edge, detail="2차 강경고")
             send_pos_msg(
                 "🚨 자동청산 2차 강경고",
                 "진입 대비 실제엣지가 +6% 이상 악화되었습니다.\n아직 자동손절은 아니며, +8% 이상이 15분 유지될 때만 손절합니다.",
@@ -2765,13 +3344,24 @@ def check_semi_auto_auto_close(symbol: str, domestic: str, foreign: str, current
             hold_sec = now_ts - started
             if hold_sec >= AUTO_STOP_HOLD_SEC:
                 ok, detail = execute_auto_close_orders(pos, current_edge)
-                status = "AUTO_STOPPED" if ok else "STOP_FAILED"
-                mark_position_closed(pos_id, status, current_edge, detail)
-                send_pos_msg(
-                    "❌ 자동손절 실행",
-                    f"진입 대비 +8% 이상 악화가 {AUTO_STOP_HOLD_SEC // 60}분 이상 유지되었습니다.\n\n결과:\n{detail}",
-                    vip=True,
-                )
+                if ok:
+                    mark_position_closed(pos_id, "AUTO_STOPPED", current_edge, detail)
+                    send_pos_msg(
+                        "❌ 자동손절 실행 완료",
+                        f"진입 대비 +8% 이상 악화가 {AUTO_STOP_HOLD_SEC // 60}분 이상 유지되었습니다.\n\n결과:\n{detail}",
+                        vip=True,
+                    )
+                else:
+                    _update_position_fields(pos_id, {
+                        "last_stop_failed_at": now_str(),
+                        "last_stop_failed_edge": round(current_edge, 4),
+                        "last_stop_failed_detail": detail,
+                    })
+                    send_pos_msg(
+                        "🚨 자동손절 청산 실패 - ACTIVE 유지",
+                        f"둘 다 성공하지 못해 CLOSED 처리하지 않았습니다. 다음 루프에서 재시도합니다.\n\n결과:\n{detail}",
+                        vip=True,
+                    )
             else:
                 remain = max(0, int(AUTO_STOP_HOLD_SEC - hold_sec))
                 # 도배 방지: 상태 메시지는 5분 간격으로만
@@ -2945,10 +3535,17 @@ def emergency_close_all_positions(request_user_id: str = "", current_edge: float
         pos_id = str(pos.get("pos_id") or "")
         try:
             ok, detail = execute_auto_close_orders(pos, current_edge)
-            status = "MANUAL_STOP_CLOSED" if ok else "MANUAL_STOP_CLOSE_FAILED"
-            mark_position_closed(pos_id, status, current_edge, "정지 버튼 전체 종료: " + str(detail))
-            closed += 1 if ok else 0
-            details.append(f"{pos.get('coin')} {pos.get('domestic')}↔{pos.get('foreign')} / {status}")
+            if ok:
+                mark_position_closed(pos_id, "MANUAL_STOP_CLOSED", current_edge, "정지 버튼 전체 종료: " + str(detail))
+                closed += 1
+                details.append(f"{pos.get('coin')} {pos.get('domestic')}↔{pos.get('foreign')} / MANUAL_STOP_CLOSED")
+            else:
+                _update_position_fields(pos_id, {
+                    "last_manual_stop_failed_at": now_str(),
+                    "last_manual_stop_failed_edge": round(current_edge, 4),
+                    "last_manual_stop_failed_detail": "정지 버튼 전체 종료 실패: " + str(detail),
+                })
+                details.append(f"{pos.get('coin')} {pos.get('domestic')}↔{pos.get('foreign')} / ACTIVE 유지 / 청산 실패")
         except Exception as e:
             details.append(f"{pos.get('coin')} / 종료 실패: {e}")
     return closed, details
@@ -3242,7 +3839,12 @@ def execute_real_entry_orders(user_id: str, member: Dict[str, Any], signal: Dict
             print(f"[실거래 레버리지 설정 경고] {e}")
 
         print(f"[실거래 주문 시작] spot_buy {spot_market} amount={spot_amount} / future_short {future_market} amount={future_amount}")
-        spot_order = domestic_ex.create_order(spot_market, "market", "buy", spot_amount)
+        if domestic == "bithumb":
+            creds = get_api_credentials_priority(member_full, "BITHUMB", "spot")
+            print(f"[BITHUMB 직접주문 사용] source={creds.get('source')} key_head={creds.get('api_key','')[:4]} key_tail={creds.get('api_key','')[-4:]} krw={domestic_entry_krw} coin={coin}")
+            spot_order = bithumb_v2_order_direct(creds.get("api_key"), creds.get("secret"), coin, "buy", krw_amount=domestic_entry_krw)
+        else:
+            spot_order = domestic_ex.create_order(spot_market, "market", "buy", spot_amount)
         result["domestic_order"] = spot_order
         print(f"[실거래 국내매수 성공] {spot_order}")
 
@@ -3259,7 +3861,11 @@ def execute_real_entry_orders(user_id: str, member: Dict[str, Any], signal: Dict
         # 국내 현물만 체결되고 해외 숏 실패한 경우 가능한 시장가 매도 되돌림
         if result.get("domestic_order") and not result.get("foreign_order"):
             try:
-                rollback = domestic_ex.create_order(spot_market, "market", "sell", spot_amount)
+                if domestic == "bithumb":
+                    creds = get_api_credentials_priority(member_full, "BITHUMB", "spot")
+                    rollback = bithumb_v2_order_direct(creds.get("api_key"), creds.get("secret"), coin, "sell", volume=spot_amount)
+                else:
+                    rollback = domestic_ex.create_order(spot_market, "market", "sell", spot_amount)
                 result["domestic_rollback_order"] = rollback
                 err += " / 국내 매수 되돌림 매도 시도 완료"
                 print(f"[실거래 롤백 국내매도 성공] {rollback}")
@@ -3344,6 +3950,7 @@ def perform_auto_entry_for_member(member: Dict[str, Any], signal: Dict[str, Any]
                 set_user_selected_amount(tg_id, signal_id, 0)
                 release_processing_lock_on_failure(tg_id, signal_id, order_detail)
                 paper_record_auto_attempt(tg_id, signal, final_entry_krw, "FAIL_REAL_ORDER", order_detail)
+                supabase_live_insert_event("ENTRY_FAIL", signal=signal, amount_krw=final_entry_krw, edge_percent=signal.get("real_edge"), detail=order_detail)
                 telegram_send_private(
                     tg_id,
                     f"""❌ 실거래 자동진입 실패
@@ -3363,6 +3970,7 @@ def perform_auto_entry_for_member(member: Dict[str, Any], signal: Dict[str, Any]
         pos_id = register_semi_auto_position(tg_id, signal, final_entry_krw)
         finish_processing_lock(tg_id, signal_id, "DONE", pos_id)
         paper_record_auto_attempt(tg_id, signal, final_entry_krw, "SUCCESS", f"pos_id={pos_id} / {order_detail}")
+        supabase_live_insert_event("ENTRY_SUCCESS", signal=signal, amount_krw=final_entry_krw, edge_percent=signal.get("real_edge"), detail=f"pos_id={pos_id}")
 
         if AUTO_ENTRY_SEND_DM_RESULT:
             telegram_send_private(
@@ -3394,6 +4002,7 @@ def perform_auto_entry_for_member(member: Dict[str, Any], signal: Dict[str, Any]
         release_processing_lock_on_failure(tg_id, signal_id, str(e))
         reason = f"자동진입 예외: {e}"
         paper_record_auto_attempt(tg_id, signal, amount if 'amount' in locals() else 0, "EXCEPTION", reason)
+        supabase_live_insert_event("ENTRY_FAIL", signal=signal, amount_krw=amount if 'amount' in locals() else 0, edge_percent=signal.get("real_edge"), detail=reason)
         send_auto_entry_attempt_dm(tg_id, signal, "❌ 자동진입 미진입", reason, amount if 'amount' in locals() else 0)
         return False, reason
 
@@ -3454,6 +4063,9 @@ def auto_entry_approved_members(signal: Dict[str, Any]) -> None:
       자동익절/위험경고/정지·재시작 알림만 사용한다.
     - auto_enabled=true + 전체 자동진입 가능 상태일 때만 자동진입을 시도한다.
     """
+    # 홈페이지 LIVE 대시보드: 후보 이벤트는 유저 개인DM 없이 홈페이지/DB에만 기록
+    supabase_live_insert_event("CANDIDATE", signal=signal, amount_krw=signal.get("max_entry_krw"), edge_percent=signal.get("real_edge"))
+
     members = supabase_get_approved_members()
     if not members:
         print("[AUTO] 승인회원 없음")

@@ -27,7 +27,7 @@
 
   function statusText(s){
     const m = {
-      CANDIDATE:'후보', ENTRY_SUCCESS:'진입성공', ENTRY_FAIL:'진입실패', TP_SUCCESS:'익절완료', SL_WARNING:'위험경고', STOPPED:'정지'
+      CANDIDATE:'후보', ENTRY_SUCCESS:'진입성공', ENTRY_FAIL:'진입실패', TP_SUCCESS:'익절완료', TP_FAIL:'익절실패', SL_WARNING:'위험경고', SL_STRONG_WARNING:'강경고', STOPPED:'정지'
     };
     return m[s] || s || '-';
   }
