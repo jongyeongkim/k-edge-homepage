@@ -719,6 +719,96 @@
       "usd_krw": 1508.28,
       "entry_status": "READY",
       "status": "V8.8_FAST_PAPER_ENTRY"
+    },
+    "ALLO_BITHUMB_GATE_1780041806": {
+      "signal_id": "ALLO_BITHUMB_GATE_1780041806",
+      "ts": 1780041806.3301003,
+      "time": "17:03",
+      "created_at": "2026-05-29 17:03:26",
+      "coin": "ALLO",
+      "domestic": "BITHUMB",
+      "domestic_exchange": "BITHUMB",
+      "domestic_market": "ALLO_KRW",
+      "foreign": "GATE",
+      "foreign_exchange": "GATE",
+      "foreign_market": "ALLO/USDT:USDT",
+      "coin_gap": 3.61,
+      "btc_gap": 1.99,
+      "real_edge": 1.62,
+      "expected_profit_min": 0.62,
+      "expected_profit_max": 1.62,
+      "funding_rate": 0.005,
+      "recommended_leverage": "x1 기본 / x2 최대 권장",
+      "stop_edge": 3.62,
+      "spot_wall_krw": 3200352,
+      "futures_wall_krw": 2864008,
+      "real_fill_krw": 2864008,
+      "futures_position_limit_krw": 253648037,
+      "futures_position_limit_source": "ccxt_market_limits",
+      "min_retain_edge_percent": 1.5,
+      "allowed_slippage_percent": 0.12,
+      "slippage_tiers_text": "0.12%: 국내 320.0만 / 해외 286.4만 / 최종 286.4만",
+      "max_user_entry_krw": 0,
+      "paper_domestic_base_krw": 2000000,
+      "paper_foreign_margin_base_krw": 500000,
+      "paper_futures_leverage": 4.0,
+      "roundtrip_fee_percent": 0.14,
+      "funding_simulation_enabled": false,
+      "max_entry_krw": 2864008,
+      "final_entry_krw": 2864008,
+      "used_entry_krw": 0,
+      "remaining_entry_krw": 2864008,
+      "wall_range_percent": 0.1225,
+      "executable_krw": 2864008,
+      "krw": 2864008,
+      "usd_krw": 1508.14,
+      "entry_status": "READY",
+      "status": "V8.8_FAST_PAPER_ENTRY"
+    },
+    "NIL_BITHUMB_GATE_1780042124": {
+      "signal_id": "NIL_BITHUMB_GATE_1780042124",
+      "ts": 1780042124.2573955,
+      "time": "17:08",
+      "created_at": "2026-05-29 17:08:44",
+      "coin": "NIL",
+      "domestic": "BITHUMB",
+      "domestic_exchange": "BITHUMB",
+      "domestic_market": "NIL_KRW",
+      "foreign": "GATE",
+      "foreign_exchange": "GATE",
+      "foreign_market": "NIL/USDT:USDT",
+      "coin_gap": 4.52,
+      "btc_gap": 2.1,
+      "real_edge": 2.42,
+      "expected_profit_min": 1.42,
+      "expected_profit_max": 2.42,
+      "funding_rate": -0.0328,
+      "recommended_leverage": "x1 기본 / x2 최대 권장",
+      "stop_edge": 4.42,
+      "spot_wall_krw": 99891103,
+      "futures_wall_krw": 17131835,
+      "real_fill_krw": 17131835,
+      "futures_position_limit_krw": 129437365,
+      "futures_position_limit_source": "ccxt_market_limits",
+      "min_retain_edge_percent": 1.5,
+      "allowed_slippage_percent": 0.92,
+      "slippage_tiers_text": "0.50%: 국내 6472.8만 / 해외 1005.7만 / 최종 1005.7만\n0.92%: 국내 9989.1만 / 해외 1713.2만 / 최종 1713.2만",
+      "max_user_entry_krw": 0,
+      "paper_domestic_base_krw": 2000000,
+      "paper_foreign_margin_base_krw": 500000,
+      "paper_futures_leverage": 4.0,
+      "roundtrip_fee_percent": 0.14,
+      "funding_simulation_enabled": false,
+      "max_entry_krw": 17131835,
+      "final_entry_krw": 17131835,
+      "used_entry_krw": 0,
+      "remaining_entry_krw": 17131835,
+      "wall_range_percent": 0.9204,
+      "executable_krw": 17131835,
+      "krw": 17131835,
+      "usd_krw": 1509.28,
+      "entry_status": "READY",
+      "status": "V8.8_FAST_PAPER_ENTRY"
     }
   },
   "users": {
@@ -829,6 +919,22 @@
     "6870367623:ALLO_BITHUMB_GATE_1780040465": {
       "selected_krw": 0,
       "updated_at": "2026-05-29 16:41:08"
+    },
+    "8958522411:ALLO_BITHUMB_GATE_1780041806": {
+      "selected_krw": 0,
+      "updated_at": "2026-05-29 17:03:26"
+    },
+    "6870367623:ALLO_BITHUMB_GATE_1780041806": {
+      "selected_krw": 0,
+      "updated_at": "2026-05-29 17:03:29"
+    },
+    "8958522411:NIL_BITHUMB_GATE_1780042124": {
+      "selected_krw": 0,
+      "updated_at": "2026-05-29 17:08:44"
+    },
+    "6870367623:NIL_BITHUMB_GATE_1780042124": {
+      "selected_krw": 0,
+      "updated_at": "2026-05-29 17:08:46"
     }
   },
   "positions": {
@@ -1043,6 +1149,30 @@
       "reason": "❌ 진입 취소\n\n사유: 현재 실제엣지 부족\n\n알림 당시: +4.45%\n현재: +0.88%\n최소 유지엣지: +1.50% 이상",
       "finished_at": "2026-05-29 16:41:08",
       "finished_ts": 1780040468.485293
+    },
+    "8958522411:ALLO_BITHUMB_GATE_1780041806": {
+      "status": "FAILED",
+      "reason": "❌ 진입 취소\n\n사유: 현재 실제엣지 부족\n\n알림 당시: +1.62%\n현재: +1.10%\n최소 유지엣지: +1.50% 이상",
+      "finished_at": "2026-05-29 17:03:26",
+      "finished_ts": 1780041806.977661
+    },
+    "6870367623:ALLO_BITHUMB_GATE_1780041806": {
+      "status": "FAILED",
+      "reason": "❌ 진입 취소\n\n사유: 현재 실제엣지 부족\n\n알림 당시: +1.62%\n현재: +0.93%\n최소 유지엣지: +1.50% 이상",
+      "finished_at": "2026-05-29 17:03:29",
+      "finished_ts": 1780041809.1086
+    },
+    "8958522411:NIL_BITHUMB_GATE_1780042124": {
+      "status": "FAILED",
+      "reason": "❌ 진입 취소\n\n사유: 현재 실제엣지 부족\n\n알림 당시: +2.42%\n현재: +1.21%\n최소 유지엣지: +1.50% 이상",
+      "finished_at": "2026-05-29 17:08:44",
+      "finished_ts": 1780042124.8968482
+    },
+    "6870367623:NIL_BITHUMB_GATE_1780042124": {
+      "status": "FAILED",
+      "reason": "❌ 진입 취소\n\n사유: 현재 실제엣지 부족\n\n알림 당시: +2.42%\n현재: +1.28%\n최소 유지엣지: +1.50% 이상",
+      "finished_at": "2026-05-29 17:08:46",
+      "finished_ts": 1780042126.0871775
     }
   }
 }

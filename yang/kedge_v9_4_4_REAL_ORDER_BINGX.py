@@ -1778,124 +1778,148 @@ def supabase_insert_signal(row: Dict[str, Any]) -> Optional[Dict[str, Any]]:
 
 
 
-
 # ============================================================
-# K-EDGE LIVE DASHBOARD 저장 (홈페이지 실시간 대시보드)
+# K-EDGE LIVE DASHBOARD Supabase 저장
+# - 홈페이지 메인 LIVE 대시보드가 읽는 테이블:
+#   kedge_live_summary / kedge_live_events
+# - 실거래 주문/익절 로직은 건드리지 않고 상태 저장만 수행
 # ============================================================
-SUPABASE_LIVE_SUMMARY_TABLE = os.getenv("SUPABASE_LIVE_SUMMARY_TABLE", "kedge_live_summary").strip()
-SUPABASE_LIVE_EVENTS_TABLE = os.getenv("SUPABASE_LIVE_EVENTS_TABLE", "kedge_live_events").strip()
+
+KEDGE_LIVE_SUMMARY_TABLE = os.getenv("KEDGE_LIVE_SUMMARY_TABLE", "kedge_live_summary").strip()
+KEDGE_LIVE_EVENTS_TABLE = os.getenv("KEDGE_LIVE_EVENTS_TABLE", "kedge_live_events").strip()
 
 
-def _iso_now_utc() -> str:
-    try:
-        return datetime.utcnow().isoformat() + "Z"
-    except Exception:
-        return now_str()
+def _kedge_live_iso_now() -> str:
+    return datetime.utcnow().isoformat() + "Z"
 
 
-def _live_rest_url(table: str) -> str:
-    return f"{SUPABASE_URL.rstrip('/')}/rest/v1/{table}"
+def _kedge_live_rest_headers(prefer: str = "return=minimal") -> Dict[str, str]:
+    h = supabase_headers()
+    h["Prefer"] = prefer
+    return h
 
 
-def _live_signal_value(obj: Dict[str, Any], *keys: str, default: Any = None) -> Any:
-    for k in keys:
-        try:
-            v = obj.get(k)
-        except Exception:
-            v = None
-        if v not in (None, ""):
-            return v
-    return default
-
-
-def supabase_live_update_summary(bot_status: str = "가동중", inc_entry: int = 0, inc_tp: int = 0) -> None:
-    """홈페이지 LIVE summary 갱신. 실패해도 매매에는 영향 없음."""
+def _kedge_live_get_summary() -> Dict[str, Any]:
     if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
-        return
+        return {}
     try:
-        # 현재 카운터 읽기
-        get_url = _live_rest_url(SUPABASE_LIVE_SUMMARY_TABLE)
+        url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/{KEDGE_LIVE_SUMMARY_TABLE}"
         r = session.get(
-            get_url,
+            url,
             headers=supabase_headers(),
-            params={"id": "eq.main", "select": "id,today_entries,today_tp,today_pnl_krw"},
-            timeout=5,
+            params={"select": "*", "id": "eq.main", "limit": "1"},
+            timeout=6,
         )
-        today_entries = 0
-        today_tp = 0
-        today_pnl_krw = 0
-        if r.status_code in (200, 206):
+        if r.status_code == 200:
             data = r.json()
             if isinstance(data, list) and data:
-                today_entries = int(safe_float(data[0].get("today_entries"), 0))
-                today_tp = int(safe_float(data[0].get("today_tp"), 0))
-                today_pnl_krw = safe_float(data[0].get("today_pnl_krw"), 0)
-
-        row = {
-            "id": "main",
-            "updated_at": _iso_now_utc(),
-            "bot_status": bot_status,
-            "today_entries": today_entries + int(inc_entry or 0),
-            "today_tp": today_tp + int(inc_tp or 0),
-            "today_pnl_krw": today_pnl_krw,
-        }
-        # id=main upsert
-        post_headers = dict(supabase_headers())
-        post_headers["Prefer"] = "resolution=merge-duplicates,return=minimal"
-        rr = session.post(
-            _live_rest_url(SUPABASE_LIVE_SUMMARY_TABLE),
-            headers=post_headers,
-            data=json.dumps(row, ensure_ascii=False),
-            timeout=5,
-        )
-        if rr.status_code not in (200, 201, 204):
-            print("[LIVE SUMMARY 저장 실패]", rr.status_code, rr.text[:200])
+                return data[0] if isinstance(data[0], dict) else {}
     except Exception as e:
-        print("[LIVE SUMMARY 저장 예외]", e)
+        print("[LIVE 대시보드 summary 조회 예외]", e)
+    return {}
 
 
-def supabase_live_insert_event(event_type: str, signal: Optional[Dict[str, Any]] = None, pos: Optional[Dict[str, Any]] = None,
-                               amount_krw: Any = None, edge_percent: Any = None, detail: str = "") -> None:
-    """홈페이지 LIVE events 저장. 실패해도 매매에는 영향 없음."""
+def kedge_live_upsert_summary(bot_status: str = "가동중", event_type: str = "", last_scan_at: Optional[str] = None) -> None:
+    """
+    kedge_live_summary 갱신.
+    - 스캔 완료 시: last_scan_at / updated_at 갱신
+    - 진입 성공 시: today_entries +1
+    - 익절 성공 시: today_tp +1
+    """
     if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
         return
+
     try:
-        src: Dict[str, Any] = {}
-        if isinstance(signal, dict): src.update(signal)
-        if isinstance(pos, dict): src.update(pos)
+        now_iso = _kedge_live_iso_now()
+        old = _kedge_live_get_summary()
+        today_key = datetime.now().strftime("%Y-%m-%d")
+        old_day = str(old.get("live_date") or "")
 
-        symbol = normalize_symbol(_live_signal_value(src, "symbol", "coin", default=""))
-        domestic = str(_live_signal_value(src, "domestic_exchange", "domestic", default="") or "").upper()
-        foreign = str(_live_signal_value(src, "foreign_exchange", "foreign", default="") or "").upper()
-        edge = safe_float(edge_percent if edge_percent is not None else _live_signal_value(src, "real_edge_percent", "real_edge", "entry_edge", "close_edge", default=0), 0)
-        executable = safe_float(amount_krw if amount_krw is not None else _live_signal_value(src, "executable_krw", "max_entry_krw", "amount_krw", "domestic_entry_krw", default=0), 0)
+        # 테이블에 live_date 컬럼이 없어도 실패하지 않도록 기본 컬럼만 사용한다.
+        today_entries = int(safe_float(old.get("today_entries"))) if old_day in ("", today_key) else 0
+        today_tp = int(safe_float(old.get("today_tp"))) if old_day in ("", today_key) else 0
 
-        row = {
-            "created_at": _iso_now_utc(),
-            "event_type": str(event_type or "EVENT"),
-            "symbol": symbol,
-            "domestic_exchange": domestic,
-            "foreign_exchange": foreign,
-            "real_edge_percent": round(edge, 4),
-            "executable_krw": int(executable),
+        et = str(event_type or "").upper()
+        if et == "ENTRY_SUCCESS":
+            today_entries += 1
+        elif et == "TP_SUCCESS":
+            today_tp += 1
+
+        payload = {
+            "id": "main",
+            "bot_status": bot_status or "가동중",
+            "today_entries": today_entries,
+            "today_tp": today_tp,
+            "last_scan_at": last_scan_at or old.get("last_scan_at") or now_iso,
+            "updated_at": now_iso,
         }
 
+        url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/{KEDGE_LIVE_SUMMARY_TABLE}?on_conflict=id"
         r = session.post(
-            _live_rest_url(SUPABASE_LIVE_EVENTS_TABLE),
-            headers=supabase_headers(),
-            data=json.dumps(row, ensure_ascii=False),
-            timeout=5,
+            url,
+            headers=_kedge_live_rest_headers("resolution=merge-duplicates,return=minimal"),
+            data=json.dumps(payload, ensure_ascii=False),
+            timeout=6,
         )
-        if r.status_code not in (200, 201):
-            print("[LIVE EVENT 저장 실패]", r.status_code, r.text[:200])
+        if r.status_code not in (200, 201, 204):
+            print("[LIVE 대시보드 summary 저장 실패]", r.status_code, r.text[:300])
         else:
-            print(f"[LIVE EVENT 저장] {event_type} {symbol} {domestic}->{foreign}")
-
-        inc_entry = 1 if str(event_type) == "ENTRY_SUCCESS" else 0
-        inc_tp = 1 if str(event_type) == "TP_SUCCESS" else 0
-        supabase_live_update_summary("가동중", inc_entry=inc_entry, inc_tp=inc_tp)
+            print(f"[LIVE 대시보드 summary 저장] status={bot_status} event={event_type or '-'}")
     except Exception as e:
-        print("[LIVE EVENT 저장 예외]", e)
+        print("[LIVE 대시보드 summary 저장 예외]", e)
+
+
+def kedge_live_insert_event(event_type: str, signal: Dict[str, Any], detail: str = "", amount_krw: float = 0) -> None:
+    """
+    kedge_live_events 저장.
+    홈페이지 kedge-live-dashboard.js가 이 테이블을 읽어 메인 LIVE 테이블에 표시한다.
+    """
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return
+
+    try:
+        et = str(event_type or "CANDIDATE").upper()
+        payload = {
+            "created_at": _kedge_live_iso_now(),
+            "event_type": et,
+            "symbol": normalize_symbol(signal.get("coin") or signal.get("symbol") or ""),
+            "domestic_exchange": str(signal.get("domestic") or signal.get("domestic_exchange") or "BITHUMB").upper(),
+            "foreign_exchange": str(signal.get("foreign") or signal.get("foreign_exchange") or "").upper(),
+            "real_edge_percent": round(safe_float(signal.get("real_edge") or signal.get("real_edge_percent")), 4),
+            "executable_krw": int(safe_float(
+                amount_krw
+                or signal.get("final_entry_krw")
+                or signal.get("max_entry_krw")
+                or signal.get("real_fill_krw")
+                or signal.get("executable_krw")
+                or 0
+            )),
+        }
+
+        url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/{KEDGE_LIVE_EVENTS_TABLE}"
+        r = session.post(
+            url,
+            headers=_kedge_live_rest_headers("return=minimal"),
+            data=json.dumps(payload, ensure_ascii=False),
+            timeout=6,
+        )
+        if r.status_code not in (200, 201, 204):
+            print("[LIVE 대시보드 event 저장 실패]", r.status_code, r.text[:300])
+        else:
+            print(f"[LIVE 대시보드 event 저장] {et} {payload.get('symbol')} {payload.get('foreign_exchange')}")
+
+        # summary도 같이 갱신
+        status_map = {
+            "CANDIDATE": "감시중",
+            "ENTRY_SUCCESS": "가동중",
+            "ENTRY_FAIL": "가동중",
+            "TP_SUCCESS": "가동중",
+            "SL_WARNING": "위험경고",
+            "STOPPED": "정지",
+        }
+        kedge_live_upsert_summary(status_map.get(et, "가동중"), et)
+    except Exception as e:
+        print("[LIVE 대시보드 event 저장 예외]", e)
 
 
 def get_member_chat_id(member: Dict[str, Any]) -> str:
@@ -3287,7 +3311,7 @@ def check_semi_auto_auto_close(symbol: str, domestic: str, foreign: str, current
             force_text = "\n강한 익절권(+0.3% 이하) 도달" if current_edge <= take_profit_force_edge else ""
             if ok:
                 mark_position_closed(pos_id, "AUTO_CLOSED", current_edge, detail)
-                supabase_live_insert_event("TP_SUCCESS", pos=pos, amount_krw=pos.get("amount_krw"), edge_percent=current_edge, detail=detail)
+                kedge_live_insert_event("TP_SUCCESS", pos, detail, pos.get("amount_krw"))
                 send_pos_msg(
                     "✅ 자동익절 완료",
                     f"결과:\n{detail}{force_text}",
@@ -3299,7 +3323,6 @@ def check_semi_auto_auto_close(symbol: str, domestic: str, foreign: str, current
                     "last_close_failed_edge": round(current_edge, 4),
                     "last_close_failed_detail": detail,
                 })
-                supabase_live_insert_event("TP_FAIL", pos=pos, amount_krw=pos.get("amount_krw"), edge_percent=current_edge, detail=detail)
                 send_pos_msg(
                     "🚨 자동익절 청산 실패 - ACTIVE 유지",
                     f"둘 다 성공하지 못해 CLOSED 처리하지 않았습니다. 다음 루프에서 재시도합니다.\n\n결과:\n{detail}{force_text}",
@@ -3310,7 +3333,7 @@ def check_semi_auto_auto_close(symbol: str, domestic: str, foreign: str, current
         # 2) 1차 경고
         if current_edge >= warn_edge and not bool(pos.get("warn_sent")):
             _update_position_fields(pos_id, {"warn_sent": True, "warn_sent_at": now_str()})
-            supabase_live_insert_event("SL_WARNING", pos=pos, amount_krw=pos.get("amount_krw"), edge_percent=current_edge, detail="1차 경고")
+            kedge_live_insert_event("SL_WARNING", pos, "자동청산 1차 경고", pos.get("amount_krw"))
             send_pos_msg(
                 "⚠️ 자동청산 1차 경고",
                 "진입 대비 실제엣지가 +4% 이상 악화되었습니다.\n급등/급락 윗꼬리 회귀 가능성이 있어 즉시 손절은 하지 않고 감시합니다.",
@@ -3319,7 +3342,6 @@ def check_semi_auto_auto_close(symbol: str, domestic: str, foreign: str, current
         # 3) 2차 강경고
         if current_edge >= strong_warn_edge and not bool(pos.get("strong_warn_sent")):
             _update_position_fields(pos_id, {"strong_warn_sent": True, "strong_warn_sent_at": now_str()})
-            supabase_live_insert_event("SL_STRONG_WARNING", pos=pos, amount_krw=pos.get("amount_krw"), edge_percent=current_edge, detail="2차 강경고")
             send_pos_msg(
                 "🚨 자동청산 2차 강경고",
                 "진입 대비 실제엣지가 +6% 이상 악화되었습니다.\n아직 자동손절은 아니며, +8% 이상이 15분 유지될 때만 손절합니다.",
@@ -3950,7 +3972,7 @@ def perform_auto_entry_for_member(member: Dict[str, Any], signal: Dict[str, Any]
                 set_user_selected_amount(tg_id, signal_id, 0)
                 release_processing_lock_on_failure(tg_id, signal_id, order_detail)
                 paper_record_auto_attempt(tg_id, signal, final_entry_krw, "FAIL_REAL_ORDER", order_detail)
-                supabase_live_insert_event("ENTRY_FAIL", signal=signal, amount_krw=final_entry_krw, edge_percent=signal.get("real_edge"), detail=order_detail)
+                kedge_live_insert_event("ENTRY_FAIL", signal, order_detail, final_entry_krw)
                 telegram_send_private(
                     tg_id,
                     f"""❌ 실거래 자동진입 실패
@@ -3970,7 +3992,6 @@ def perform_auto_entry_for_member(member: Dict[str, Any], signal: Dict[str, Any]
         pos_id = register_semi_auto_position(tg_id, signal, final_entry_krw)
         finish_processing_lock(tg_id, signal_id, "DONE", pos_id)
         paper_record_auto_attempt(tg_id, signal, final_entry_krw, "SUCCESS", f"pos_id={pos_id} / {order_detail}")
-        supabase_live_insert_event("ENTRY_SUCCESS", signal=signal, amount_krw=final_entry_krw, edge_percent=signal.get("real_edge"), detail=f"pos_id={pos_id}")
 
         if AUTO_ENTRY_SEND_DM_RESULT:
             telegram_send_private(
@@ -4002,7 +4023,6 @@ def perform_auto_entry_for_member(member: Dict[str, Any], signal: Dict[str, Any]
         release_processing_lock_on_failure(tg_id, signal_id, str(e))
         reason = f"자동진입 예외: {e}"
         paper_record_auto_attempt(tg_id, signal, amount if 'amount' in locals() else 0, "EXCEPTION", reason)
-        supabase_live_insert_event("ENTRY_FAIL", signal=signal, amount_krw=amount if 'amount' in locals() else 0, edge_percent=signal.get("real_edge"), detail=reason)
         send_auto_entry_attempt_dm(tg_id, signal, "❌ 자동진입 미진입", reason, amount if 'amount' in locals() else 0)
         return False, reason
 
@@ -4063,9 +4083,6 @@ def auto_entry_approved_members(signal: Dict[str, Any]) -> None:
       자동익절/위험경고/정지·재시작 알림만 사용한다.
     - auto_enabled=true + 전체 자동진입 가능 상태일 때만 자동진입을 시도한다.
     """
-    # 홈페이지 LIVE 대시보드: 후보 이벤트는 유저 개인DM 없이 홈페이지/DB에만 기록
-    supabase_live_insert_event("CANDIDATE", signal=signal, amount_krw=signal.get("max_entry_krw"), edge_percent=signal.get("real_edge"))
-
     members = supabase_get_approved_members()
     if not members:
         print("[AUTO] 승인회원 없음")
@@ -4129,9 +4146,11 @@ def auto_entry_approved_members(signal: Dict[str, Any]) -> None:
         if ok:
             ok_count += 1
             print(f"[AUTO 진입 성공] tg={tg_id} / {signal.get('coin')} / {detail}")
+            kedge_live_insert_event("ENTRY_SUCCESS", signal, detail)
         else:
             fail_count += 1
             print(f"[AUTO 진입 스킵/실패] tg={tg_id} / {signal.get('coin')} / {detail}")
+            kedge_live_insert_event("ENTRY_FAIL", signal, detail)
 
     print(
         f"[AUTO 결과] 후보DM차단 {candidate_dm_blocked_count} / "
@@ -5881,6 +5900,7 @@ def scan_once(spot_exs: Dict[str, Any], future_exs: Dict[str, Any]) -> None:
                             print("[주의] VIP 텔레그램 전송 실패 - 그래도 자동진입/로컬저장은 계속 진행")
 
                         save_web_signal(signal_row)
+                        kedge_live_insert_event("CANDIDATE", signal_row)
                         print(f"[AUTO 후보 버튼DM 차단 완료] {base} / {spot.get('source')} -> {future_ex_name} / signal_id={signal_id}")
                         print("[홈페이지 자동 PUSH] 4파일 분리 테스트 모드 - 스킵")
                         alerts_local += 1
@@ -5950,6 +5970,7 @@ def scan_once(spot_exs: Dict[str, Any], future_exs: Dict[str, Any]) -> None:
         print("[실제엣지 TOP 후보] 없음 - BTC기준/호가/마켓 단계에서 대부분 제외")
 
     print(f"[스캔 완료] 검사 {checked}개 / 알림 {alerts}개 / 소요 {elapsed:.1f}초 / {now_str()}")
+    kedge_live_upsert_summary("가동중", last_scan_at=_kedge_live_iso_now())
 
 def boot_message() -> None:
     msg = f"""✅ 국내 현물 → 해외 선물 괴리 감시봇 - 빠른 테스트 모드 시작

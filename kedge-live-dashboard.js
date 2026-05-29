@@ -27,7 +27,7 @@
 
   function statusText(s){
     const m = {
-      CANDIDATE:'후보', ENTRY_SUCCESS:'진입성공', ENTRY_FAIL:'진입실패', TP_SUCCESS:'익절완료', TP_FAIL:'익절실패', SL_WARNING:'위험경고', SL_STRONG_WARNING:'강경고', STOPPED:'정지'
+      CANDIDATE:'후보', ENTRY_SUCCESS:'진입성공', ENTRY_FAIL:'진입실패', TP_SUCCESS:'익절완료', SL_WARNING:'위험경고', STOPPED:'정지'
     };
     return m[s] || s || '-';
   }
@@ -38,16 +38,26 @@
     return 'warn';
   }
 
+  // 공개 홈페이지에는 깔끔하게 후보/진입성공/익절완료만 표시한다.
+  // ENTRY_FAIL 등 운영 로그는 Supabase DB에는 저장하되 화면에서는 숨긴다.
+  const PUBLIC_EVENT_TYPES = new Set(['CANDIDATE', 'ENTRY_SUCCESS', 'TP_SUCCESS']);
+
+  function isPublicEvent(row){
+    const type = String((row && (row.event_type || row.status)) || '').toUpperCase();
+    return PUBLIC_EVENT_TYPES.has(type);
+  }
+
   function renderRows(rows){
     const wrap = $('kedgeLiveRows');
     if(!wrap) return;
-    if(!rows || !rows.length){
-      wrap.innerHTML = '<div class="kedge-live-empty">아직 표시할 실시간 이벤트가 없습니다.</div>';
+    const publicRows = (Array.isArray(rows) ? rows : []).filter(isPublicEvent).slice(0, 12);
+    if(!publicRows.length){
+      wrap.innerHTML = '<div class="kedge-live-empty">아직 표시할 공개 LIVE 이벤트가 없습니다.</div>';
       return;
     }
     wrap.innerHTML = `
       <div class="kedge-live-row head"><span>시간</span><span>코인</span><span>국내</span><span>해외</span><span>실제엣지</span><span>실체결</span><span>상태</span></div>
-      ${rows.map(r => `
+      ${publicRows.map(r => `
         <div class="kedge-live-row">
           <span>${fmtTime(r.created_at)}</span>
           <span>${r.symbol || '-'}</span>
@@ -72,7 +82,7 @@
       const { data: summary, error: sErr } = await db.from('kedge_live_summary').select('*').eq('id','main').maybeSingle();
       if(!sErr && summary) renderSummary(summary);
 
-      const { data: events, error: eErr } = await db.from('kedge_live_events').select('*').order('created_at', {ascending:false}).limit(12);
+      const { data: events, error: eErr } = await db.from('kedge_live_events').select('*').order('created_at', {ascending:false}).limit(50);
       if(eErr) throw eErr;
       renderRows(events || []);
       setStatus('실시간 연동 ON', true);
