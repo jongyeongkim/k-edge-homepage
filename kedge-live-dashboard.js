@@ -8,14 +8,21 @@
   const fmtTime = (v) => {
     if(!v) return '-';
     try{
-      return new Date(v).toLocaleTimeString('ko-KR', {
-        timeZone:'Asia/Seoul',
-        hour:'2-digit',
-        minute:'2-digit',
-        second:'2-digit'
-      });
+      // 봇이 KST 문자열을 Supabase timestamptz에 넣으면 DB가 UTC로 해석해서
+      // 브라우저에서 +9시간 밀려 보인다. 그래서 화면에는 UTC 시각 그대로 표시한다.
+      const d = new Date(v);
+      if(!isNaN(d.getTime())){
+        const h = String(d.getUTCHours()).padStart(2, '0');
+        const m = String(d.getUTCMinutes()).padStart(2, '0');
+        const sec = String(d.getUTCSeconds()).padStart(2, '0');
+        const ap = Number(h) < 12 ? '오전' : '오후';
+        const hh12 = Number(h) % 12 || 12;
+        return `${ap} ${String(hh12).padStart(2, '0')}:${m}:${sec}`;
+      }
+      return String(v);
     }catch(e){return String(v);}
   };
+
   const fmtKrwShort = (n) => {
     const v = Number(n || 0);
     if(!v) return '0원';
