@@ -7,7 +7,14 @@
   };
   const fmtTime = (v) => {
     if(!v) return '-';
-    try{return new Date(v).toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});}catch(e){return String(v);}
+    try{
+      return new Date(v).toLocaleTimeString('ko-KR', {
+        timeZone:'Asia/Seoul',
+        hour:'2-digit',
+        minute:'2-digit',
+        second:'2-digit'
+      });
+    }catch(e){return String(v);}
   };
   const fmtKrwShort = (n) => {
     const v = Number(n || 0);
@@ -24,13 +31,15 @@
     el.className = 'kedge-live-status' + (ok ? '' : ' off');
   }
 
+  function kstDateKey(v){
+    try{
+      return new Date(v).toLocaleDateString('sv-SE', { timeZone:'Asia/Seoul' });
+    }catch(e){ return ''; }
+  }
+
   function isToday(v){
     if(!v) return false;
-    try{
-      const d = new Date(v);
-      const n = new Date();
-      return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate();
-    }catch(e){ return false; }
+    return kstDateKey(v) === kstDateKey(new Date());
   }
 
   function eventType(row){
@@ -103,6 +112,30 @@
     return PUBLIC_EVENT_TYPES.has(eventType(row));
   }
 
+  function renderHeroCandidate(rows){
+    const list = Array.isArray(rows) ? rows : [];
+    const latest = list.find(r => eventType(r) === 'CANDIDATE') || list.find(isPublicEvent);
+    if(!latest) return;
+
+    const symbol = latest.symbol || latest.coin || '-';
+    const domestic = latest.domestic_exchange || latest.domestic || '-';
+    const foreign = latest.foreign_exchange || latest.foreign || '-';
+    const realEdge = Number(latest.real_edge_percent || latest.real_edge || 0);
+    const coinGap = Number(latest.coin_gap_percent || latest.coin_gap || 0);
+    const btcGap = Number(latest.btc_gap_percent || latest.btc_gap || 0);
+    const executable = Number(latest.executable_krw || latest.final_entry_krw || latest.krw || 0);
+
+    const setText = (id, value) => { const el = $(id); if(el) el.textContent = value; };
+    setText('liveHeroLabel', statusText(eventType(latest) || 'CANDIDATE'));
+    setText('liveHeroEdge', fmtPct(realEdge));
+    setText('liveHeroTitle', `⚖️ ${symbol} 양방 자동 후보`);
+    setText('liveHeroRoute', `${domestic} ↔ ${foreign}`);
+    setText('liveHeroCoinGap', coinGap ? fmtPct(coinGap) : '-');
+    setText('liveHeroBtcGap', btcGap ? fmtPct(btcGap) : '-');
+    setText('liveHeroRealEdge', fmtPct(realEdge));
+    setText('liveHeroExecutable', fmtKrwShort(executable));
+  }
+
   function renderRows(rows){
     const wrap = $('kedgeLiveRows');
     if(!wrap) return;
@@ -141,6 +174,7 @@
       const { data: events, error: eErr } = await db.from('kedge_live_events').select('*').order('created_at', {ascending:false}).limit(200);
       if(eErr) throw eErr;
       renderTopStats(summary, events || []);
+      renderHeroCandidate(events || []);
       renderRows(events || []);
       setStatus('실시간 연동 ON', true);
     }catch(err){

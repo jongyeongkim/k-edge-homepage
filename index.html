@@ -82,15 +82,15 @@
         </div>
       </div>
 
-      <aside class="live-edge-card">
-        <div class="live-head"><span>자동 진입 후보</span><b>+2.16%</b></div>
-        <h3>⚖️ SOL 양방 자동 후보</h3>
-        <p>국내 현물: 빗썸 · 해외 선물: Bitget</p>
+      <aside class="live-edge-card" id="liveHeroCard">
+        <div class="live-head"><span id="liveHeroLabel">자동 진입 후보</span><b id="liveHeroEdge">실시간 대기</b></div>
+        <h3 id="liveHeroTitle">⚖️ LIVE 후보 연결 중</h3>
+        <p id="liveHeroRoute">Supabase LIVE 데이터 수신 대기</p>
         <div class="live-metrics">
-          <div><small>가격 괴리</small><strong>+3.21%</strong></div>
-          <div><small>BTC 괴리</small><strong>+1.05%</strong></div>
-          <div><small>실제 엣지</small><strong>+2.16%</strong></div>
-          <div><small>실체결</small><strong>140만원</strong></div>
+          <div><small>가격 괴리</small><strong id="liveHeroCoinGap">-</strong></div>
+          <div><small>BTC 괴리</small><strong id="liveHeroBtcGap">-</strong></div>
+          <div><small>실제 엣지</small><strong id="liveHeroRealEdge">-</strong></div>
+          <div><small>실체결</small><strong id="liveHeroExecutable">-</strong></div>
         </div>
         <a class="btn primary full" href="./payment.html">월 200,000원 등록</a>
       </aside>
@@ -215,7 +215,7 @@
 window.KEDGE_SUPABASE_URL = "https://qakhbihueonefzifrmct.supabase.co";
 window.KEDGE_SUPABASE_ANON_KEY = "sb_publishable_XboBFueAITcieSL75B2S5g_qlm4XmOm";
 </script>
-<script src="./kedge-live-dashboard.js?v=20260529_live2"></script>
+<script src="./kedge-live-dashboard.js?v=20260530_live4"></script>
 
 
 <script>
