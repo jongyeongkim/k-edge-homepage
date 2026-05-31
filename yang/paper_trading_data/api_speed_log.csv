@@ -10056,3 +10056,269 @@
 2026-06-01 05:41:22,MEXC,BTC/USDT:USDT,1.4947,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
 2026-06-01 05:41:27,MEXC,NEAR/USDT:USDT,6.1256,True,
 2026-06-01 05:41:28,MEXC,BTC/USDT:USDT,5.972,True,
+2026-06-01 05:44:22,BITGET,XAN/USDT:USDT,1.643,True,
+2026-06-01 05:46:08,MEXC,DOGE/USDT:USDT,0.3231,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:46:09,MEXC,BTC/USDT:USDT,2.152,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:46:14,MEXC,VIRTUAL/USDT:USDT,6.0649,True,
+2026-06-01 05:46:15,MEXC,SAHARA/USDT:USDT,6.6055,True,
+2026-06-01 05:46:15,MEXC,BTC/USDT:USDT,6.2994,True,
+2026-06-01 05:46:50,MEXC,HIVE/USDT:USDT,0.3252,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:46:56,MEXC,ETH/USDT:USDT,6.0684,True,
+2026-06-01 05:46:57,MEXC,HOME/USDT:USDT,0.3139,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:46:58,MEXC,BTC/USDT:USDT,2.146,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:47:03,MEXC,EDEN/USDT:USDT,6.0663,True,
+2026-06-01 05:47:04,MEXC,BTC/USDT:USDT,6.2826,True,
+2026-06-01 05:47:05,MEXC,BTC/USDT:USDT,6.296,True,
+2026-06-01 05:47:09,MEXC,PEAQ/USDT:USDT,0.318,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:47:10,MEXC,BTC/USDT:USDT,1.811,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:47:10,MEXC,BTC/USDT:USDT,2.1453,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:47:15,MEXC,BNB/USDT:USDT,6.0689,True,
+2026-06-01 05:47:16,MEXC,BASED/USDT:USDT,7.1733,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:47:16,MEXC,SAHARA/USDT:USDT,6.2811,True,
+2026-06-01 05:47:22,MEXC,BTC/USDT:USDT,6.0404,True,
+2026-06-01 05:47:48,MEXC,ALLO/USDT:USDT,0.3197,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:47:54,MEXC,BTC/USDT:USDT,6.0892,True,
+2026-06-01 05:47:55,MEXC,PUNDIX/USDT:USDT,0.317,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:47:56,MEXC,BTC/USDT:USDT,2.1341,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:48:01,MEXC,ID/USDT:USDT,6.0698,True,
+2026-06-01 05:48:02,MEXC,BTC/USDT:USDT,6.2862,True,
+2026-06-01 05:48:02,MEXC,BTC/USDT:USDT,6.2795,True,
+2026-06-01 05:48:07,MEXC,TRX/USDT:USDT,0.322,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:48:08,MEXC,BTC/USDT:USDT,2.1651,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:48:08,MEXC,BTC/USDT:USDT,1.8327,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:48:13,MEXC,IO/USDT:USDT,6.068,True,
+2026-06-01 05:48:14,MEXC,SAHARA/USDT:USDT,6.2973,True,
+2026-06-01 05:48:14,MEXC,BTC/USDT:USDT,6.292,True,
+2026-06-01 05:48:47,MEXC,ID/USDT:USDT,0.3122,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:48:49,MEXC,BTC/USDT:USDT,2.1465,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:48:54,MEXC,HOME/USDT:USDT,6.0819,True,
+2026-06-01 05:48:55,MEXC,SAHARA/USDT:USDT,6.6149,True,
+2026-06-01 05:48:55,MEXC,BTC/USDT:USDT,6.2969,True,
+2026-06-01 05:49:00,MEXC,PEAQ/USDT:USDT,0.329,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:49:01,MEXC,BTC/USDT:USDT,2.1522,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:49:06,MEXC,BNB/USDT:USDT,6.0677,True,
+2026-06-01 05:49:07,MEXC,BASED/USDT:USDT,6.6075,True,
+2026-06-01 05:49:07,MEXC,SAHARA/USDT:USDT,6.5944,True,
+2026-06-01 05:49:40,MEXC,ID/USDT:USDT,0.3181,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:49:41,MEXC,BTC/USDT:USDT,1.8292,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:49:41,MEXC,BTC/USDT:USDT,2.1476,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:49:46,MEXC,HOME/USDT:USDT,6.0648,True,
+2026-06-01 05:49:47,MEXC,SAHARA/USDT:USDT,6.2886,True,
+2026-06-01 05:49:47,MEXC,BTC/USDT:USDT,6.2897,True,
+2026-06-01 05:49:52,MEXC,IO/USDT:USDT,0.3146,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:49:53,MEXC,BTC/USDT:USDT,2.1456,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:49:53,MEXC,BTC/USDT:USDT,1.8248,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:49:58,MEXC,PEAQ/USDT:USDT,6.0728,True,
+2026-06-01 05:49:59,MEXC,SAHARA/USDT:USDT,6.2976,True,
+2026-06-01 05:50:00,MEXC,BTC/USDT:USDT,6.2948,True,
+2026-06-01 05:50:23,MEXC,BTC/USDT:USDT,1.6035,True,
+2026-06-01 05:50:32,MEXC,ALLO/USDT:USDT,0.3158,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:50:38,MEXC,BTC/USDT:USDT,6.066,True,
+2026-06-01 05:50:42,MEXC,SOL/USDT:USDT,0.3086,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:50:42,MEXC,BTC/USDT:USDT,2.143,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:50:42,MEXC,BTC/USDT:USDT,1.8258,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:50:48,MEXC,SIGN/USDT:USDT,6.0697,True,
+2026-06-01 05:50:49,MEXC,BTC/USDT:USDT,6.2909,True,
+2026-06-01 05:50:49,MEXC,BTC/USDT:USDT,6.3006,True,
+2026-06-01 05:52:06,MEXC,ID/USDT:USDT,0.333,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:52:08,MEXC,BASED/USDT:USDT,1.8443,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:52:13,MEXC,HOME/USDT:USDT,6.0665,True,
+2026-06-01 05:52:14,MEXC,SAHARA/USDT:USDT,6.605,True,
+2026-06-01 05:52:19,MEXC,IO/USDT:USDT,0.3187,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:52:20,MEXC,BTC/USDT:USDT,2.1464,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:52:25,MEXC,PEAQ/USDT:USDT,6.0657,True,
+2026-06-01 05:52:26,MEXC,SAHARA/USDT:USDT,6.6296,True,
+2026-06-01 05:52:26,MEXC,BTC/USDT:USDT,6.2898,True,
+2026-06-01 05:52:58,MEXC,ID/USDT:USDT,0.3146,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:52:59,MEXC,BTC/USDT:USDT,2.1454,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:53:04,MEXC,HOME/USDT:USDT,6.0661,True,
+2026-06-01 05:53:05,MEXC,SAHARA/USDT:USDT,6.6129,True,
+2026-06-01 05:53:06,MEXC,BTC/USDT:USDT,6.2846,True,
+2026-06-01 05:53:10,MEXC,IO/USDT:USDT,0.3117,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:53:12,MEXC,BTC/USDT:USDT,2.1491,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:53:16,MEXC,PEAQ/USDT:USDT,6.0635,True,
+2026-06-01 05:53:18,MEXC,SAHARA/USDT:USDT,6.614,True,
+2026-06-01 05:53:18,MEXC,BTC/USDT:USDT,6.2936,True,
+2026-06-01 05:53:50,MEXC,ID/USDT:USDT,0.3212,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:53:51,MEXC,BTC/USDT:USDT,2.142,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:53:56,MEXC,HOME/USDT:USDT,6.1077,True,
+2026-06-01 05:53:57,MEXC,SAHARA/USDT:USDT,6.5921,True,
+2026-06-01 05:53:57,MEXC,BTC/USDT:USDT,6.2832,True,
+2026-06-01 05:54:02,MEXC,IO/USDT:USDT,0.3155,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:54:03,MEXC,BTC/USDT:USDT,2.1311,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:54:08,MEXC,PEAQ/USDT:USDT,6.0675,True,
+2026-06-01 05:54:09,MEXC,SAHARA/USDT:USDT,6.5945,True,
+2026-06-01 05:54:10,MEXC,BTC/USDT:USDT,6.2901,True,
+2026-06-01 05:54:42,MEXC,ID/USDT:USDT,0.3179,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:54:43,MEXC,BTC/USDT:USDT,2.1392,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:54:43,MEXC,BTC/USDT:USDT,1.8168,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:54:48,MEXC,HOME/USDT:USDT,6.0684,True,
+2026-06-01 05:54:49,MEXC,SAHARA/USDT:USDT,6.293,True,
+2026-06-01 05:54:49,MEXC,BTC/USDT:USDT,6.3027,True,
+2026-06-01 05:54:54,MEXC,IO/USDT:USDT,0.3222,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:54:55,MEXC,BTC/USDT:USDT,2.1469,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:54:55,MEXC,BTC/USDT:USDT,1.8218,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:55:00,MEXC,PEAQ/USDT:USDT,6.0826,True,
+2026-06-01 05:55:01,MEXC,BASED/USDT:USDT,7.1849,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:55:01,MEXC,SAHARA/USDT:USDT,6.288,True,
+2026-06-01 05:55:07,MEXC,BTC/USDT:USDT,5.9689,True,
+2026-06-01 05:55:32,MEXC,BTC/USDT:USDT,0.3195,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:55:38,MEXC,HIVE/USDT:USDT,6.0712,True,
+2026-06-01 05:55:40,MEXC,ID/USDT:USDT,0.3162,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:55:41,MEXC,BTC/USDT:USDT,2.1388,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:55:46,MEXC,HOME/USDT:USDT,6.072,True,
+2026-06-01 05:55:47,MEXC,BTC/USDT:USDT,6.2846,True,
+2026-06-01 05:55:47,MEXC,BTC/USDT:USDT,6.2997,True,
+2026-06-01 05:55:52,MEXC,IO/USDT:USDT,0.3031,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:55:53,MEXC,BTC/USDT:USDT,2.1417,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:55:53,MEXC,BTC/USDT:USDT,1.8149,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:55:58,MEXC,PEAQ/USDT:USDT,6.0661,True,
+2026-06-01 05:55:59,MEXC,SAHARA/USDT:USDT,6.2905,True,
+2026-06-01 05:55:59,MEXC,BTC/USDT:USDT,6.2865,True,
+2026-06-01 05:56:31,MEXC,ID/USDT:USDT,0.3145,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:56:32,MEXC,BTC/USDT:USDT,2.1452,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:56:32,MEXC,BTC/USDT:USDT,1.8238,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:56:38,MEXC,HOME/USDT:USDT,6.0645,True,
+2026-06-01 05:56:38,MEXC,SAHARA/USDT:USDT,6.2996,True,
+2026-06-01 05:56:39,MEXC,BTC/USDT:USDT,6.2782,True,
+2026-06-01 05:56:44,MEXC,IO/USDT:USDT,0.3153,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:56:44,MEXC,BTC/USDT:USDT,2.1444,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:56:44,MEXC,BTC/USDT:USDT,1.8094,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:56:50,MEXC,PEAQ/USDT:USDT,6.0697,True,
+2026-06-01 05:56:51,MEXC,SAHARA/USDT:USDT,6.2843,True,
+2026-06-01 05:56:51,MEXC,BTC/USDT:USDT,6.2964,True,
+2026-06-01 05:58:43,MEXC,BTC/USDT:USDT,2.1455,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:58:43,MEXC,BTC/USDT:USDT,1.8208,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:58:49,MEXC,BTC/USDT:USDT,6.2879,True,
+2026-06-01 05:58:49,MEXC,BTC/USDT:USDT,6.2795,True,
+2026-06-01 05:59:24,MEXC,HIVE/USDT:USDT,0.3234,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:59:30,MEXC,ETH/USDT:USDT,6.0733,True,
+2026-06-01 05:59:31,MEXC,HOME/USDT:USDT,0.3148,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:59:32,MEXC,BTC/USDT:USDT,2.144,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:59:37,MEXC,EDEN/USDT:USDT,6.0692,True,
+2026-06-01 05:59:38,MEXC,BTC/USDT:USDT,6.2918,True,
+2026-06-01 05:59:38,MEXC,BTC/USDT:USDT,6.2942,True,
+2026-06-01 05:59:43,MEXC,PEAQ/USDT:USDT,0.3142,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:59:44,MEXC,BTC/USDT:USDT,1.8199,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:59:44,MEXC,BTC/USDT:USDT,2.1448,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 05:59:49,MEXC,BNB/USDT:USDT,6.0652,True,
+2026-06-01 05:59:50,MEXC,SAHARA/USDT:USDT,6.2872,True,
+2026-06-01 05:59:50,MEXC,BTC/USDT:USDT,6.2919,True,
+2026-06-01 06:00:23,MEXC,ID/USDT:USDT,0.4183,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:00:24,MEXC,BTC/USDT:USDT,2.1411,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:00:24,MEXC,BTC/USDT:USDT,1.8255,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:00:24,MEXC,BASED/USDT:USDT,1.503,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:00:29,MEXC,HOME/USDT:USDT,6.0699,True,
+2026-06-01 06:00:30,MEXC,BTC/USDT:USDT,5.5425,True,
+2026-06-01 06:00:35,MEXC,IO/USDT:USDT,0.3231,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:00:36,MEXC,BTC/USDT:USDT,1.8267,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:00:36,MEXC,BASED/USDT:USDT,1.5022,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:00:41,MEXC,PEAQ/USDT:USDT,6.1076,True,
+2026-06-01 06:00:42,MEXC,BTC/USDT:USDT,5.9925,True,
+2026-06-01 06:01:15,MEXC,ID/USDT:USDT,0.2986,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:01:15,MEXC,BASED/USDT:USDT,1.4995,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:01:15,MEXC,SAHARA/USDT:USDT,1.2693,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:01:21,MEXC,HOME/USDT:USDT,6.0656,True,
+2026-06-01 06:01:23,MEXC,LA/USDT:USDT,0.3165,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:01:24,MEXC,BTC/USDT:USDT,2.1136,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:01:29,MEXC,SOL/USDT:USDT,6.0691,True,
+2026-06-01 06:01:30,MEXC,SAHARA/USDT:USDT,6.6202,True,
+2026-06-01 06:01:30,MEXC,BTC/USDT:USDT,6.2893,True,
+2026-06-01 06:01:36,MEXC,BTC/USDT:USDT,2.1392,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:01:42,MEXC,BASED/USDT:USDT,6.6187,True,
+2026-06-01 06:01:42,MEXC,SAHARA/USDT:USDT,6.595,True,
+2026-06-01 06:02:06,MEXC,ALLO/USDT:USDT,0.319,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:02:07,MEXC,BTC/USDT:USDT,2.1399,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:02:12,MEXC,BTC/USDT:USDT,6.0653,True,
+2026-06-01 06:02:13,MEXC,BTC/USDT:USDT,7.5041,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:02:13,MEXC,BASED/USDT:USDT,6.6062,True,
+2026-06-01 06:02:19,MEXC,SAHARA/USDT:USDT,12.0428,True,
+2026-06-01 06:02:19,MEXC,BTC/USDT:USDT,6.2992,True,
+2026-06-01 06:02:52,MEXC,XRP/USDT:USDT,0.3171,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:02:53,MEXC,BTC/USDT:USDT,2.1395,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:02:58,MEXC,ONDO/USDT:USDT,6.0679,True,
+2026-06-01 06:02:59,MEXC,BTC/USDT:USDT,6.2846,True,
+2026-06-01 06:02:59,MEXC,BTC/USDT:USDT,6.2972,True,
+2026-06-01 06:03:04,MEXC,MANTRA/USDT:USDT,0.3133,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:03:05,MEXC,BTC/USDT:USDT,2.1418,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:03:10,MEXC,ZORA/USDT:USDT,6.0724,True,
+2026-06-01 06:03:11,MEXC,SAHARA/USDT:USDT,6.6121,True,
+2026-06-01 06:03:11,MEXC,BTC/USDT:USDT,6.2931,True,
+2026-06-01 06:05:06,MEXC,ONDO/USDT:USDT,0.3248,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:05:06,MEXC,BTC/USDT:USDT,2.1465,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:05:06,MEXC,BTC/USDT:USDT,1.8195,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:05:12,MEXC,ALLO/USDT:USDT,6.0794,True,
+2026-06-01 06:05:12,MEXC,SAHARA/USDT:USDT,6.2934,True,
+2026-06-01 06:05:13,MEXC,BTC/USDT:USDT,6.2956,True,
+2026-06-01 06:05:18,MEXC,ZORA/USDT:USDT,0.3193,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:05:19,MEXC,BTC/USDT:USDT,2.1448,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:05:19,MEXC,BTC/USDT:USDT,1.8243,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:05:24,MEXC,NIL/USDT:USDT,6.1023,True,
+2026-06-01 06:05:25,MEXC,SAHARA/USDT:USDT,6.2895,True,
+2026-06-01 06:05:25,MEXC,BTC/USDT:USDT,6.3001,True,
+2026-06-01 06:05:58,MEXC,STRAX/USDT:USDT,0.3306,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:06:04,MEXC,XRP/USDT:USDT,6.0706,True,
+2026-06-01 06:06:08,MEXC,PRL/USDT:USDT,0.3184,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:06:08,MEXC,BASED/USDT:USDT,1.4972,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:06:08,MEXC,SAHARA/USDT:USDT,1.2513,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:06:14,MEXC,HBAR/USDT:USDT,6.0716,True,
+2026-06-01 06:06:16,MEXC,VIRTUAL/USDT:USDT,0.3196,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:06:16,MEXC,BTC/USDT:USDT,2.1352,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:06:16,MEXC,BTC/USDT:USDT,1.8111,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:06:22,MEXC,MANTRA/USDT:USDT,6.0696,True,
+2026-06-01 06:06:22,MEXC,BASED/USDT:USDT,6.2899,True,
+2026-06-01 06:06:23,MEXC,SAHARA/USDT:USDT,6.3604,True,
+2026-06-01 06:06:24,MEXC,MERL/USDT:USDT,0.3292,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:06:30,MEXC,TRX/USDT:USDT,6.0681,True,
+2026-06-01 06:07:04,MEXC,HOME/USDT:USDT,0.3146,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:07:05,MEXC,BTC/USDT:USDT,2.1476,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:07:05,MEXC,BTC/USDT:USDT,1.8146,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:07:10,MEXC,EDEN/USDT:USDT,6.0678,True,
+2026-06-01 06:07:11,MEXC,BASED/USDT:USDT,6.2966,True,
+2026-06-01 06:07:12,MEXC,SAHARA/USDT:USDT,6.3634,True,
+2026-06-01 06:07:12,MEXC,SIGN/USDT:USDT,0.3201,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:07:18,MEXC,SUI/USDT:USDT,6.0762,True,
+2026-06-01 06:07:54,MEXC,XRP/USDT:USDT,0.3167,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:07:54,MEXC,BTC/USDT:USDT,2.1438,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:08:00,MEXC,ONDO/USDT:USDT,6.0754,True,
+2026-06-01 06:08:00,MEXC,BTC/USDT:USDT,6.2983,True,
+2026-06-01 06:08:01,MEXC,BTC/USDT:USDT,6.2927,True,
+2026-06-01 06:08:06,MEXC,MANTRA/USDT:USDT,0.3127,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:08:06,MEXC,BTC/USDT:USDT,2.1347,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:08:06,MEXC,BTC/USDT:USDT,1.8232,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:08:12,MEXC,ZORA/USDT:USDT,6.0661,True,
+2026-06-01 06:08:12,MEXC,SAHARA/USDT:USDT,6.2932,True,
+2026-06-01 06:08:13,MEXC,BTC/USDT:USDT,6.296,True,
+2026-06-01 06:08:45,MEXC,XRP/USDT:USDT,0.318,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:08:47,MEXC,BTC/USDT:USDT,2.1505,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:08:51,MEXC,ONDO/USDT:USDT,6.068,True,
+2026-06-01 06:08:53,MEXC,BTC/USDT:USDT,6.2913,True,
+2026-06-01 06:08:53,MEXC,BTC/USDT:USDT,6.3182,True,
+2026-06-01 06:08:58,MEXC,MANTRA/USDT:USDT,0.3188,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:08:59,MEXC,BTC/USDT:USDT,2.1477,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:09:04,MEXC,ZORA/USDT:USDT,6.0685,True,
+2026-06-01 06:09:05,MEXC,SAHARA/USDT:USDT,6.6223,True,
+2026-06-01 06:09:05,MEXC,BTC/USDT:USDT,6.295,True,
+2026-06-01 06:09:40,MEXC,HIVE/USDT:USDT,0.3212,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:09:46,MEXC,ETH/USDT:USDT,6.1726,True,
+2026-06-01 06:09:47,MEXC,HOME/USDT:USDT,0.3281,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:09:48,MEXC,BTC/USDT:USDT,2.1388,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:09:48,MEXC,BTC/USDT:USDT,1.8224,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:09:53,MEXC,EDEN/USDT:USDT,6.0738,True,
+2026-06-01 06:09:54,MEXC,BTC/USDT:USDT,6.295,True,
+2026-06-01 06:09:54,MEXC,BTC/USDT:USDT,6.2911,True,
+2026-06-01 06:11:21,MEXC,NIL/USDT:USDT,0.3655,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:11:22,MEXC,SAHARA/USDT:USDT,2.1661,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:11:22,MEXC,BTC/USDT:USDT,1.8228,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:11:27,MEXC,STEEM/USDT:USDT,6.0264,True,
+2026-06-01 06:11:31,MEXC,BTC/USDT:USDT,1.8164,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:11:31,MEXC,BASED/USDT:USDT,1.4958,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:11:31,MEXC,SAHARA/USDT:USDT,1.2548,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:12:06,MEXC,DOGE/USDT:USDT,0.3108,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:12:07,MEXC,BTC/USDT:USDT,2.1388,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:12:12,MEXC,VIRTUAL/USDT:USDT,6.0992,True,
+2026-06-01 06:12:13,MEXC,BASED/USDT:USDT,6.6933,True,
+2026-06-01 06:12:13,MEXC,BTC/USDT:USDT,7.505,False,"mexc {""success"":false,""code"":510,""message"":""Requests are too frequent, please try again later""}"
+2026-06-01 06:12:14,MEXC,SAHARA/USDT:USDT,6.6144,True,
+2026-06-01 06:12:20,MEXC,BTC/USDT:USDT,6.2108,True,
+2026-06-01 06:12:20,MEXC,BTC/USDT:USDT,6.289,True,

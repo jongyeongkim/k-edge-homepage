@@ -31,6 +31,63 @@
     return fmtNum(v) + '원';
   };
 
+
+
+  function firstNumber(row, keys){
+    if(!row) return null;
+    for(const k of keys){
+      if(Object.prototype.hasOwnProperty.call(row, k)){
+        const raw = row[k];
+        if(raw !== null && raw !== undefined && raw !== ''){
+          const n = Number(raw);
+          if(Number.isFinite(n)) return n;
+        }
+      }
+    }
+    return null;
+  }
+
+  function valueOrDash(v){
+    return (v === null || v === undefined || !Number.isFinite(Number(v))) ? '-' : fmtPct(v);
+  }
+
+  function getRealEdge(row){
+    return firstNumber(row, [
+      'real_edge_percent', 'real_edge', 'edge_percent', 'edge',
+      'actual_edge_percent', 'actual_edge', 'net_edge_percent', 'net_edge'
+    ]);
+  }
+
+  function getCoinGap(row){
+    return firstNumber(row, [
+      'coin_gap_percent', 'coin_gap',
+      'price_gap_percent', 'price_gap',
+      'price_premium_percent', 'price_premium',
+      'premium_percent', 'premium',
+      'basis_percent', 'basis',
+      'coin_basis_percent', 'coin_basis',
+      'gap_percent', 'gap',
+      'kimchi_premium_percent', 'kimchi_premium'
+    ]);
+  }
+
+  function getBtcGap(row){
+    return firstNumber(row, [
+      'btc_gap_percent', 'btc_gap',
+      'btc_basis_percent', 'btc_basis',
+      'btc_premium_percent', 'btc_premium',
+      'market_gap_percent', 'market_gap',
+      'btc_impact_percent', 'btc_impact'
+    ]);
+  }
+
+  function getExecutableKrw(row){
+    return firstNumber(row, [
+      'executable_krw', 'final_entry_krw', 'entry_krw', 'amount_krw',
+      'domestic_entry_krw', 'foreign_entry_krw', 'krw'
+    ]) || 0;
+  }
+
   function setStatus(text, ok){
     const el = $('kedgeLiveStatus');
     if(!el) return;
@@ -100,10 +157,10 @@
 
     const edgeSource = (publicTodayRows.length ? publicTodayRows : list.filter(isPublicEvent));
     let maxEdge = 0;
-    edgeSource.forEach(r => { maxEdge = Math.max(maxEdge, Number(r.real_edge_percent || 0)); });
+    edgeSource.forEach(r => { maxEdge = Math.max(maxEdge, getRealEdge(r) || 0); });
 
     const latestPublic = list.find(isPublicEvent) || null;
-    const latestKrw = latestPublic ? Number(latestPublic.executable_krw || 0) : 0;
+    const latestKrw = latestPublic ? getExecutableKrw(latestPublic) : 0;
     const todayTp = Number((summary && summary.today_tp) || 0) || tpCountFromEvents;
 
     const items = [
@@ -154,18 +211,24 @@
     const symbol = latest.symbol || latest.coin || '-';
     const domestic = latest.domestic_exchange || latest.domestic || '-';
     const foreign = latest.foreign_exchange || latest.foreign || '-';
-    const realEdge = Number(latest.real_edge_percent || latest.real_edge || 0);
-    const coinGap = Number(latest.coin_gap_percent || latest.coin_gap || 0);
-    const btcGap = Number(latest.btc_gap_percent || latest.btc_gap || 0);
-    const executable = Number(latest.executable_krw || latest.final_entry_krw || latest.krw || 0);
+    let realEdge = getRealEdge(latest);
+    let coinGap = getCoinGap(latest);
+    let btcGap = getBtcGap(latest);
+    const executable = getExecutableKrw(latest);
+
+    // real_edge = 가격괴리 - BTC괴리. 저장 필드가 하나 빠진 경우 화면에서 역산해 보강한다.
+    if(coinGap === null && realEdge !== null && btcGap !== null) coinGap = realEdge + btcGap;
+    if(btcGap === null && coinGap !== null && realEdge !== null) btcGap = coinGap - realEdge;
+    if(realEdge === null && coinGap !== null && btcGap !== null) realEdge = coinGap - btcGap;
+    if(realEdge === null) realEdge = 0;
 
     const setText = (id, value) => { const el = $(id); if(el) el.textContent = value; };
     setText('liveHeroLabel', statusText(eventType(latest) || 'CANDIDATE'));
     setText('liveHeroEdge', fmtPct(realEdge));
     setText('liveHeroTitle', `⚖️ ${symbol} 양방 자동 후보`);
     setText('liveHeroRoute', `${domestic} ↔ ${foreign}`);
-    setText('liveHeroCoinGap', coinGap ? fmtPct(coinGap) : '-');
-    setText('liveHeroBtcGap', btcGap ? fmtPct(btcGap) : '-');
+    setText('liveHeroCoinGap', valueOrDash(coinGap));
+    setText('liveHeroBtcGap', valueOrDash(btcGap));
     setText('liveHeroRealEdge', fmtPct(realEdge));
     setText('liveHeroExecutable', fmtKrwShort(executable));
   }
@@ -183,11 +246,11 @@
       ${publicRows.map(r => `
         <div class="kedge-live-row">
           <span>${fmtTime(r.created_at)}</span>
-          <span>${r.symbol || '-'}</span>
-          <span>${r.domestic_exchange || '-'}</span>
-          <span>${r.foreign_exchange || '-'}</span>
-          <span class="${Number(r.real_edge_percent || 0) >= 2 ? 'up' : 'warn'}">${fmtPct(r.real_edge_percent)}</span>
-          <span>${fmtNum(r.executable_krw)}원</span>
+          <span>${r.symbol || r.coin || '-'}</span>
+          <span>${r.domestic_exchange || r.domestic || '-'}</span>
+          <span>${r.foreign_exchange || r.foreign || '-'}</span>
+          <span class="${(getRealEdge(r) || 0) >= 2 ? 'up' : 'warn'}">${fmtPct(getRealEdge(r) || 0)}</span>
+          <span>${fmtNum(getExecutableKrw(r))}원</span>
           <span class="${statusClass(r.event_type || r.status)}">${statusText(r.event_type || r.status)}</span>
         </div>
       `).join('')}

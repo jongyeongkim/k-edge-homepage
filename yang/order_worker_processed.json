@@ -1546,5 +1546,17 @@
   "ALLO_BITHUMB_BINGX_1780258199": {
     "at": "2026-06-01 05:10:04",
     "result": "DONE"
+  },
+  "SAHARA_BITHUMB_BITGET_1780260275": {
+    "at": "2026-06-01 05:44:36",
+    "result": "DONE"
+  },
+  "SAHARA_BITHUMB_BINGX_1780260277": {
+    "at": "2026-06-01 05:44:42",
+    "result": "DONE"
+  },
+  "SAHARA_BITHUMB_MEXC_1780260282": {
+    "at": "2026-06-01 05:44:56",
+    "result": "DONE"
   }
 }
