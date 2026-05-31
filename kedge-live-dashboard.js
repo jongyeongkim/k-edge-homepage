@@ -53,6 +53,7 @@
 
   function getRealEdge(row){
     return firstNumber(row, [
+      'real_edge_per',
       'real_edge_percent', 'real_edge', 'edge_percent', 'edge',
       'actual_edge_percent', 'actual_edge', 'net_edge_percent', 'net_edge'
     ]);
@@ -83,6 +84,7 @@
 
   function getExecutableKrw(row){
     return firstNumber(row, [
+      'executable_kr',
       'executable_krw', 'final_entry_krw', 'entry_krw', 'amount_krw',
       'domestic_entry_krw', 'foreign_entry_krw', 'krw'
     ]) || 0;
@@ -209,8 +211,8 @@
     if(!latest) return;
 
     const symbol = latest.symbol || latest.coin || '-';
-    const domestic = latest.domestic_exchange || latest.domestic || '-';
-    const foreign = latest.foreign_exchange || latest.foreign || '-';
+    const domestic = latest.domestic_exchange || latest.domestic_exch || latest.domestic || '-';
+    const foreign = latest.foreign_exchange || latest.foreign_excha || latest.foreign || '-';
     let realEdge = getRealEdge(latest);
     let coinGap = getCoinGap(latest);
     let btcGap = getBtcGap(latest);
@@ -247,8 +249,8 @@
         <div class="kedge-live-row">
           <span>${fmtTime(r.created_at)}</span>
           <span>${r.symbol || r.coin || '-'}</span>
-          <span>${r.domestic_exchange || r.domestic || '-'}</span>
-          <span>${r.foreign_exchange || r.foreign || '-'}</span>
+          <span>${r.domestic_exchange || r.domestic_exch || r.domestic || '-'}</span>
+          <span>${r.foreign_exchange || r.foreign_excha || r.foreign || '-'}</span>
           <span class="${(getRealEdge(r) || 0) >= 2 ? 'up' : 'warn'}">${fmtPct(getRealEdge(r) || 0)}</span>
           <span>${fmtNum(getExecutableKrw(r))}원</span>
           <span class="${statusClass(r.event_type || r.status)}">${statusText(r.event_type || r.status)}</span>
