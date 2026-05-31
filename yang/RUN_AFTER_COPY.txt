@@ -1,0 +1,12 @@
+1) 아래 2개 파일을 C:\Users\pc1\Desktop\k-edge-homepage\yang 에 덮어쓰기
+- kedge_v9_5_2_SCAN_QUEUE_MEXC.py
+- kedge_telegram_menu_worker_v9_5_3.py
+
+2) 기존 CMD 창에서 Ctrl+C로 메뉴워커/오더워커 끄기
+
+3) 다시 실행
+cd C:\Users\pc1\Desktop\k-edge-homepage\yang
+py kedge_order_worker_v9_5_2.py
+py kedge_telegram_menu_worker_v9_5_3.py
+
+4) 텔레그램에서 📊 포지션조회 재확인

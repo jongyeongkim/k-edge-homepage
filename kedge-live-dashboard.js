@@ -53,12 +53,39 @@
     return String((row && (row.event_type || row.status)) || '').toUpperCase();
   }
 
-  function renderSummary(row){
-    if(!row) return;
-    if($('liveBotStatus')) $('liveBotStatus').textContent = row.bot_status || '대기';
-    if($('liveTodayEntries')) $('liveTodayEntries').textContent = fmtNum(row.today_entries) + '건';
-    if($('liveTodayTp')) $('liveTodayTp').textContent = fmtNum(row.today_tp) + '건';
-    if($('liveLastScan')) $('liveLastScan').textContent = fmtTime(row.last_scan_at || row.updated_at);
+  function isEntryEvent(row){
+    const t = eventType(row);
+    return t === 'ENTRY_SUCCESS' || t === 'AUTO_ENTRY_SUCCESS' || t === 'ENTRY_OPEN' || t === 'OPEN_SUCCESS';
+  }
+
+  function isTpEvent(row){
+    const t = eventType(row);
+    return (
+      t === 'TP_SUCCESS' ||
+      t === 'AUTO_CLOSED' ||
+      t === 'TAKE_PROFIT' ||
+      t === 'TAKE_PROFIT_SUCCESS' ||
+      t === 'PROFIT_CLOSED' ||
+      t === 'CLOSE_SUCCESS'
+    );
+  }
+
+  function renderSummary(row, rows){
+    const list = Array.isArray(rows) ? rows : [];
+    const todayRows = list.filter(r => isToday(r.created_at));
+    const entryCountFromEvents = todayRows.filter(isEntryEvent).length;
+    const tpCountFromEvents = todayRows.filter(isTpEvent).length;
+
+    if($('liveBotStatus')) $('liveBotStatus').textContent = (row && row.bot_status) || 'RUNNING';
+    if($('liveTodayEntries')) {
+      const v = Math.max(Number((row && row.today_entries) || 0), entryCountFromEvents);
+      $('liveTodayEntries').textContent = fmtNum(v) + '건';
+    }
+    if($('liveTodayTp')) {
+      const v = Math.max(Number((row && row.today_tp) || 0), tpCountFromEvents);
+      $('liveTodayTp').textContent = fmtNum(v) + '건';
+    }
+    if($('liveLastScan')) $('liveLastScan').textContent = fmtTime((row && (row.last_scan_at || row.updated_at)) || (list[0] && list[0].created_at));
   }
 
   function renderTopStats(summary, rows){
@@ -69,7 +96,7 @@
     const todayRows = list.filter(r => isToday(r.created_at));
     const publicTodayRows = todayRows.filter(isPublicEvent);
     const candidateCount = todayRows.filter(r => eventType(r) === 'CANDIDATE').length;
-    const tpCountFromEvents = todayRows.filter(r => eventType(r) === 'TP_SUCCESS').length;
+    const tpCountFromEvents = todayRows.filter(isTpEvent).length;
 
     const edgeSource = (publicTodayRows.length ? publicTodayRows : list.filter(isPublicEvent));
     let maxEdge = 0;
@@ -100,7 +127,7 @@
 
   function statusText(s){
     const m = {
-      CANDIDATE:'후보', ENTRY_SUCCESS:'진입성공', ENTRY_FAIL:'진입실패', TP_SUCCESS:'익절완료', SL_WARNING:'위험경고', STOPPED:'정지'
+      CANDIDATE:'후보', ENTRY_SUCCESS:'진입성공', ENTRY_FAIL:'진입실패', TP_SUCCESS:'익절완료', AUTO_CLOSED:'익절완료', TAKE_PROFIT:'익절완료', TAKE_PROFIT_SUCCESS:'익절완료', CLOSE_SUCCESS:'청산완료', SL_WARNING:'위험경고', STOPPED:'정지'
     };
     return m[s] || s || '-';
   }
@@ -113,7 +140,7 @@
 
   // 공개 홈페이지에는 후보/진입성공/익절완료만 표시한다.
   // ENTRY_FAIL 등 운영 로그는 Supabase DB에는 저장하되 화면에서는 숨긴다.
-  const PUBLIC_EVENT_TYPES = new Set(['CANDIDATE', 'ENTRY_SUCCESS', 'TP_SUCCESS']);
+  const PUBLIC_EVENT_TYPES = new Set(['CANDIDATE', 'ENTRY_SUCCESS', 'TP_SUCCESS', 'AUTO_CLOSED', 'TAKE_PROFIT', 'TAKE_PROFIT_SUCCESS', 'CLOSE_SUCCESS']);
 
   function isPublicEvent(row){
     return PUBLIC_EVENT_TYPES.has(eventType(row));
@@ -175,11 +202,18 @@
     const db = window.supabase.createClient(url, key);
 
     try{
-      const { data: summary, error: sErr } = await db.from('kedge_live_summary').select('*').eq('id','main').maybeSingle();
-      if(!sErr && summary) renderSummary(summary);
+      let summary = null;
+      const { data: summaryRows, error: sErr } = await db.from('kedge_live_summary').select('*').limit(10);
+      if(!sErr && Array.isArray(summaryRows) && summaryRows.length){
+        summary =
+          summaryRows.find(r => String(r.id) === 'main') ||
+          summaryRows.find(r => String(r.id) === '1') ||
+          summaryRows[0];
+      }
 
       const { data: events, error: eErr } = await db.from('kedge_live_events').select('*').order('created_at', {ascending:false}).limit(200);
       if(eErr) throw eErr;
+      renderSummary(summary, events || []);
       renderTopStats(summary, events || []);
       renderHeroCandidate(events || []);
       renderRows(events || []);
