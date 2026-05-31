@@ -4922,6 +4922,135 @@ def update_web_stats(rows: Optional[List[Dict[str, Any]]] = None) -> None:
     _write_json_atomic(WEB_STATS_PATH, stats)
 
 
+
+# ============================================================
+# 홈페이지 LIVE Dashboard Supabase PUSH
+# - CANDIDATE 후보를 kedge_live_events에 저장한다.
+# - 주문/큐/텔레그램/청산 로직과 분리
+# - 실패해도 봇은 계속 진행
+# - V9.5.3: 실제 DB 컬럼명 기준 + 가격괴리/BTC괴리 저장 보강
+# ============================================================
+def _live_iso_now() -> str:
+    try:
+        return datetime.now().isoformat(timespec="seconds")
+    except Exception:
+        return now_str()
+
+
+def supabase_live_headers() -> Dict[str, str]:
+    return {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Content-Type": "application/json",
+        "Prefer": "return=representation",
+    }
+
+
+def _live_event_row_candidate(signal: Dict[str, Any], include_gap: bool = True) -> Dict[str, Any]:
+    """현재 kedge_live_events 실제 컬럼명에 맞춘 후보 row 생성."""
+    symbol = signal.get("coin") or signal.get("symbol")
+    domestic = signal.get("domestic") or signal.get("domestic_exchange") or signal.get("domestic_exch")
+    foreign = signal.get("foreign") or signal.get("foreign_exchange") or signal.get("foreign_excha")
+    real_edge = round(safe_float(signal.get("real_edge") or signal.get("real_edge_per") or signal.get("real_edge_percent")), 4)
+    executable = int(safe_float(
+        signal.get("executable_kr")
+        or signal.get("executable_krw")
+        or signal.get("real_fill_krw")
+        or signal.get("krw")
+        or signal.get("max_entry_krw")
+        or signal.get("final_entry_krw")
+    ))
+
+    row = {
+        "event_type": "CANDIDATE",
+        "symbol": symbol,
+        # 실제 DB 컬럼명 기준
+        "domestic_exch": domestic,
+        "foreign_excha": foreign,
+        "real_edge_per": real_edge,
+        "executable_kr": executable,
+        "status": "CANDIDATE",
+        "message": f"{symbol} {domestic}↔{foreign} edge={real_edge:+.2f}% fill={executable}",
+        "created_at": _live_iso_now(),
+    }
+
+    if include_gap:
+        # 신규 컬럼 필요:
+        # alter table kedge_live_events add column if not exists price_gap_per numeric;
+        # alter table kedge_live_events add column if not exists btc_gap_per numeric;
+        row["price_gap_per"] = round(safe_float(
+            signal.get("coin_gap")
+            or signal.get("price_gap")
+            or signal.get("price_gap_per")
+            or signal.get("coin_gap_percent")
+            or signal.get("basis_percent")
+        ), 4)
+        row["btc_gap_per"] = round(safe_float(
+            signal.get("btc_gap")
+            or signal.get("btc_gap_per")
+            or signal.get("btc_basis")
+            or signal.get("btc_basis_percent")
+        ), 4)
+
+    return row
+
+
+def push_live_event_candidate(signal: Dict[str, Any]) -> None:
+    """kedge_live_events / kedge_live_summary에 CANDIDATE를 저장한다.
+
+    중요: 홈페이지 표시용만 담당한다. 주문/큐/텔레그램 로직은 건드리지 않는다.
+    """
+    try:
+        if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+            print("[LIVE Supabase] 설정 없음 - CANDIDATE 저장 스킵")
+            return
+
+        url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/kedge_live_events"
+
+        # 1차: 가격괴리/BTC괴리 포함 저장
+        event_row = _live_event_row_candidate(signal, include_gap=True)
+        r = session.post(url, headers=supabase_live_headers(), data=json.dumps(event_row, ensure_ascii=False), timeout=8)
+
+        # 신규 컬럼이 아직 DB에 없거나 schema cache가 갱신 전이면 기본 컬럼만 재시도한다.
+        if r.status_code not in (200, 201):
+            err = r.text[:500]
+            if "price_gap_per" in err or "btc_gap_per" in err or "schema cache" in err:
+                print("[LIVE Supabase] gap 컬럼 미준비 - 기본 후보 저장으로 재시도", r.status_code, err[:220])
+                event_row = _live_event_row_candidate(signal, include_gap=False)
+                r = session.post(url, headers=supabase_live_headers(), data=json.dumps(event_row, ensure_ascii=False), timeout=8)
+
+        if r.status_code not in (200, 201):
+            print("[LIVE Supabase] CANDIDATE 저장 실패", r.status_code, r.text[:300])
+            return
+
+        gap_txt = ""
+        if "price_gap_per" in event_row or "btc_gap_per" in event_row:
+            gap_txt = f" / price_gap={event_row.get('price_gap_per')} btc_gap={event_row.get('btc_gap_per')}"
+        print(f"[LIVE Supabase] CANDIDATE 저장 완료{gap_txt}")
+
+        # summary는 스키마 차이가 있을 수 있어서 best-effort로만 갱신
+        summary_row = {
+            "id": 1,
+            "bot_status": "RUNNING",
+            "last_scan_at": _live_iso_now(),
+        }
+        s_url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/kedge_live_summary?id=eq.1"
+        sr = session.patch(s_url, headers=supabase_live_headers(), data=json.dumps(summary_row, ensure_ascii=False), timeout=8)
+        if sr.status_code not in (200, 204):
+            s_url2 = f"{SUPABASE_URL.rstrip('/')}/rest/v1/kedge_live_summary"
+            sr2 = session.post(s_url2, headers=supabase_live_headers(), data=json.dumps(summary_row, ensure_ascii=False), timeout=8)
+            if sr2.status_code not in (200, 201):
+                print("[LIVE Supabase] summary 갱신 실패", sr.status_code, sr.text[:200], "/", sr2.status_code, sr2.text[:200])
+            else:
+                print("[LIVE Supabase] summary 생성 완료")
+        else:
+            print("[LIVE Supabase] summary 갱신 완료")
+
+        print("[홈페이지 LIVE] CANDIDATE Supabase PUSH 완료")
+    except Exception as e:
+        print("[LIVE Supabase] CANDIDATE PUSH 예외", e)
+
+
 def build_free_alert_message(
     spot: Dict[str, Any],
     future_ex_name: str,
@@ -6214,8 +6343,8 @@ def scan_once(spot_exs: Dict[str, Any], future_exs: Dict[str, Any]) -> None:
                             print("[주의] VIP 텔레그램 전송 실패 - 그래도 자동진입/로컬저장은 계속 진행")
 
                         save_web_signal(signal_row)
+                        push_live_event_candidate(signal_row)
                         print(f"[AUTO 개인DM 스캔봇 미발송] {base} / {spot.get('source')} -> {future_ex_name} / signal_id={signal_id} / ORDER WORKER가 진입성공·실패 DM 처리")
-                        print("[홈페이지 자동 PUSH] 4파일 분리 테스트 모드 - 스킵")
                         alerts_local += 1
                         cut("알림")
 

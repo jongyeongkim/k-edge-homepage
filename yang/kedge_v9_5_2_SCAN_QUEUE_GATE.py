@@ -4615,10 +4615,13 @@ def update_web_stats(rows: Optional[List[Dict[str, Any]]] = None) -> None:
 
 
 
+
 # ============================================================
-# 홈페이지 LIVE Dashboard Supabase PUSH 복구
-# - 거래/주문/청산 로직과 분리
+# 홈페이지 LIVE Dashboard Supabase PUSH
+# - CANDIDATE 후보를 kedge_live_events에 저장한다.
+# - 주문/큐/텔레그램/청산 로직과 분리
 # - 실패해도 봇은 계속 진행
+# - V9.5.3: 실제 DB 컬럼명 기준 + 가격괴리/BTC괴리 저장 보강
 # ============================================================
 def _live_iso_now() -> str:
     try:
@@ -4636,6 +4639,55 @@ def supabase_live_headers() -> Dict[str, str]:
     }
 
 
+def _live_event_row_candidate(signal: Dict[str, Any], include_gap: bool = True) -> Dict[str, Any]:
+    """현재 kedge_live_events 실제 컬럼명에 맞춘 후보 row 생성."""
+    symbol = signal.get("coin") or signal.get("symbol")
+    domestic = signal.get("domestic") or signal.get("domestic_exchange") or signal.get("domestic_exch")
+    foreign = signal.get("foreign") or signal.get("foreign_exchange") or signal.get("foreign_excha")
+    real_edge = round(safe_float(signal.get("real_edge") or signal.get("real_edge_per") or signal.get("real_edge_percent")), 4)
+    executable = int(safe_float(
+        signal.get("executable_kr")
+        or signal.get("executable_krw")
+        or signal.get("real_fill_krw")
+        or signal.get("krw")
+        or signal.get("max_entry_krw")
+        or signal.get("final_entry_krw")
+    ))
+
+    row = {
+        "event_type": "CANDIDATE",
+        "symbol": symbol,
+        # 실제 DB 컬럼명 기준
+        "domestic_exch": domestic,
+        "foreign_excha": foreign,
+        "real_edge_per": real_edge,
+        "executable_kr": executable,
+        "status": "CANDIDATE",
+        "message": f"{symbol} {domestic}↔{foreign} edge={real_edge:+.2f}% fill={executable}",
+        "created_at": _live_iso_now(),
+    }
+
+    if include_gap:
+        # 신규 컬럼 필요:
+        # alter table kedge_live_events add column if not exists price_gap_per numeric;
+        # alter table kedge_live_events add column if not exists btc_gap_per numeric;
+        row["price_gap_per"] = round(safe_float(
+            signal.get("coin_gap")
+            or signal.get("price_gap")
+            or signal.get("price_gap_per")
+            or signal.get("coin_gap_percent")
+            or signal.get("basis_percent")
+        ), 4)
+        row["btc_gap_per"] = round(safe_float(
+            signal.get("btc_gap")
+            or signal.get("btc_gap_per")
+            or signal.get("btc_basis")
+            or signal.get("btc_basis_percent")
+        ), 4)
+
+    return row
+
+
 def push_live_event_candidate(signal: Dict[str, Any]) -> None:
     """kedge_live_events / kedge_live_summary에 CANDIDATE를 저장한다.
 
@@ -4646,23 +4698,28 @@ def push_live_event_candidate(signal: Dict[str, Any]) -> None:
             print("[LIVE Supabase] 설정 없음 - CANDIDATE 저장 스킵")
             return
 
-        event_row = {
-            "event_type": "CANDIDATE",
-            "symbol": signal.get("coin") or signal.get("symbol"),
-            "domestic_exchange": signal.get("domestic") or signal.get("domestic_exchange"),
-            "foreign_exchange": signal.get("foreign") or signal.get("foreign_exchange"),
-            "real_edge_percent": round(safe_float(signal.get("real_edge")), 4),
-            "executable_krw": int(safe_float(signal.get("executable_krw") or signal.get("krw") or signal.get("max_entry_krw") or signal.get("final_entry_krw"))),
-            "created_at": _live_iso_now(),
-        }
-
         url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/kedge_live_events"
+
+        # 1차: 가격괴리/BTC괴리 포함 저장
+        event_row = _live_event_row_candidate(signal, include_gap=True)
         r = session.post(url, headers=supabase_live_headers(), data=json.dumps(event_row, ensure_ascii=False), timeout=8)
+
+        # 신규 컬럼이 아직 DB에 없거나 schema cache가 갱신 전이면 기본 컬럼만 재시도한다.
+        if r.status_code not in (200, 201):
+            err = r.text[:500]
+            if "price_gap_per" in err or "btc_gap_per" in err or "schema cache" in err:
+                print("[LIVE Supabase] gap 컬럼 미준비 - 기본 후보 저장으로 재시도", r.status_code, err[:220])
+                event_row = _live_event_row_candidate(signal, include_gap=False)
+                r = session.post(url, headers=supabase_live_headers(), data=json.dumps(event_row, ensure_ascii=False), timeout=8)
+
         if r.status_code not in (200, 201):
             print("[LIVE Supabase] CANDIDATE 저장 실패", r.status_code, r.text[:300])
             return
 
-        print("[LIVE Supabase] CANDIDATE 저장 완료")
+        gap_txt = ""
+        if "price_gap_per" in event_row or "btc_gap_per" in event_row:
+            gap_txt = f" / price_gap={event_row.get('price_gap_per')} btc_gap={event_row.get('btc_gap_per')}"
+        print(f"[LIVE Supabase] CANDIDATE 저장 완료{gap_txt}")
 
         # summary는 스키마 차이가 있을 수 있어서 best-effort로만 갱신
         summary_row = {
@@ -4673,7 +4730,6 @@ def push_live_event_candidate(signal: Dict[str, Any]) -> None:
         s_url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/kedge_live_summary?id=eq.1"
         sr = session.patch(s_url, headers=supabase_live_headers(), data=json.dumps(summary_row, ensure_ascii=False), timeout=8)
         if sr.status_code not in (200, 204):
-            # id=1 row가 없을 때 생성 시도
             s_url2 = f"{SUPABASE_URL.rstrip('/')}/rest/v1/kedge_live_summary"
             sr2 = session.post(s_url2, headers=supabase_live_headers(), data=json.dumps(summary_row, ensure_ascii=False), timeout=8)
             if sr2.status_code not in (200, 201):

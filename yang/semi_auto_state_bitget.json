@@ -1349,6 +1349,96 @@
       "usd_krw": 1509.0,
       "entry_status": "READY",
       "status": "V8.8_FAST_PAPER_ENTRY"
+    },
+    "INJ_BITHUMB_BITGET_1780265365": {
+      "signal_id": "INJ_BITHUMB_BITGET_1780265365",
+      "ts": 1780265365.078233,
+      "time": "07:09",
+      "created_at": "2026-06-01 07:09:25",
+      "coin": "INJ",
+      "domestic": "BITHUMB",
+      "domestic_exchange": "BITHUMB",
+      "domestic_market": "INJ_KRW",
+      "foreign": "BITGET",
+      "foreign_exchange": "BITGET",
+      "foreign_market": "INJ/USDT:USDT",
+      "coin_gap": 3.54,
+      "btc_gap": 2.03,
+      "real_edge": 1.51,
+      "expected_profit_min": 0.51,
+      "expected_profit_max": 1.51,
+      "funding_rate": -0.0098,
+      "recommended_leverage": "x1 기본 / x2 최대 권장",
+      "stop_edge": 3.51,
+      "spot_wall_krw": 6317614,
+      "futures_wall_krw": 2743534,
+      "real_fill_krw": 2743534,
+      "futures_position_limit_krw": 1507130,
+      "futures_position_limit_source": "default_safe_limit",
+      "min_retain_edge_percent": 1.5,
+      "allowed_slippage_percent": 0.01,
+      "slippage_tiers_text": "0.01%: 국내 631.8만 / 해외 274.4만 / 최종 150.7만",
+      "max_user_entry_krw": 0,
+      "paper_domestic_base_krw": 2000000,
+      "paper_foreign_margin_base_krw": 500000,
+      "paper_futures_leverage": 4.0,
+      "roundtrip_fee_percent": 0.14,
+      "funding_simulation_enabled": false,
+      "max_entry_krw": 1507130,
+      "final_entry_krw": 1507130,
+      "used_entry_krw": 0,
+      "remaining_entry_krw": 1507130,
+      "wall_range_percent": 0.0139,
+      "executable_krw": 1507130,
+      "krw": 1507130,
+      "usd_krw": 1507.13,
+      "entry_status": "READY",
+      "status": "V8.8_FAST_PAPER_ENTRY"
+    },
+    "BASED_BITHUMB_BITGET_1780265717": {
+      "signal_id": "BASED_BITHUMB_BITGET_1780265717",
+      "ts": 1780265717.3966577,
+      "time": "07:15",
+      "created_at": "2026-06-01 07:15:17",
+      "coin": "BASED",
+      "domestic": "BITHUMB",
+      "domestic_exchange": "BITHUMB",
+      "domestic_market": "BASED_KRW",
+      "foreign": "BITGET",
+      "foreign_exchange": "BITGET",
+      "foreign_market": "BASED/USDT:USDT",
+      "coin_gap": 3.79,
+      "btc_gap": 2.21,
+      "real_edge": 1.58,
+      "expected_profit_min": 0.58,
+      "expected_profit_max": 1.58,
+      "funding_rate": 0.005,
+      "recommended_leverage": "x1 기본 / x2 최대 권장",
+      "stop_edge": 3.58,
+      "spot_wall_krw": 9799477,
+      "futures_wall_krw": 1756974,
+      "real_fill_krw": 1756974,
+      "futures_position_limit_krw": 1507130,
+      "futures_position_limit_source": "default_safe_limit",
+      "min_retain_edge_percent": 1.5,
+      "allowed_slippage_percent": 0.08,
+      "slippage_tiers_text": "0.08%: 국내 979.9만 / 해외 175.7만 / 최종 150.7만",
+      "max_user_entry_krw": 0,
+      "paper_domestic_base_krw": 2000000,
+      "paper_foreign_margin_base_krw": 500000,
+      "paper_futures_leverage": 4.0,
+      "roundtrip_fee_percent": 0.14,
+      "funding_simulation_enabled": false,
+      "max_entry_krw": 1507130,
+      "final_entry_krw": 1507130,
+      "used_entry_krw": 0,
+      "remaining_entry_krw": 1507130,
+      "wall_range_percent": 0.0784,
+      "executable_krw": 1507130,
+      "krw": 1507130,
+      "usd_krw": 1507.13,
+      "entry_status": "READY",
+      "status": "V8.8_FAST_PAPER_ENTRY"
     }
   },
   "users": {
@@ -1415,6 +1505,14 @@
     "8958522411:MERL_BITHUMB_BITGET_1780254045": {
       "selected_krw": 0,
       "updated_at": "2026-06-01 04:00:57"
+    },
+    "8958522411:INJ_BITHUMB_BITGET_1780265365": {
+      "selected_krw": 0,
+      "updated_at": "2026-06-01 07:09:26"
+    },
+    "6870367623:INJ_BITHUMB_BITGET_1780265365": {
+      "selected_krw": 0,
+      "updated_at": "2026-06-01 07:09:27"
     }
   },
   "positions": {
@@ -2023,6 +2121,18 @@
       "reason": "❌ 진입 취소\n\n사유: 현재 실제엣지 부족\n\n알림 당시: +1.84%\n현재: +0.94%\n최소 유지엣지: +1.50% 이상",
       "finished_at": "2026-06-01 04:00:57",
       "finished_ts": 1780254057.2086768
+    },
+    "6870367623:INJ_BITHUMB_BITGET_1780265365": {
+      "status": "FAILED",
+      "reason": "❌ 진입 취소\n\n사유: 현재 실제엣지 부족\n\n알림 당시: +1.51%\n현재: +0.97%\n최소 유지엣지: +1.50% 이상",
+      "finished_at": "2026-06-01 07:09:27",
+      "finished_ts": 1780265367.2892723
+    },
+    "8958522411:INJ_BITHUMB_BITGET_1780265365": {
+      "status": "FAILED",
+      "reason": "❌ 진입 취소\n\n사유: 현재 실제엣지 부족\n\n알림 당시: +1.51%\n현재: +0.97%\n최소 유지엣지: +1.50% 이상",
+      "finished_at": "2026-06-01 07:09:26",
+      "finished_ts": 1780265366.6665626
     }
   }
 }

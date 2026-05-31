@@ -51,16 +51,53 @@
     return (v === null || v === undefined || !Number.isFinite(Number(v))) ? '-' : fmtPct(v);
   }
 
+  // DB 컬럼에 값이 없을 때 row.message 안의 텍스트에서 퍼센트를 추출한다.
+  // 예: "가격 괴리 +3.12%" / "BTC 괴리 +0.98%" / "실제 엣지 +2.14%"
+  function normalizeMessageText(row){
+    if(!row) return '';
+    const msg = row.message || row.msg || row.text || row.detail || '';
+    return String(msg || '')
+      .replace(/\\n/g, '\n')
+      .replace(/\r/g, '\n')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/&nbsp;/gi, ' ');
+  }
+
+  function pctFromMessage(row, labelPatterns){
+    const msg = normalizeMessageText(row);
+    if(!msg) return null;
+    const labels = Array.isArray(labelPatterns) ? labelPatterns : [labelPatterns];
+
+    for(const label of labels){
+      // label 다음에 공백/콜론/줄바꿈/태그 등이 와도 잡히게 느슨하게 처리
+      const re = new RegExp(label + '[^+\\-0-9]{0,40}([+\\-]?\\d+(?:\\.\\d+)?)\\s*%', 'i');
+      const m = msg.match(re);
+      if(m && m[1] !== undefined){
+        const n = Number(m[1]);
+        if(Number.isFinite(n)) return n;
+      }
+    }
+    return null;
+  }
+
   function getRealEdge(row){
-    return firstNumber(row, [
+    const v = firstNumber(row, [
       'real_edge_per',
       'real_edge_percent', 'real_edge', 'edge_percent', 'edge',
       'actual_edge_percent', 'actual_edge', 'net_edge_percent', 'net_edge'
     ]);
+    if(v !== null) return v;
+    return pctFromMessage(row, [
+      '실제\\s*엣지',
+      '실제\\s*edge',
+      'real\\s*edge',
+      'actual\\s*edge'
+    ]);
   }
 
   function getCoinGap(row){
-    return firstNumber(row, [
+    const v = firstNumber(row, [
+      'price_gap_per', 'coin_gap_per',
       'coin_gap_percent', 'coin_gap',
       'price_gap_percent', 'price_gap',
       'price_premium_percent', 'price_premium',
@@ -70,15 +107,35 @@
       'gap_percent', 'gap',
       'kimchi_premium_percent', 'kimchi_premium'
     ]);
+    if(v !== null) return v;
+    return pctFromMessage(row, [
+      '가격\\s*괴리',
+      '코인\\s*괴리',
+      '가격\\s*갭',
+      'coin\\s*gap',
+      'price\\s*gap',
+      'premium',
+      'basis'
+    ]);
   }
 
   function getBtcGap(row){
-    return firstNumber(row, [
+    const v = firstNumber(row, [
+      'btc_gap_per',
       'btc_gap_percent', 'btc_gap',
       'btc_basis_percent', 'btc_basis',
       'btc_premium_percent', 'btc_premium',
       'market_gap_percent', 'market_gap',
       'btc_impact_percent', 'btc_impact'
+    ]);
+    if(v !== null) return v;
+    return pctFromMessage(row, [
+      'BTC\\s*괴리',
+      '비트\\s*괴리',
+      'BTC\\s*갭',
+      'btc\\s*gap',
+      'btc\\s*basis',
+      'btc\\s*premium'
     ]);
   }
 
@@ -217,6 +274,16 @@
     let coinGap = getCoinGap(latest);
     let btcGap = getBtcGap(latest);
     const executable = getExecutableKrw(latest);
+
+    // 같은 심볼의 다른 최신 이벤트 message에 괴리값이 있으면 보조로 사용
+    if(coinGap === null || btcGap === null || realEdge === null){
+      const sameSymbol = list.find(r => (r.symbol || r.coin || '-') === symbol && r !== latest);
+      if(sameSymbol){
+        if(coinGap === null) coinGap = getCoinGap(sameSymbol);
+        if(btcGap === null) btcGap = getBtcGap(sameSymbol);
+        if(realEdge === null) realEdge = getRealEdge(sameSymbol);
+      }
+    }
 
     // real_edge = 가격괴리 - BTC괴리. 저장 필드가 하나 빠진 경우 화면에서 역산해 보강한다.
     if(coinGap === null && realEdge !== null && btcGap !== null) coinGap = realEdge + btcGap;

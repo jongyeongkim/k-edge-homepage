@@ -1558,5 +1558,33 @@
   "SAHARA_BITHUMB_MEXC_1780260282": {
     "at": "2026-06-01 05:44:56",
     "result": "DONE"
+  },
+  "SAHARA_BITHUMB_MEXC_1780265086": {
+    "at": "2026-06-01 07:04:47",
+    "result": "DONE"
+  },
+  "INJ_BITHUMB_BITGET_1780265365": {
+    "at": "2026-06-01 07:09:29",
+    "result": "DONE"
+  },
+  "BASED_BITHUMB_BINGX_1780265714": {
+    "at": "2026-06-01 07:15:18",
+    "result": "DONE"
+  },
+  "BASED_BITHUMB_BITGET_1780265717": {
+    "at": "2026-06-01 07:15:18",
+    "result": "DONE"
+  },
+  "ALLO_BITHUMB_GATE_1780265806": {
+    "at": "2026-06-01 07:16:50",
+    "result": "DONE"
+  },
+  "BILL_BITHUMB_BINGX_1780266552": {
+    "at": "2026-06-01 07:29:17",
+    "result": "DONE"
+  },
+  "HEMI_BITHUMB_BINGX_1780266687": {
+    "at": "2026-06-01 07:31:31",
+    "result": "DONE"
   }
 }
