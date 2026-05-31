@@ -82,16 +82,27 @@
         </div>
       </div>
 
-      <aside class="live-edge-card" id="liveHeroCard">
-        <div class="live-head"><span id="liveHeroLabel">자동 진입 후보</span><b id="liveHeroEdge">실시간 대기</b></div>
-        <h3 id="liveHeroTitle">⚖️ LIVE 후보 연결 중</h3>
-        <p id="liveHeroRoute">Supabase LIVE 데이터 수신 대기</p>
-        <div class="live-metrics">
-          <div><small>가격 괴리</small><strong id="liveHeroCoinGap">-</strong></div>
-          <div><small>BTC 괴리</small><strong id="liveHeroBtcGap">-</strong></div>
-          <div><small>실제 엣지</small><strong id="liveHeroRealEdge">-</strong></div>
-          <div><small>실체결</small><strong id="liveHeroExecutable">-</strong></div>
+      <aside class="live-edge-card live-edge-card-v2" id="liveHeroCard">
+        <div class="live-glow"></div>
+        <div class="live-head">
+          <span id="liveHeroLabel">자동 진입 후보</span>
+          <b id="liveHeroEdge">실시간 대기</b>
         </div>
+        <div class="live-title-wrap">
+          <h3 id="liveHeroTitle">⚖️ LIVE 후보 연결 중</h3>
+          <p id="liveHeroRoute">Supabase LIVE 데이터 수신 대기</p>
+        </div>
+        <div class="live-metrics live-metrics-v2">
+          <div class="metric-main">
+            <small>실제 엣지</small>
+            <strong id="liveHeroRealEdge">-</strong>
+          </div>
+          <div class="metric-main">
+            <small>실체결 가능금액</small>
+            <strong id="liveHeroExecutable">-</strong>
+          </div>
+        </div>
+        <div class="live-note">BTC 괴리 제외 후 실제 진입 판단 기준</div>
         <a class="btn primary full" href="./payment.html">월 200,000원 등록</a>
       </aside>
     </section>

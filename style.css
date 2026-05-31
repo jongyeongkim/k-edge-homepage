@@ -638,3 +638,148 @@ footer a{color:#31d5ff;text-decoration:none;font-weight:800}
   align-items:center;
   text-align:center;
 }
+
+
+/* ===== K-EDGE LIVE 후보 카드 V2: 실제엣지/실체결 집중형 ===== */
+.live-edge-card-v2{
+  position:relative;
+  overflow:hidden;
+  border:1px solid rgba(49,213,255,.34);
+  background:
+    radial-gradient(circle at 18% 0%,rgba(34,255,213,.18),transparent 34%),
+    radial-gradient(circle at 88% 18%,rgba(140,53,255,.22),transparent 30%),
+    linear-gradient(155deg,rgba(10,29,58,.92),rgba(3,8,20,.95));
+  box-shadow:0 28px 90px rgba(0,0,0,.38), inset 0 0 40px rgba(49,213,255,.055);
+}
+.live-edge-card-v2:before{
+  content:"";
+  position:absolute;
+  inset:-1px;
+  border-radius:inherit;
+  padding:1px;
+  background:linear-gradient(135deg,rgba(31,255,210,.75),rgba(41,130,255,.28),rgba(149,64,255,.55));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+  mask-composite:exclude;
+  pointer-events:none;
+}
+.live-edge-card-v2 .live-glow{
+  position:absolute;
+  right:-70px;
+  top:-80px;
+  width:190px;
+  height:190px;
+  border-radius:50%;
+  background:rgba(31,255,210,.13);
+  filter:blur(18px);
+  pointer-events:none;
+}
+.live-edge-card-v2 .live-head{
+  position:relative;
+  z-index:1;
+  padding:3px 0 14px;
+  border-bottom:1px solid rgba(145,176,255,.14);
+}
+.live-edge-card-v2 .live-head span{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  padding:7px 11px;
+  border-radius:999px;
+  background:rgba(21,255,145,.09);
+  color:#b9ffe9;
+  border:1px solid rgba(32,255,149,.22);
+  font-size:13px;
+}
+.live-edge-card-v2 .live-head span:before{
+  content:"";
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:#20ff95;
+  box-shadow:0 0 12px #20ff95;
+}
+.live-edge-card-v2 .live-head b{
+  font-size:30px;
+  letter-spacing:-.5px;
+  color:#20ff95;
+  text-shadow:0 0 18px rgba(32,255,149,.32);
+}
+.live-title-wrap{
+  position:relative;
+  z-index:1;
+  margin:24px 0 18px;
+}
+.live-title-wrap h3{
+  margin:0 0 10px!important;
+  font-size:26px!important;
+  line-height:1.3;
+  letter-spacing:-.6px;
+}
+.live-title-wrap p{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  margin:0;
+  padding:9px 12px;
+  border-radius:999px;
+  background:rgba(255,255,255,.055);
+  border:1px solid rgba(145,176,255,.16);
+  color:#d9e6f7!important;
+  font-weight:850;
+}
+.live-metrics-v2{
+  position:relative;
+  z-index:1;
+  grid-template-columns:1.12fr .88fr!important;
+  gap:14px!important;
+  margin:20px 0 12px!important;
+}
+.live-metrics-v2 .metric-main{
+  border:1px solid rgba(49,213,255,.22)!important;
+  background:linear-gradient(155deg,rgba(8,27,56,.72),rgba(4,12,27,.86))!important;
+  border-radius:18px!important;
+  padding:18px 17px!important;
+  min-height:108px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+.live-metrics-v2 .metric-main:first-child{
+  background:
+    radial-gradient(circle at 78% 20%,rgba(32,255,149,.18),transparent 38%),
+    linear-gradient(155deg,rgba(7,38,53,.82),rgba(4,14,29,.88))!important;
+}
+.live-metrics-v2 small{
+  color:#94a6bd!important;
+  font-size:13px;
+  font-weight:900;
+  letter-spacing:.2px;
+  margin-bottom:10px!important;
+}
+.live-metrics-v2 strong{
+  font-size:34px!important;
+  line-height:1;
+  color:#fff;
+  letter-spacing:-1px;
+}
+.live-metrics-v2 .metric-main:first-child strong{
+  color:#20ff95;
+  text-shadow:0 0 20px rgba(32,255,149,.28);
+}
+.live-note{
+  position:relative;
+  z-index:1;
+  margin:8px 0 22px;
+  color:#9fb0c6;
+  font-size:13px;
+  font-weight:800;
+}
+@media(max-width:640px){
+  .live-edge-card-v2 .live-head b{font-size:23px;}
+  .live-title-wrap h3{font-size:20px!important;}
+  .live-title-wrap p{font-size:12px;}
+  .live-metrics-v2{grid-template-columns:1fr!important;}
+  .live-metrics-v2 .metric-main{min-height:88px;padding:14px!important;}
+  .live-metrics-v2 strong{font-size:27px!important;}
+}
