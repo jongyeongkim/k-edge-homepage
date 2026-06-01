@@ -194,23 +194,24 @@ function recalcEntry(){
 
 async function fetchBithumbTickerMap(markets){
   const out = {};
-  const list = Array.from(new Set((markets||[]).filter(Boolean)));
-  if(!list.length) return out;
-
-  for(let i=0; i<list.length; i+=40){
-    const chunk = list.slice(i, i+40);
-    try{
-      const res = await fetch('https://api.bithumb.com/v1/ticker?markets=' + encodeURIComponent(chunk.join(',')));
-      if(!res.ok) throw new Error('ticker HTTP ' + res.status);
-      const data = await res.json();
-      (Array.isArray(data)?data:[]).forEach(t=>{
-        const m = t.market || t.market_code || '';
-        const price = Number(t.trade_price || t.prev_closing_price || t.closing_price || 0);
-        if(m && price > 0) out[m] = price;
-      });
-    }catch(e){
-      console.log('Bithumb ticker fetch failed', chunk, e);
-    }
+  try{
+    // 빗썸 화면 기준 현재가에 가장 가깝게 전체 KRW 티커를 한 번에 가져온다.
+    // 개별 KRW-심볼 요청이 실패하는 코인들이 있어 ALL_KRW 방식으로 통일한다.
+    const res = await fetch('https://api.bithumb.com/public/ticker/ALL_KRW');
+    if(!res.ok) throw new Error('ALL_KRW ticker HTTP ' + res.status);
+    const raw = await res.json();
+    const data = raw && raw.data ? raw.data : {};
+    Object.keys(data || {}).forEach(sym=>{
+      if(sym === 'date') return;
+      const row = data[sym] || {};
+      const price = Number(row.closing_price || row.prev_closing_price || row.buy_price || row.sell_price || 0);
+      if(price > 0){
+        out['KRW-' + String(sym).toUpperCase()] = price;
+        out[String(sym).toUpperCase()] = price;
+      }
+    });
+  }catch(e){
+    console.log('Bithumb ALL_KRW ticker fetch failed', e);
   }
   return out;
 }
@@ -256,7 +257,7 @@ async function checkBithumbBalance(){
     const tickerMap = await fetchBithumbTickerMap(coinRows.map(x=>x.market));
 
     coinRows.forEach(c=>{
-      const currentPrice = Number(tickerMap[c.market] || 0);
+      const currentPrice = Number(tickerMap[c.market] || tickerMap[c.currency] || 0);
       if(currentPrice > 0){
         c.current_price = currentPrice;
         c.value = c.qty * currentPrice;
