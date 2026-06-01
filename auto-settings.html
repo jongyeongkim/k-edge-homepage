@@ -183,26 +183,91 @@ function recalcEntry(){
   return entry;
 }
 
+
+async function fetchBithumbTickerMap(markets){
+  const out = {};
+  const list = Array.from(new Set((markets||[]).filter(Boolean)));
+  if(!list.length) return out;
+
+  for(let i=0; i<list.length; i+=40){
+    const chunk = list.slice(i, i+40);
+    try{
+      const res = await fetch('https://api.bithumb.com/v1/ticker?markets=' + encodeURIComponent(chunk.join(',')));
+      if(!res.ok) throw new Error('ticker HTTP ' + res.status);
+      const data = await res.json();
+      (Array.isArray(data)?data:[]).forEach(t=>{
+        const m = t.market || t.market_code || '';
+        const price = Number(t.trade_price || t.prev_closing_price || t.closing_price || 0);
+        if(m && price > 0) out[m] = price;
+      });
+    }catch(e){
+      console.log('Bithumb ticker fetch failed', chunk, e);
+    }
+  }
+  return out;
+}
+
 async function checkBithumbBalance(){
   if(!latestRequest) return;
   const {key, secret} = getBithumbKeys();
-  if(!key || !secret){ qs('balanceResult').innerHTML = '<span class="err">빗썸 API KEY/SECRET이 없습니다. 등록 페이지에서 재등록하세요.</span>'; return; }
-  qs('balanceResult').innerHTML = '빗썸 잔고조회 중...';
+  if(!key || !secret){
+    qs('balanceResult').innerHTML = '<span class="err">빗썸 API KEY/SECRET이 없습니다. 등록 페이지에서 재등록하세요.</span>';
+    return;
+  }
+
+  qs('balanceResult').innerHTML = '빗썸 잔고조회 중...<br><span class="small">빗썸 기준: 주문가능 원화 + 총매수금액 기준입니다.</span>';
+
   try{
     const token = await makeJwt(key, secret);
     const res = await fetch('https://api.bithumb.com/v1/accounts', {headers:{Authorization:'Bearer '+token}});
     const txt = await res.text();
     if(!res.ok) throw new Error('HTTP '+res.status+' '+txt.slice(0,300));
     const data = JSON.parse(txt);
-    let total = 0;
+
+    const accounts = Array.isArray(data) ? data : [];
     let krw = 0;
-    (Array.isArray(data)?data:[]).forEach(x=>{
-      const bal = Number(x.balance||0)+Number(x.locked||0);
-      if(x.currency==='KRW'){ krw += bal; total += bal; }
-      else { total += bal * Number(x.avg_buy_price||0); }
+    let totalBuyAmount = 0;
+    const coinRows = [];
+
+    accounts.forEach(x=>{
+      const currency = String(x.currency || '').toUpperCase();
+      const qty = Number(x.balance || 0) + Number(x.locked || 0);
+      if(!currency || qty <= 0) return;
+
+      if(currency === 'KRW'){
+        krw += qty;
+      }else{
+        const avg = Number(x.avg_buy_price || 0);
+        const buyValue = qty * avg;
+        totalBuyAmount += buyValue;
+        if(buyValue > 0){
+          coinRows.push({
+            currency,
+            qty,
+            avg_buy_price: avg,
+            buy_value: buyValue
+          });
+        }
+      }
     });
-    bithumbCapital = Math.floor(total);
-    qs('balanceResult').innerHTML = `<span class="ok">✅ 빗썸 API 연결 성공</span><br>KRW: <b>${won(krw)}</b><br>총자산 추정: <b>${won(bithumbCapital)}</b><br><span class="small">※ 보유코인은 평균매수가 기준 추정입니다.</span>`;
+
+    bithumbCapital = Math.floor(krw + totalBuyAmount);
+
+    const topCoins = coinRows
+      .filter(c=>c.buy_value > 0)
+      .sort((a,b)=>b.buy_value-a.buy_value)
+      .slice(0,5)
+      .map(c=>`${c.currency}: ${won(c.buy_value)} (매수금액)`)
+      .join('<br>');
+
+    qs('balanceResult').innerHTML =
+      `<span class="ok">✅ 빗썸 API 연결 성공</span><br>` +
+      `주문가능/묶인 원화: <b>${won(krw)}</b><br>` +
+      `총매수금액: <b>${won(totalBuyAmount)}</b><br>` +
+      `빗썸 기준잔고: <b>${won(bithumbCapital)}</b><br>` +
+      (topCoins ? `<br><span class="small">${topCoins}</span><br>` : '') +
+      `<span class="small">※ 기준: 빗썸 총매수금액 + 주문가능 원화입니다.</span>`;
+
     recalcEntry();
   }catch(e){
     qs('balanceResult').innerHTML = `<span class="err">❌ 빗썸 잔고조회 실패</span><br>${String(e.message||e)}`;
