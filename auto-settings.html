@@ -50,8 +50,8 @@
       </div>
 
       <div id="compoundBox">
-        <button type="button" class="btn ghost full" onclick="checkBithumbBalance()">🔍 빗썸 잔고조회</button>
-        <div id="balanceResult" class="result-box">아직 조회하지 않았습니다.</div>
+        <button type="button" class="btn ghost full" onclick="checkBithumbBalance()">🔍 빗썸 현재 평가잔고 조회</button>
+        <div id="balanceResult" class="result-box">아직 조회하지 않았습니다.<br><span class="small">기준: 보유 현물 현재 평가금액 + 주문가능/묶인 원화</span></div>
       </div>
 
       <div class="setting-row">
@@ -95,6 +95,9 @@ let currentUser = null;
 let latestRequest = null;
 let existingSetting = null;
 let bithumbCapital = 0;
+let bithumbKrwBalance = 0;
+let bithumbSpotValue = 0;
+let bithumbKrwChecked = false;
 
 const qs = id => document.getElementById(id);
 const won = n => (Math.floor(Number(n)||0)).toLocaleString('ko-KR') + '원';
@@ -159,7 +162,7 @@ async function loadPage(){
     qs('autoEnabled').value = String(!!existingSetting.auto_enabled);
     qs('alertEnabled').value = String(existingSetting.alert_enabled !== false);
     bithumbCapital = Number(existingSetting.capital_krw || 0);
-    if(bithumbCapital>0) qs('balanceResult').innerHTML = `최근 저장 운용금액: <b>${won(bithumbCapital)}</b>`;
+    if(bithumbCapital>0) qs('balanceResult').innerHTML = `최근 저장 빗썸 현재 기준잔고: <b>${won(bithumbCapital)}</b>`;
   }
   recalcEntry();
 }
@@ -176,8 +179,13 @@ function recalcEntry(){
   const mode = document.querySelector('input[name="capitalMode"]:checked')?.value || 'compound';
   const split = Math.max(1, parseInt(val('splitCount')||'1',10));
   let entry = 0;
-  if(mode==='fixed') entry = Math.floor((Number(val('fixedEntryKrw'))||0)/1000)*1000;
-  else entry = Math.floor((Number(bithumbCapital)||0)/split/1000)*1000;
+
+  if(mode==='fixed'){
+    entry = Math.floor((Number(val('fixedEntryKrw'))||0)/1000)*1000;
+  }else{
+    entry = Math.floor((Number(bithumbCapital)||0)/split/1000)*1000;
+  }
+
   qs('entryAmount').value = entry>0 ? won(entry) : '-';
   qs('entryWarn').innerHTML = entry>0 && entry<5000 ? '⚠️ 빗썸 최소 주문금액 5,000원 미만입니다. 분할 수를 줄이세요.' : '';
   return entry;
@@ -215,7 +223,7 @@ async function checkBithumbBalance(){
     return;
   }
 
-  qs('balanceResult').innerHTML = '빗썸 잔고조회 중...<br><span class="small">빗썸 기준: 주문가능 원화 + 총매수금액 기준입니다.</span>';
+  qs('balanceResult').innerHTML = '빗썸 현재 평가잔고 조회 중...<br><span class="small">보유 현물 현재 평가금액 + 주문가능/묶인 원화를 계산합니다.</span>';
 
   try{
     const token = await makeJwt(key, secret);
@@ -226,7 +234,7 @@ async function checkBithumbBalance(){
 
     const accounts = Array.isArray(data) ? data : [];
     let krw = 0;
-    let totalBuyAmount = 0;
+    let spotValue = 0;
     const coinRows = [];
 
     accounts.forEach(x=>{
@@ -237,40 +245,54 @@ async function checkBithumbBalance(){
       if(currency === 'KRW'){
         krw += qty;
       }else{
-        const avg = Number(x.avg_buy_price || 0);
-        const buyValue = qty * avg;
-        totalBuyAmount += buyValue;
-        if(buyValue > 0){
-          coinRows.push({
-            currency,
-            qty,
-            avg_buy_price: avg,
-            buy_value: buyValue
-          });
-        }
+        coinRows.push({
+          currency,
+          qty,
+          market: 'KRW-' + currency
+        });
       }
     });
 
-    bithumbCapital = Math.floor(krw + totalBuyAmount);
+    const tickerMap = await fetchBithumbTickerMap(coinRows.map(x=>x.market));
+
+    coinRows.forEach(c=>{
+      const currentPrice = Number(tickerMap[c.market] || 0);
+      if(currentPrice > 0){
+        c.current_price = currentPrice;
+        c.value = c.qty * currentPrice;
+        spotValue += c.value;
+      }else{
+        c.current_price = 0;
+        c.value = 0;
+        c.failed = true;
+      }
+    });
+
+    bithumbKrwBalance = Math.floor(krw);
+    bithumbSpotValue = Math.floor(spotValue);
+    bithumbCapital = Math.floor(bithumbKrwBalance + bithumbSpotValue);
 
     const topCoins = coinRows
-      .filter(c=>c.buy_value > 0)
-      .sort((a,b)=>b.buy_value-a.buy_value)
+      .filter(c=>c.value > 0)
+      .sort((a,b)=>b.value-a.value)
       .slice(0,5)
-      .map(c=>`${c.currency}: ${won(c.buy_value)} (매수금액)`)
+      .map(c=>`${c.currency}: ${won(c.value)} (현재가)`)
       .join('<br>');
+
+    const failedCoins = coinRows.filter(c=>c.failed).map(c=>c.currency).join(', ');
 
     qs('balanceResult').innerHTML =
       `<span class="ok">✅ 빗썸 API 연결 성공</span><br>` +
-      `주문가능/묶인 원화: <b>${won(krw)}</b><br>` +
-      `총매수금액: <b>${won(totalBuyAmount)}</b><br>` +
-      `빗썸 기준잔고: <b>${won(bithumbCapital)}</b><br>` +
+      `주문가능/묶인 원화: <b>${won(bithumbKrwBalance)}</b><br>` +
+      `보유 현물 현재 평가금액: <b>${won(bithumbSpotValue)}</b><br>` +
+      `빗썸 현재 기준잔고: <b>${won(bithumbCapital)}</b><br>` +
       (topCoins ? `<br><span class="small">${topCoins}</span><br>` : '') +
-      `<span class="small">※ 기준: 빗썸 총매수금액 + 주문가능 원화입니다.</span>`;
+      (failedCoins ? `<br><span class="err small">현재가 조회 실패: ${failedCoins}</span><br>` : '') +
+      `<span class="small">※ 기준: 보유 현물 현재 평가금액 + 주문가능/묶인 원화입니다.</span>`;
 
     recalcEntry();
   }catch(e){
-    qs('balanceResult').innerHTML = `<span class="err">❌ 빗썸 잔고조회 실패</span><br>${String(e.message||e)}`;
+    qs('balanceResult').innerHTML = `<span class="err">❌ 빗썸 현재 평가잔고 조회 실패</span><br>${String(e.message||e)}`;
   }
 }
 
@@ -278,25 +300,51 @@ async function saveAutoSettings(){
   if(!currentUser || !latestRequest) return;
   const mode = document.querySelector('input[name="capitalMode"]:checked')?.value || 'compound';
   const split = Math.max(1, parseInt(val('splitCount')||'1',10));
+  const manualBuy = Math.floor(Number(val('bithumbTotalBuyKrw')) || 0);
   const entry = recalcEntry();
-  if(entry < 5000){ qs('saveMsg').style.display='block'; qs('saveMsg').innerHTML='<span class="err">❌ 1회 진입금액이 5,000원 미만입니다. 분할 수를 줄이거나 잔고를 확인하세요.</span>'; return; }
+
+  if(mode === 'compound'){
+    if(manualBuy <= 0){
+      qs('saveMsg').style.display='block';
+      qs('saveMsg').innerHTML='<span class="err">❌ 빗썸 현재 평가금액을 입력하세요.</span>';
+      return;
+    }
+    if(!bithumbKrwChecked){
+      qs('saveMsg').style.display='block';
+      qs('saveMsg').innerHTML='<span class="err">❌ 빗썸 원화잔고 조회를 먼저 눌러주세요.</span><br>현재 평가금액 + 주문가능 원화가 저장되어야 최초잔고가 정확합니다.';
+      return;
+    }
+  }
+
+  if(entry < 5000){
+    qs('saveMsg').style.display='block';
+    qs('saveMsg').innerHTML='<span class="err">❌ 1회 진입금액이 5,000원 미만입니다. 분할 수를 줄이거나 잔고를 확인하세요.</span>';
+    return;
+  }
+
+  const autoOn = val('autoEnabled') === 'true';
+  const nowIso = new Date().toISOString();
+  const domesticCapital = mode==='compound' ? Math.floor(bithumbCapital) : Math.floor(entry);
+
   const payload = {
     request_id: latestRequest.id,
     email: currentUser.email,
     tg_chat_id: latestRequest.tg_chat_id,
     alert_enabled: val('alertEnabled') === 'true',
-    auto_enabled: val('autoEnabled') === 'true',
+    auto_enabled: autoOn,
     capital_mode: mode,
-    capital_krw: mode==='compound' ? Math.floor(bithumbCapital) : Math.floor(entry),
+    capital_krw: domesticCapital,
     split_count: split,
     entry_amount_krw: Math.floor(entry),
-    balance_snapshot_requested: val('autoEnabled') === 'true',
-    balance_snapshot_request_at: new Date().toISOString(),
+
+    // 핵심: AUTO ON 저장 클릭 시점이 새 최초 기준잔고 생성 요청이다.
+    balance_snapshot_requested: autoOn,
+    balance_snapshot_request_at: autoOn ? nowIso : null,
     balance_snapshot_notified: false,
-    updated_at: new Date().toISOString()
+
+    updated_at: nowIso
   };
-  // email unique 충돌 방지: 같은 이메일이면 insert가 아니라 upsert/update로 처리한다.
-  // 재가입/재등록으로 request_id가 바뀌어도 email 기준 기존 설정을 갱신한다.
+
   let result = await db
     .from('auto_settings')
     .upsert(payload, { onConflict: 'email' })
@@ -319,14 +367,13 @@ async function saveAutoSettings(){
     error = result.error || { message:'AUTO 설정은 저장됐지만 자산추적 컬럼 SQL이 아직 적용되지 않았습니다.' };
   }
 
-  // 승인 row도 AUTO ON/OFF와 동기화한다. 봇은 service_enabled OFF면 자동진입을 스킵한다.
   if(!error){
     await db.from('kedge_requests')
       .update({
         service_enabled: payload.auto_enabled,
         running: payload.auto_enabled,
         auto_config_done: true,
-        updated_at: new Date().toISOString()
+        updated_at: nowIso
       })
       .eq('id', latestRequest.id);
   }
@@ -336,7 +383,12 @@ async function saveAutoSettings(){
     qs('saveMsg').innerHTML='<span class="err">❌ 저장 실패: '+error.message+'</span>';
   } else {
     existingSetting = result.data || payload;
-    qs('saveMsg').innerHTML='<span class="ok">✅ AUTO 설정 저장 완료</span><br>자동매매: '+(payload.auto_enabled?'ON':'OFF')+'<br>1회 진입금액: '+won(entry)+'<br><span class="small">AUTO ON 저장 시 텔레그램으로 최초 기준잔고 알림이 발송됩니다.</span>';
+    qs('saveMsg').innerHTML=
+      '<span class="ok">✅ AUTO 설정 저장 완료</span><br>' +
+      '자동매매: '+(payload.auto_enabled?'ON':'OFF')+'<br>' +
+      '빗썸 기준잔고: '+won(domesticCapital)+'<br>' +
+      '1회 진입금액: '+won(entry)+'<br>' +
+      '<span class="small">AUTO ON 저장 시 텔레그램으로 최초 기준잔고 알림이 발송됩니다.</span>';
   }
 }
 
