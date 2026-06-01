@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-K-EDGE V9.5.19 TELEGRAM MENU WORKER - BALANCE TRACKING + CURRENT EDGE
+K-EDGE V9.5.14 TELEGRAM MENU WORKER - POSITIONS MARGIN/LEVERAGE + CURRENT EDGE
 
 핵심:
 - @Kedge0203bot 토큰 자동 선택
 - /start, 메뉴 입력 시 하단 고정 버튼(reply_keyboard) 전송
-- 📊 포지션조회 / 📉 현재엣지 / 💰 자산조회 / 📈 통계조회 / 🛑 자동정지 / ▶ 자동시작
+- 📊 포지션조회 / 📉 현재엣지 / 📈 통계조회 / 🛑 자동정지 / ▶ 자동시작
 - 조회/통계는 읽기 전용
 """
 
@@ -15,10 +15,6 @@ import time
 import glob
 import traceback
 import importlib.util
-import base64
-import hmac
-import hashlib
-import uuid
 from pathlib import Path
 
 try:
@@ -198,11 +194,10 @@ def reply_keyboard_markup():
                 {"text": "📉 현재엣지"},
             ],
             [
-                {"text": "💰 자산조회"},
                 {"text": "📈 통계조회"},
+                {"text": "🛑 자동정지"},
             ],
             [
-                {"text": "🛑 자동정지"},
                 {"text": "▶ 자동시작"},
             ],
         ],
@@ -1594,458 +1589,6 @@ def current_edge_text(chat_id):
 
 
 
-# -------------------------
-# Balance baseline / asset lookup section
-# -------------------------
-BALANCE_TRACKING_ENABLED = os.getenv("KEDGE_MENU_BALANCE_TRACKING", "true").lower() == "true"
-BALANCE_POLL_SEC = float(os.getenv("KEDGE_MENU_BALANCE_POLL_SEC", "10"))
-_BALANCE_LAST_POLL_AT = 0.0
-_BALANCE_FX_CACHE = {"ts": 0.0, "usd_krw": 1509.0}
-_BALANCE_FX_TTL_SEC = 30.0
-
-
-def _supabase_url_menu():
-    return str(getattr(core, "SUPABASE_URL", "") or "").rstrip("/") if core else ""
-
-
-def _supabase_key_menu():
-    return str(getattr(core, "SUPABASE_SERVICE_KEY", "") or "").strip() if core else ""
-
-
-def _supabase_headers_menu(prefer_return=True):
-    key = _supabase_key_menu()
-    h = {"apikey": key, "Authorization": "Bearer " + key, "Content-Type": "application/json"}
-    if prefer_return:
-        h["Prefer"] = "return=representation"
-    return h
-
-
-def _balance_now_iso():
-    try:
-        from datetime import datetime
-        return datetime.now().isoformat(timespec="seconds")
-    except Exception:
-        return time.strftime("%Y-%m-%d %H:%M:%S")
-
-
-def _json_obj(v):
-    if isinstance(v, dict): return v
-    if not v: return {}
-    try: return json.loads(v)
-    except Exception: return {}
-
-
-def _balance_member_chat_id(m):
-    try:
-        if core and hasattr(core, "get_member_chat_id"):
-            cid = str(core.get_member_chat_id(m) or "").strip()
-            if cid: return cid
-    except Exception: pass
-    return str((m or {}).get("tg_chat_id") or (m or {}).get("chat_id") or (m or {}).get("user_id") or "").strip()
-
-
-def _balance_find_member(chat_id=None, email=None):
-    chat_id = str(chat_id or "").strip(); email = str(email or "").strip().lower()
-    try:
-        members = core.supabase_get_approved_members(force_refresh=True) if core and hasattr(core, "supabase_get_approved_members") else []
-    except Exception as e:
-        print(f"{MENU_LOG_PREFIX} balance member load fail: {e}"); members = []
-    for m in members or []:
-        if not isinstance(m, dict): continue
-        try:
-            if core and hasattr(core, "merge_member_auto_settings"):
-                m = core.merge_member_auto_settings(m)
-        except Exception: pass
-        if chat_id and _balance_member_chat_id(m) == chat_id: return m
-        if email and str(m.get("email") or "").strip().lower() == email: return m
-    return None
-
-
-def _supabase_get_auto_setting(chat_id=None, email=None):
-    url = _supabase_url_menu()
-    if not url or not _supabase_key_menu() or requests is None: return None
-    base = url + "/rest/v1/auto_settings"
-    try:
-        if chat_id:
-            r = requests.get(base, headers=_supabase_headers_menu(False), params={"select":"*", "tg_chat_id":"eq."+str(chat_id), "order":"updated_at.desc", "limit":"1"}, timeout=10)
-            if r.status_code in (200,206) and isinstance(r.json(), list) and r.json(): return r.json()[0]
-        if email:
-            r = requests.get(base, headers=_supabase_headers_menu(False), params={"select":"*", "email":"eq."+str(email), "order":"updated_at.desc", "limit":"1"}, timeout=10)
-            if r.status_code in (200,206) and isinstance(r.json(), list) and r.json(): return r.json()[0]
-    except Exception as e:
-        print(f"{MENU_LOG_PREFIX} auto_settings read fail: {e}")
-    return None
-
-
-def _supabase_patch_auto_setting(setting, patch):
-    url = _supabase_url_menu()
-    if not url or not _supabase_key_menu() or not isinstance(setting, dict) or requests is None: return False, "supabase config missing"
-    email = str(setting.get("email") or "").strip(); sid = setting.get("id")
-    params = {"email":"eq."+email} if email else {"id":"eq."+str(sid)}
-    try:
-        r = requests.patch(url+"/rest/v1/auto_settings", headers=_supabase_headers_menu(True), params=params, data=json.dumps(patch, ensure_ascii=False), timeout=12)
-        return (r.status_code in (200,204), "ok" if r.status_code in (200,204) else f"HTTP {r.status_code} {r.text[:300]}")
-    except Exception as e:
-        return False, repr(e)
-
-
-def _menu_usd_krw():
-    now=time.time()
-    if now-float(_BALANCE_FX_CACHE.get("ts") or 0) < _BALANCE_FX_TTL_SEC: return safe_float(_BALANCE_FX_CACHE.get("usd_krw"),1509.0)
-    try: val = safe_float(core.get_usd_krw(), 1509.0) if core and hasattr(core,"get_usd_krw") else safe_float(getattr(core,"FALLBACK_USD_KRW",1509.0),1509.0)
-    except Exception: val = safe_float(getattr(core,"FALLBACK_USD_KRW",1509.0),1509.0)
-    _BALANCE_FX_CACHE.update({"ts":now,"usd_krw":val}); return val
-
-
-def _b64url_bytes(b): return base64.urlsafe_b64encode(b).decode().rstrip("=")
-def _b64url_json(obj): return _b64url_bytes(json.dumps(obj, separators=(",", ":")).encode())
-
-def _bithumb_jwt(access_key, secret_key):
-    signing = _b64url_json({"alg":"HS256","typ":"JWT"}) + "." + _b64url_json({"access_key":access_key,"nonce":str(uuid.uuid4()),"timestamp":int(time.time()*1000)})
-    sig = hmac.new(str(secret_key).encode(), signing.encode(), hashlib.sha256).digest()
-    return signing + "." + _b64url_bytes(sig)
-
-
-def _get_bithumb_keys_from_member(member):
-    apis=_json_obj(member.get("domestic_apis")); b=apis.get("bithumb") or apis.get("BITHUMB") or {}
-    return str(b.get("api_key") or member.get("domestic_api_key") or "").strip(), str(b.get("api_secret") or b.get("secret_key") or b.get("secret") or member.get("domestic_api_secret") or "").strip()
-
-
-
-def fetch_bithumb_current_price_map_for_balance(markets):
-    """빗썸 현물 자산평가용 현재 시세 조회. 읽기 전용."""
-    out = {}
-    try:
-        if requests is None:
-            return out
-        markets = [str(x).strip().upper() for x in (markets or []) if str(x).strip()]
-        uniq = []
-        for m in markets:
-            if m not in uniq:
-                uniq.append(m)
-        for i in range(0, len(uniq), 40):
-            chunk = uniq[i:i+40]
-            if not chunk:
-                continue
-            r = requests.get(
-                "https://api.bithumb.com/v1/ticker",
-                params={"markets": ",".join(chunk)},
-                timeout=8
-            )
-            if r.status_code != 200:
-                continue
-            data = r.json()
-            if not isinstance(data, list):
-                continue
-            for t in data:
-                if not isinstance(t, dict):
-                    continue
-                market = str(t.get("market") or t.get("market_code") or "").upper()
-                price = safe_float(t.get("trade_price") or t.get("prev_closing_price") or t.get("closing_price") or 0)
-                if market and price > 0:
-                    out[market] = price
-    except Exception as e:
-        print(f"{MENU_LOG_PREFIX} bithumb current price lookup fail: {e}")
-    return out
-
-
-def _fetch_bithumb_total_krw(member):
-    """빗썸 현물 총자산 조회.
-
-    기준:
-    - 주문가능 KRW + 묶인 KRW
-    - 보유 현물 수량(balance+locked) × 빗썸 총매수금액
-    - 평균매수가는 총매수금액 조회 실패 시 fallback으로만 사용
-    """
-    key,sec=_get_bithumb_keys_from_member(member)
-    if not key or not sec or requests is None:
-        return 0.0,{"ok":False,"exchange":"BITHUMB","error":"api key missing"}
-    try:
-        r=requests.get("https://api.bithumb.com/v1/accounts", headers={"Authorization":"Bearer "+_bithumb_jwt(key,sec)}, timeout=12)
-        if r.status_code not in (200,201):
-            return 0.0,{"ok":False,"exchange":"BITHUMB","error":f"HTTP {r.status_code} {r.text[:160]}"}
-
-        accounts = r.json() if isinstance(r.json(),list) else []
-        krw=0.0
-        coin_rows=[]
-
-        for x in accounts:
-            if not isinstance(x,dict):
-                continue
-            bal=safe_float(x.get("balance"))+safe_float(x.get("locked"))
-            cur=str(x.get("currency") or "").upper()
-            if not cur or bal<=0:
-                continue
-            if cur=="KRW":
-                krw+=bal
-            else:
-                coin_rows.append({
-                    "currency":cur,
-                    "market":"KRW-"+cur,
-                    "qty":bal,
-                    "avg_buy_price":safe_float(x.get("avg_buy_price"))
-                })
-
-        price_map=fetch_bithumb_current_price_map_for_balance([c["market"] for c in coin_rows])
-        coin_total=0.0
-        top=[]
-        for c in coin_rows:
-            current_price=safe_float(price_map.get(c["market"]))
-            fallback=safe_float(c.get("avg_buy_price"))
-            used=current_price if current_price>0 else fallback
-            value=safe_float(c.get("qty"))*used
-            coin_total+=value
-            if value>0:
-                top.append({
-                    "coin":c["currency"],
-                    "qty":round(safe_float(c.get("qty")),8),
-                    "price":round(used,8),
-                    "value_krw":round(value,2),
-                    "price_source":"current_price" if current_price>0 else "avg_buy_price_fallback"
-                })
-
-        total=krw+coin_total
-        return total,{
-            "ok":True,
-            "exchange":"BITHUMB",
-            "total_krw":round(total,2),
-            "krw":round(krw,2),
-            "spot_value_krw":round(coin_total,2),
-            "valuation":"current_price",
-            "top":sorted(top,key=lambda x:x.get("value_krw",0),reverse=True)[:10]
-        }
-    except Exception as e:
-        return 0.0,{"ok":False,"exchange":"BITHUMB","error":repr(e)[:180]}
-
-
-def _fetch_foreign_futures_total_krw(member):
-    usd=_menu_usd_krw(); total=0.0; details=[]
-    for name in _enabled_foreign_names(member):
-        try:
-            ex=core.build_user_exchange_from_member(member,name.lower(),"future") if core and hasattr(core,"build_user_exchange_from_member") else None
-            if ex is None: details.append({"exchange":name,"ok":False,"error":"object missing"}); continue
-            try: bal=ex.fetch_balance({"type":"swap"})
-            except Exception: bal=ex.fetch_balance()
-            usdt=_balance_total_from_ccxt_balance(bal); krw=usdt*usd; total+=krw
-            details.append({"exchange":name,"ok":True,"usdt":round(usdt,4),"krw":round(krw,2)})
-        except Exception as e: details.append({"exchange":name,"ok":False,"error":repr(e)[:160]})
-    return total,details
-
-
-def _calc_user_total_balance(member):
-    """국내 현물 + 해외 선물 자산 합산.
-
-    국내 빗썸 기준:
-    - 주문가능/묶인 KRW
-    - 보유 코인 수량(balance+locked) × avg_buy_price
-    - 즉 빗썸 기준 총매수금액 + 원화
-
-    해외:
-    - 등록된 MEXC/GATE/BITGET/BINGX 선물 계정 잔고/equity 합산
-    - 해외 현물은 제외
-    """
-    detail = {
-        "domestic": {},
-        "foreign_futures": {},
-        "foreign_spot_excluded": True,
-    }
-
-    domestic_total = 0.0
-    foreign_futures_total = 0.0
-
-    # 1) BITHUMB: 총매수금액 + 원화
-    try:
-        krw_total = 0.0
-        total_buy_amount = 0.0
-        coin_rows = []
-
-        bithumb_accounts = []
-        for fn_name in ["fetch_bithumb_accounts_from_member", "bithumb_get_accounts_from_member", "fetch_bithumb_accounts"]:
-            try:
-                if core and hasattr(core, fn_name):
-                    bithumb_accounts = getattr(core, fn_name)(member) or []
-                    if bithumb_accounts:
-                        break
-            except Exception:
-                bithumb_accounts = []
-
-        if isinstance(bithumb_accounts, dict):
-            bithumb_accounts = bithumb_accounts.get("data") or bithumb_accounts.get("accounts") or []
-
-        if isinstance(bithumb_accounts, list):
-            for x in bithumb_accounts:
-                if not isinstance(x, dict):
-                    continue
-                currency = str(x.get("currency") or x.get("asset") or x.get("coin") or "").upper()
-                qty = safe_float(x.get("balance")) + safe_float(x.get("locked"))
-                if not currency or qty <= 0:
-                    continue
-                if currency == "KRW":
-                    krw_total += qty
-                else:
-                    avg = safe_float(x.get("avg_buy_price"))
-                    buy_value = qty * avg
-                    total_buy_amount += buy_value
-                    if buy_value > 0:
-                        coin_rows.append({
-                            "coin": currency,
-                            "qty": qty,
-                            "avg_buy_price": avg,
-                            "buy_value_krw": round(buy_value, 2),
-                        })
-
-        domestic_total = krw_total + total_buy_amount
-        detail["domestic"] = {
-            "exchange": "BITHUMB",
-            "ok": True,
-            "valuation": "total_buy_amount_plus_krw",
-            "total_krw": round(domestic_total, 2),
-            "krw": round(krw_total, 2),
-            "total_buy_amount_krw": round(total_buy_amount, 2),
-            "top": sorted(coin_rows, key=lambda x: x.get("buy_value_krw", 0), reverse=True)[:10],
-        }
-    except Exception as e:
-        detail["domestic"] = {"exchange": "BITHUMB", "ok": False, "error": repr(e)}
-        domestic_total = 0.0
-
-    # 2) 해외 선물 전체 합산
-    try:
-        foreign_apis = {}
-        try:
-            foreign_apis = member.get("foreign_apis") or {}
-            if isinstance(foreign_apis, str):
-                foreign_apis = json.loads(foreign_apis)
-        except Exception:
-            foreign_apis = {}
-
-        exchanges = ["mexc", "gate", "bitget", "bingx"]
-        usd_krw = safe_float(getattr(core, "FALLBACK_USD_KRW", None) or getattr(core, "MANUAL_USD_KRW", None) or 1509.0, 1509.0)
-
-        for ex_name in exchanges:
-            cfg = foreign_apis.get(ex_name) if isinstance(foreign_apis, dict) else None
-            if isinstance(cfg, dict) and cfg.get("enabled") is False:
-                continue
-
-            has_json_key = isinstance(cfg, dict) and (cfg.get("api_key") or cfg.get("key"))
-            has_legacy_key = member.get("foreign_api_key") and str(member.get("foreign_exchange") or "").lower() == ex_name
-            if not has_json_key and not has_legacy_key:
-                continue
-
-            try:
-                ex = None
-                if core and hasattr(core, "build_user_exchange_from_member"):
-                    ex = core.build_user_exchange_from_member(member, ex_name, "future")
-                if ex is None:
-                    raise RuntimeError("future exchange object missing")
-
-                bal = ex.fetch_balance()
-                total_usdt = _balance_total_from_ccxt_balance(bal)
-                total_krw = total_usdt * usd_krw
-                foreign_futures_total += total_krw
-                detail["foreign_futures"][ex_name.upper()] = {
-                    "ok": True,
-                    "total_usdt": round(total_usdt, 6),
-                    "total_krw": round(total_krw, 2),
-                    "usd_krw": usd_krw,
-                }
-            except Exception as e:
-                detail["foreign_futures"][ex_name.upper()] = {
-                    "ok": False,
-                    "error": repr(e)[:220],
-                }
-    except Exception as e:
-        detail["foreign_futures_error"] = repr(e)
-
-    total = domestic_total + foreign_futures_total
-    return {
-        "ok": True,
-        "total_krw": round(total, 2),
-        "domestic_balance_krw": round(domestic_total, 2),
-        "foreign_futures_balance_krw": round(foreign_futures_total, 2),
-        "foreign_spot_balance_krw": 0,
-        "detail": detail,
-        "checked_at": _balance_now_iso(),
-    }
-
-
-def _save_balance_snapshot(setting, bal, is_initial=False, notified=None):
-    now=_balance_now_iso()
-    patch={
-        "last_total_balance_krw":bal.get("total_krw"),
-        "last_domestic_balance_krw":bal.get("domestic_balance_krw"),
-        "last_foreign_futures_balance_krw":bal.get("foreign_futures_balance_krw"),
-        "last_balance_detail":bal.get("detail"),
-        "last_balance_checked_at":now,
-        "balance_snapshot_requested":False,
-        "updated_at":now
-    }
-    if is_initial:
-        patch.update({
-            "initial_total_balance_krw":bal.get("total_krw"),
-            "initial_domestic_balance_krw":bal.get("domestic_balance_krw"),
-            "initial_foreign_futures_balance_krw":bal.get("foreign_futures_balance_krw"),
-            "initial_balance_detail":bal.get("detail"),
-            "initial_saved_at":now
-        })
-    if notified is not None:
-        patch["balance_snapshot_notified"]=bool(notified)
-    ok,msg=_supabase_patch_auto_setting(setting,patch)
-    if not ok:
-        print(f"{MENU_LOG_PREFIX} balance snapshot save fail: {msg}")
-    return ok
-
-
-def _balance_start_dm_text(setting, bal):
-    lines=["🤖 <b>K-EDGE AUTO 설정 저장 완료</b>","",f"자동매매: <b>{'ON' if setting.get('auto_enabled') else 'OFF'}</b>"]
-    if setting.get("split_count"): lines.append(f"분할: <b>{int(safe_float(setting.get('split_count')))}분할</b>")
-    if setting.get("entry_amount_krw"): lines.append(f"1회 진입금액: <b>{fmt_krw(setting.get('entry_amount_krw'))}</b>")
-    lines += ["","━━━━━━━━━━━━━━","💰 <b>최초 기준잔고</b>",f"총 기준자산: <b>{fmt_krw(bal.get('total_krw'))}</b>",f"빗썸 현물: <b>{fmt_krw(bal.get('domestic_balance_krw'))}</b>",f"해외 선물: <b>{fmt_krw(bal.get('foreign_futures_balance_krw'))}</b>","","이 금액을 기준으로 앞으로 자산조회에서 수익률을 계산합니다.",f"🕒 {_balance_now_iso()}"]
-    return "\n".join(lines)
-
-
-def _balance_lookup_text(setting, bal):
-    initial=safe_float(setting.get("initial_total_balance_krw")) or safe_float(bal.get("total_krw")); diff=safe_float(bal.get("total_krw"))-initial; pct=(diff/initial*100.0) if initial>0 else 0.0; sign="+" if diff>=0 else ""
-    return "\n".join(["💰 <b>K-EDGE 자산조회</b>","",f"최초 기준자산: <b>{fmt_krw(initial)}</b>",f"현재 총자산: <b>{fmt_krw(bal.get('total_krw'))}</b>","",f"증가금액: <b>{sign}{fmt_krw(diff)}</b>",f"수익률: <b>{sign}{pct:.2f}%</b>","","━━━━━━━━━━━━━━",f"빗썸 현물: <b>{fmt_krw(bal.get('domestic_balance_krw'))}</b>",f"해외 선물: <b>{fmt_krw(bal.get('foreign_futures_balance_krw'))}</b>",f"시작일: {html_escape(setting.get('initial_saved_at') or '-')}","","※ 조회 시점 기준이며 빗썸 현물은 총매수금액 기준, 해외는 선물잔고 기준입니다."])
-
-
-def process_pending_balance_snapshots():
-    global _BALANCE_LAST_POLL_AT
-    if not BALANCE_TRACKING_ENABLED: return
-    now=time.time()
-    if now-_BALANCE_LAST_POLL_AT < BALANCE_POLL_SEC: return
-    _BALANCE_LAST_POLL_AT=now; url=_supabase_url_menu()
-    if not url or not _supabase_key_menu() or requests is None: return
-    try:
-        r=requests.get(url+"/rest/v1/auto_settings", headers=_supabase_headers_menu(False), params={"select":"*","balance_snapshot_requested":"eq.true","order":"updated_at.desc","limit":"20"}, timeout=10)
-        if r.status_code not in (200,206): print(f"{MENU_LOG_PREFIX} pending balance read fail {r.status_code} {r.text[:160]}"); return
-        for setting in r.json() if isinstance(r.json(),list) else []:
-            member=_balance_find_member(chat_id=setting.get("tg_chat_id"), email=setting.get("email"))
-            if not member: continue
-            bal=_calc_user_total_balance(member)
-            if safe_float(bal.get("total_krw"))<=0: continue
-            first = safe_float(setting.get("initial_total_balance_krw"))<=0
-            _save_balance_snapshot(setting, bal, is_initial=first, notified=True)
-            baseline = bal if first else {**bal,"total_krw":setting.get("initial_total_balance_krw") or bal.get("total_krw"),"domestic_balance_krw":setting.get("initial_domestic_balance_krw") or bal.get("domestic_balance_krw"),"foreign_futures_balance_krw":setting.get("initial_foreign_futures_balance_krw") or bal.get("foreign_futures_balance_krw")}
-            send_message(setting.get("tg_chat_id"), _balance_start_dm_text(setting, baseline), reply_keyboard_markup())
-            print(f"{MENU_LOG_PREFIX} balance baseline notify sent chat={setting.get('tg_chat_id')}")
-    except Exception as e: print(f"{MENU_LOG_PREFIX} pending balance snapshot error: {e}")
-
-
-def balance_text(chat_id):
-    member=_balance_find_member(chat_id=chat_id)
-    if not member: return "💰 <b>K-EDGE 자산조회</b>\n\n승인회원 정보를 찾지 못했습니다. AUTO 승인/CHAT ID 연결을 확인해주세요."
-    setting=_supabase_get_auto_setting(chat_id=chat_id, email=member.get("email")) or {}
-    if not setting: return "💰 <b>K-EDGE 자산조회</b>\n\nAUTO 설정 정보가 없습니다. 홈페이지에서 AUTO 설정을 먼저 저장해주세요."
-    bal=_calc_user_total_balance(member)
-    if safe_float(bal.get("total_krw"))<=0: return "💰 <b>K-EDGE 자산조회</b>\n\n잔고조회에 실패했습니다. 거래소 API 권한/IP/선물 계정 잔고를 확인해주세요."
-    if safe_float(setting.get("initial_total_balance_krw"))<=0:
-        _save_balance_snapshot(setting, bal, is_initial=True, notified=False)
-        setting={**setting,"initial_total_balance_krw":bal.get("total_krw"),"initial_domestic_balance_krw":bal.get("domestic_balance_krw"),"initial_foreign_futures_balance_krw":bal.get("foreign_futures_balance_krw"),"initial_saved_at":_balance_now_iso()}
-    else:
-        _save_balance_snapshot(setting, bal, is_initial=False, notified=None)
-    return _balance_lookup_text(setting, bal)
-
-
 def handle_stop(chat_id):
     return send_message(
         chat_id,
@@ -2119,10 +1662,10 @@ def send_startup_menu_to_approved_members():
 
 def poll_loop():
     print("=" * 70)
-    print("K-EDGE V9.5.19 TELEGRAM MENU WORKER - BALANCE TRACKING + CURRENT EDGE")
+    print("K-EDGE V9.5.14 TELEGRAM MENU WORKER - POSITIONS MARGIN/LEVERAGE + CURRENT EDGE")
     print(f"Target bot: @{TARGET_BOT_USERNAME}")
     print("Keyboard: persistent reply keyboard")
-    print("Buttons: 📊 포지션조회 / 📉 현재엣지 / 💰 자산조회 / 📈 통계조회 / 🛑 자동정지 / ▶ 자동시작")
+    print("Buttons: 📊 포지션조회 / 📉 현재엣지 / 📈 통계조회 / 🛑 자동정지 / ▶ 자동시작")
     print("Safe: read-only lookup, no order, no close")
     print("Start: send /start or 메뉴 to @Kedge0203bot DM")
     print("Stop: Ctrl+C")
@@ -2141,8 +1684,6 @@ def poll_loop():
 
     while True:
         try:
-            process_pending_balance_snapshots()
-
             code, data = tg_api("getUpdates", {
                 "offset": offset + 1 if offset else 0,
                 "timeout": 25,
@@ -2174,9 +1715,6 @@ def poll_loop():
                 elif text in ["📉 현재엣지", "현재엣지", "엣지", "익절거리", "/edge", "/edges"]:
                     send_message(chat_id, "⏳ <b>현재엣지 조회 중...</b>\n\n국내/해외 호가와 BTC 기준값을 확인하고 있습니다.", reply_keyboard_markup())
                     send_message(chat_id, current_edge_text(chat_id), reply_keyboard_markup())
-                elif text in ["💰 자산조회", "자산조회", "잔고조회", "잔고", "자산", "/balance", "/asset", "/assets"]:
-                    send_message(chat_id, "⏳ <b>자산 조회 중...</b>\n\n빗썸 현물과 해외 선물 잔고를 확인하고 있습니다.", reply_keyboard_markup())
-                    send_message(chat_id, balance_text(chat_id), reply_keyboard_markup())
                 elif text in ["📈 통계조회", "통계", "/stats", "통계조회"]:
                     send_message(chat_id, stats_text(chat_id), reply_keyboard_markup())
                 elif text in ["🛑 자동정지", "자동정지", "정지", "/stop"]:

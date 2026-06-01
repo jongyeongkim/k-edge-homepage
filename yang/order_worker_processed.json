@@ -1790,5 +1790,565 @@
   "ALICE_BITHUMB_BITGET_1780302099": {
     "at": "2026-06-01 17:21:42",
     "result": "DONE"
+  },
+  "FF_BITHUMB_BITGET_1780303950": {
+    "at": "2026-06-01 17:52:42",
+    "result": "DONE"
+  },
+  "SAHARA_BITHUMB_BITGET_1780304184": {
+    "at": "2026-06-01 17:56:25",
+    "result": "DONE"
+  },
+  "HNT_BITHUMB_MEXC_1780304191": {
+    "at": "2026-06-01 17:56:42",
+    "result": "DONE"
+  },
+  "SAHARA_BITHUMB_MEXC_1780304472": {
+    "at": "2026-06-01 18:01:13",
+    "result": "DONE"
+  },
+  "SAHARA_BITHUMB_BINGX_1780304510": {
+    "at": "2026-06-01 18:01:54",
+    "result": "DONE"
+  },
+  "SAHARA_BITHUMB_BITGET_1780104819": {
+    "at": "2026-06-01 18:13:29",
+    "result": "STALE"
+  },
+  "SAHARA_BITHUMB_BINGX_1780104902": {
+    "at": "2026-06-01 18:13:29",
+    "result": "STALE"
+  },
+  "SAHARA_BITHUMB_MEXC_1780104904": {
+    "at": "2026-06-01 18:13:29",
+    "result": "STALE"
+  },
+  "SAHARA_BITHUMB_MEXC_1780305226": {
+    "at": "2026-06-01 18:13:47",
+    "result": "DONE"
+  },
+  "SAHARA_BITHUMB_BITGET_1780305226": {
+    "at": "2026-06-01 18:13:47",
+    "result": "DONE"
+  },
+  "HEMI_BITHUMB_BINGX_1780305279": {
+    "at": "2026-06-01 18:14:42",
+    "result": "DONE"
+  },
+  "SAHARA_BITHUMB_BINGX_1780305631": {
+    "at": "2026-06-01 18:20:35",
+    "result": "DONE"
+  },
+  "SAHARA_BITHUMB_MEXC_1780306081": {
+    "at": "2026-06-01 18:28:02",
+    "result": "DONE"
+  },
+  "INJ_BITHUMB_MEXC_1780306492": {
+    "at": "2026-06-01 18:34:57",
+    "result": "DONE"
+  },
+  "FF_BITHUMB_BINGX_1780307842": {
+    "at": "2026-06-01 18:57:27",
+    "result": "DONE"
+  },
+  "SAHARA_BITHUMB_MEXC_1780308068": {
+    "at": "2026-06-01 19:01:08",
+    "result": "DONE"
+  },
+  "SAHARA_BITHUMB_BITGET_1780308427": {
+    "at": "2026-06-01 19:07:08",
+    "result": "DONE"
+  },
+  "SAHARA_BITHUMB_BINGX_1780308428": {
+    "at": "2026-06-01 19:07:13",
+    "result": "DONE"
+  },
+  "SAHARA_BITHUMB_MEXC_1780308429": {
+    "at": "2026-06-01 19:07:14",
+    "result": "DONE"
+  },
+  "BILL_BITHUMB_BINGX_1780308756": {
+    "at": "2026-06-01 19:12:43",
+    "result": "DONE"
+  },
+  "HNT_BITHUMB_MEXC_1780309231": {
+    "at": "2026-06-01 19:20:46",
+    "result": "DONE"
+  },
+  "HNT_BITHUMB_GATE_1780310187": {
+    "at": "2026-06-01 19:36:33",
+    "result": "DONE"
+  },
+  "KITE_BITHUMB_BINGX_1780310841": {
+    "at": "2026-06-01 19:47:28",
+    "result": "DONE"
+  },
+  "NIL_BITHUMB_MEXC_1780311846": {
+    "at": "2026-06-01 20:04:12",
+    "result": "DONE"
+  },
+  "HNT_BITHUMB_GATE_1780312066": {
+    "at": "2026-06-01 20:08:02",
+    "result": "DONE"
+  },
+  "INIT_BITHUMB_BINGX_1780312508": {
+    "at": "2026-06-01 20:15:13",
+    "result": "DONE"
+  },
+  "FF_BITHUMB_BITGET_1780312717": {
+    "at": "2026-06-01 20:18:43",
+    "result": "DONE"
+  },
+  "FF_BITHUMB_BITGET_1780314615": {
+    "at": "2026-06-01 20:50:20",
+    "result": "DONE"
+  },
+  "FF_BITHUMB_BINGX_1780314696": {
+    "at": "2026-06-01 20:51:41",
+    "result": "DONE"
+  },
+  "INIT_BITHUMB_BINGX_1780314742": {
+    "at": "2026-06-01 20:52:24",
+    "result": "DONE"
+  },
+  "VVV_BITHUMB_BITGET_1780315269": {
+    "at": "2026-06-01 21:01:13",
+    "result": "DONE"
+  },
+  "INJ_BITHUMB_BITGET_1780316891": {
+    "at": "2026-06-01 21:28:16",
+    "result": "DONE"
+  },
+  "HNT_BITHUMB_MEXC_1780317268": {
+    "at": "2026-06-01 21:34:37",
+    "result": "DONE"
+  },
+  "VVV_BITHUMB_BITGET_1780318553": {
+    "at": "2026-06-01 21:56:00",
+    "result": "DONE"
+  },
+  "VVV_BITHUMB_BINGX_1780318560": {
+    "at": "2026-06-01 21:56:04",
+    "result": "DONE"
+  },
+  "VVV_BITHUMB_GATE_1780318562": {
+    "at": "2026-06-01 21:56:07",
+    "result": "DONE"
+  },
+  "PRL_BITHUMB_BITGET_1780319550": {
+    "at": "2026-06-01 22:12:35",
+    "result": "DONE"
+  },
+  "NIL_BITHUMB_MEXC_1780319714": {
+    "at": "2026-06-01 22:15:18",
+    "result": "DONE"
+  },
+  "INJ_BITHUMB_MEXC_1780319764": {
+    "at": "2026-06-01 22:16:06",
+    "result": "DONE"
+  },
+  "BILL_BITHUMB_BINGX_1780320061": {
+    "at": "2026-06-01 22:21:07",
+    "result": "DONE"
+  },
+  "BILL_BITHUMB_MEXC_1780320089": {
+    "at": "2026-06-01 22:21:31",
+    "result": "DONE"
+  },
+  "STABLE_BITHUMB_BITGET_1780321264": {
+    "at": "2026-06-01 22:41:09",
+    "result": "DONE"
+  },
+  "STABLE_BITHUMB_BINGX_1780321264": {
+    "at": "2026-06-01 22:41:12",
+    "result": "DONE"
+  },
+  "INJ_BITHUMB_BINGX_1780322142": {
+    "at": "2026-06-01 22:55:48",
+    "result": "DONE"
+  },
+  "INJ_BITHUMB_MEXC_1780322145": {
+    "at": "2026-06-01 22:55:50",
+    "result": "DONE"
+  },
+  "NEAR_BITHUMB_MEXC_1780322307": {
+    "at": "2026-06-01 22:58:30",
+    "result": "DONE"
+  },
+  "NIL_BITHUMB_MEXC_1780322312": {
+    "at": "2026-06-01 22:58:34",
+    "result": "DONE"
+  },
+  "HOME_BITHUMB_MEXC_1780323478": {
+    "at": "2026-06-01 23:18:03",
+    "result": "DONE"
+  },
+  "NIL_BITHUMB_GATE_1780323705": {
+    "at": "2026-06-01 23:21:50",
+    "result": "DONE"
+  },
+  "STABLE_BITHUMB_BINGX_1780323906": {
+    "at": "2026-06-01 23:25:14",
+    "result": "DONE"
+  },
+  "STABLE_BITHUMB_BITGET_1780323907": {
+    "at": "2026-06-01 23:25:16",
+    "result": "DONE"
+  },
+  "PRL_BITHUMB_BINGX_1780326043": {
+    "at": "2026-06-02 00:00:49",
+    "result": "DONE"
+  },
+  "HEMI_BITHUMB_BINGX_1780326448": {
+    "at": "2026-06-02 00:07:31",
+    "result": "DONE"
+  },
+  "NIL_BITHUMB_BITGET_1780326728": {
+    "at": "2026-06-02 00:12:12",
+    "result": "DONE"
+  },
+  "NIL_BITHUMB_BINGX_1780326798": {
+    "at": "2026-06-02 00:13:21",
+    "result": "DONE"
+  },
+  "INJ_BITHUMB_MEXC_1780327126": {
+    "at": "2026-06-02 00:18:50",
+    "result": "DONE"
+  },
+  "PARTI_BITHUMB_GATE_1780327224": {
+    "at": "2026-06-02 00:20:28",
+    "result": "DONE"
+  },
+  "PARTI_BITHUMB_BINGX_1780327241": {
+    "at": "2026-06-02 00:20:46",
+    "result": "DONE"
+  },
+  "PARTI_BITHUMB_BITGET_1780328578": {
+    "at": "2026-06-02 00:43:03",
+    "result": "DONE"
+  },
+  "HOME_BITHUMB_BITGET_1780329088": {
+    "at": "2026-06-02 00:51:32",
+    "result": "DONE"
+  },
+  "INIT_BITHUMB_MEXC_1780329409": {
+    "at": "2026-06-02 00:56:52",
+    "result": "DONE"
+  },
+  "HOME_BITHUMB_BINGX_1780329519": {
+    "at": "2026-06-02 00:58:43",
+    "result": "DONE"
+  },
+  "PARTI_BITHUMB_GATE_1780329811": {
+    "at": "2026-06-02 01:03:34",
+    "result": "DONE"
+  },
+  "PARTI_BITHUMB_BINGX_1780329976": {
+    "at": "2026-06-02 01:06:20",
+    "result": "DONE"
+  },
+  "HNT_BITHUMB_GATE_1780330106": {
+    "at": "2026-06-02 01:08:29",
+    "result": "DONE"
+  },
+  "FF_BITHUMB_BITGET_1780330347": {
+    "at": "2026-06-02 01:12:30",
+    "result": "DONE"
+  },
+  "PIEVERSE_BITHUMB_BINGX_1780331000": {
+    "at": "2026-06-02 01:23:26",
+    "result": "DONE"
+  },
+  "PIEVERSE_BITHUMB_BITGET_1780331037": {
+    "at": "2026-06-02 01:24:00",
+    "result": "DONE"
+  },
+  "PARTI_BITHUMB_GATE_1780331827": {
+    "at": "2026-06-02 01:37:12",
+    "result": "DONE"
+  },
+  "PARTI_BITHUMB_BITGET_1780331833": {
+    "at": "2026-06-02 01:37:16",
+    "result": "DONE"
+  },
+  "NIL_BITHUMB_MEXC_1780332682": {
+    "at": "2026-06-02 01:51:27",
+    "result": "DONE"
+  },
+  "NIL_BITHUMB_BINGX_1780332735": {
+    "at": "2026-06-02 01:52:18",
+    "result": "DONE"
+  },
+  "KITE_BITHUMB_BINGX_1780333322": {
+    "at": "2026-06-02 02:02:06",
+    "result": "DONE"
+  },
+  "HEMI_BITHUMB_BINGX_1780333455": {
+    "at": "2026-06-02 02:04:25",
+    "result": "DONE"
+  },
+  "HOME_BITHUMB_MEXC_1780333473": {
+    "at": "2026-06-02 02:04:37",
+    "result": "DONE"
+  },
+  "PIEVERSE_BITHUMB_BINGX_1780333936": {
+    "at": "2026-06-02 02:12:21",
+    "result": "DONE"
+  },
+  "INIT_BITHUMB_BINGX_1780334592": {
+    "at": "2026-06-02 02:23:18",
+    "result": "DONE"
+  },
+  "HOME_BITHUMB_BITGET_1780334814": {
+    "at": "2026-06-02 02:26:58",
+    "result": "DONE"
+  },
+  "PIEVERSE_BITHUMB_GATE_1780334954": {
+    "at": "2026-06-02 02:29:18",
+    "result": "DONE"
+  },
+  "MERL_BITHUMB_BITGET_1780335007": {
+    "at": "2026-06-02 02:30:09",
+    "result": "DONE"
+  },
+  "ALLO_BITHUMB_MEXC_1780335535": {
+    "at": "2026-06-02 02:38:58",
+    "result": "DONE"
+  },
+  "HOME_BITHUMB_BINGX_1780335685": {
+    "at": "2026-06-02 02:41:29",
+    "result": "DONE"
+  },
+  "PIEVERSE_BITHUMB_BITGET_1780335794": {
+    "at": "2026-06-02 02:43:18",
+    "result": "DONE"
+  },
+  "PIEVERSE_BITHUMB_MEXC_1780335809": {
+    "at": "2026-06-02 02:43:32",
+    "result": "DONE"
+  },
+  "PIEVERSE_BITHUMB_BINGX_1780335872": {
+    "at": "2026-06-02 02:44:35",
+    "result": "DONE"
+  },
+  "HOME_BITHUMB_MEXC_1780336244": {
+    "at": "2026-06-02 02:50:47",
+    "result": "DONE"
+  },
+  "INIT_BITHUMB_BINGX_1780336405": {
+    "at": "2026-06-02 02:53:32",
+    "result": "DONE"
+  },
+  "PIEVERSE_BITHUMB_MEXC_1780337786": {
+    "at": "2026-06-02 03:16:30",
+    "result": "DONE"
+  },
+  "PARTI_BITHUMB_BINGX_1780337988": {
+    "at": "2026-06-02 03:19:52",
+    "result": "DONE"
+  },
+  "PIEVERSE_BITHUMB_BINGX_1780338381": {
+    "at": "2026-06-02 03:26:25",
+    "result": "DONE"
+  },
+  "INIT_BITHUMB_BINGX_1780338385": {
+    "at": "2026-06-02 03:26:27",
+    "result": "DONE"
+  },
+  "ALLO_BITHUMB_GATE_1780338645": {
+    "at": "2026-06-02 03:30:48",
+    "result": "DONE"
+  },
+  "NIL_BITHUMB_BITGET_1780338666": {
+    "at": "2026-06-02 03:31:10",
+    "result": "DONE"
+  },
+  "ALLO_BITHUMB_BINGX_1780338858": {
+    "at": "2026-06-02 03:34:22",
+    "result": "DONE"
+  },
+  "PIEVERSE_BITHUMB_MEXC_1780339898": {
+    "at": "2026-06-02 03:51:44",
+    "result": "DONE"
+  },
+  "HOME_BITHUMB_BINGX_1780340406": {
+    "at": "2026-06-02 04:00:10",
+    "result": "DONE"
+  },
+  "INIT_BITHUMB_BINGX_1780340460": {
+    "at": "2026-06-02 04:01:02",
+    "result": "DONE"
+  },
+  "HOME_BITHUMB_BINGX_1780342208": {
+    "at": "2026-06-02 04:30:14",
+    "result": "DONE"
+  },
+  "HOME_BITHUMB_MEXC_1780342349": {
+    "at": "2026-06-02 04:32:34",
+    "result": "DONE"
+  },
+  "PIEVERSE_BITHUMB_BINGX_1780343435": {
+    "at": "2026-06-02 04:50:40",
+    "result": "DONE"
+  },
+  "HOME_BITHUMB_BITGET_1780343824": {
+    "at": "2026-06-02 04:57:07",
+    "result": "DONE"
+  },
+  "PIEVERSE_BITHUMB_MEXC_1780344074": {
+    "at": "2026-06-02 05:01:18",
+    "result": "DONE"
+  },
+  "HOME_BITHUMB_BINGX_1780344095": {
+    "at": "2026-06-02 05:01:42",
+    "result": "DONE"
+  },
+  "HOME_BITHUMB_MEXC_1780344363": {
+    "at": "2026-06-02 05:06:06",
+    "result": "DONE"
+  },
+  "MERL_BITHUMB_BITGET_1780345029": {
+    "at": "2026-06-02 05:17:14",
+    "result": "DONE"
+  },
+  "MERL_BITHUMB_MEXC_1780345031": {
+    "at": "2026-06-02 05:17:16",
+    "result": "DONE"
+  },
+  "HNT_BITHUMB_MEXC_1780346160": {
+    "at": "2026-06-02 05:36:15",
+    "result": "DONE"
+  },
+  "MERL_BITHUMB_BINGX_1780346423": {
+    "at": "2026-06-02 05:40:28",
+    "result": "DONE"
+  },
+  "INIT_BITHUMB_BINGX_1780346740": {
+    "at": "2026-06-02 05:45:44",
+    "result": "DONE"
+  },
+  "MERL_BITHUMB_MEXC_1780346926": {
+    "at": "2026-06-02 05:48:49",
+    "result": "DONE"
+  },
+  "MERL_BITHUMB_BITGET_1780347246": {
+    "at": "2026-06-02 05:54:16",
+    "result": "DONE"
+  },
+  "MERL_BITHUMB_GATE_1780347305": {
+    "at": "2026-06-02 05:55:18",
+    "result": "DONE"
+  },
+  "MERL_BITHUMB_BINGX_1780348235": {
+    "at": "2026-06-02 06:10:45",
+    "result": "DONE"
+  },
+  "HOME_BITHUMB_BITGET_1780348271": {
+    "at": "2026-06-02 06:11:15",
+    "result": "DONE"
+  },
+  "NIL_BITHUMB_BITGET_1780348277": {
+    "at": "2026-06-02 06:11:19",
+    "result": "DONE"
+  },
+  "NIL_BITHUMB_GATE_1780348278": {
+    "at": "2026-06-02 06:11:22",
+    "result": "DONE"
+  },
+  "MERL_BITHUMB_BITGET_1780349144": {
+    "at": "2026-06-02 06:25:51",
+    "result": "DONE"
+  },
+  "PIEVERSE_BITHUMB_BITGET_1780350264": {
+    "at": "2026-06-02 06:44:34",
+    "result": "DONE"
+  },
+  "PIEVERSE_BITHUMB_MEXC_1780350275": {
+    "at": "2026-06-02 06:44:39",
+    "result": "DONE"
+  },
+  "PIEVERSE_BITHUMB_BINGX_1780350563": {
+    "at": "2026-06-02 06:49:27",
+    "result": "DONE"
+  },
+  "VVV_BITHUMB_BINGX_1780350572": {
+    "at": "2026-06-02 06:49:35",
+    "result": "DONE"
+  },
+  "ALLO_BITHUMB_GATE_1780351247": {
+    "at": "2026-06-02 07:00:52",
+    "result": "DONE"
+  },
+  "NIL_BITHUMB_MEXC_1780351359": {
+    "at": "2026-06-02 07:02:42",
+    "result": "DONE"
+  },
+  "EDGEX_BITHUMB_BINGX_1780351449": {
+    "at": "2026-06-02 07:04:13",
+    "result": "DONE"
+  },
+  "EDGEX_BITHUMB_GATE_1780351512": {
+    "at": "2026-06-02 07:05:16",
+    "result": "DONE"
+  },
+  "ALLO_BITHUMB_BITGET_1780352175": {
+    "at": "2026-06-02 07:16:25",
+    "result": "DONE"
+  },
+  "MERL_BITHUMB_BITGET_1780352882": {
+    "at": "2026-06-02 07:28:07",
+    "result": "DONE"
+  },
+  "HNT_BITHUMB_GATE_1780352886": {
+    "at": "2026-06-02 07:28:20",
+    "result": "DONE"
+  },
+  "HNT_BITHUMB_MEXC_1780352930": {
+    "at": "2026-06-02 07:28:57",
+    "result": "DONE"
+  },
+  "ALLO_BITHUMB_GATE_1780353226": {
+    "at": "2026-06-02 07:34:03",
+    "result": "DONE"
+  },
+  "EDGEX_BITHUMB_BINGX_1780353295": {
+    "at": "2026-06-02 07:35:01",
+    "result": "DONE"
+  },
+  "MERL_BITHUMB_BINGX_1780353340": {
+    "at": "2026-06-02 07:35:43",
+    "result": "DONE"
+  },
+  "MERL_BITHUMB_GATE_1780353343": {
+    "at": "2026-06-02 07:35:45",
+    "result": "DONE"
+  },
+  "EDGEX_BITHUMB_GATE_1780353385": {
+    "at": "2026-06-02 07:36:39",
+    "result": "DONE"
+  },
+  "MERL_BITHUMB_MEXC_1780353938": {
+    "at": "2026-06-02 07:45:43",
+    "result": "DONE"
+  },
+  "ALLO_BITHUMB_BITGET_1780354258": {
+    "at": "2026-06-02 07:51:03",
+    "result": "DONE"
+  },
+  "HOME_BITHUMB_BINGX_1780355185": {
+    "at": "2026-06-02 08:06:30",
+    "result": "DONE"
+  },
+  "EDGEX_BITHUMB_BINGX_1780355233": {
+    "at": "2026-06-02 08:07:18",
+    "result": "DONE"
+  },
+  "EDGEX_BITHUMB_GATE_1780355356": {
+    "at": "2026-06-02 08:09:35",
+    "result": "DONE"
+  },
+  "ALLO_BITHUMB_BITGET_1780356120": {
+    "at": "2026-06-02 08:22:04",
+    "result": "DONE"
   }
 }

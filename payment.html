@@ -440,10 +440,12 @@ document.addEventListener("DOMContentLoaded", function(){
 
 <!-- KEDGE_FINAL_BANK_TXID_FIX_START -->
 <script>
-/* FINAL STABLE: 신규 신청과 기존 승인 유저 API 재등록 분리
+/* FINAL STABLE + API MERGE SAVE
+   - 신규 신청과 기존 승인 유저 API 재등록 분리
    - 기존 승인/신청 row가 CHAT ID로 있으면 이메일 요구 없이 API만 업데이트
-   - 신규 신청은 로그인 이메일 기준으로 insert
-   - API 저장 시 domestic_apis/foreign_apis에 key/secret/passphrase 저장
+   - API 재등록 시 기존 domestic_apis/foreign_apis 전체를 덮어쓰지 않고, 체크+입력된 거래소만 merge 저장
+   - 빈값/null/미체크 거래소는 기존 값을 보존
+   - Bitget은 Passphrase/API 비밀번호까지 저장/merge
 */
 window.submitVipRequest = async function(){
   const SUPABASE_URL = window.KEDGE_SUPABASE_URL || "https://qakhbihueonefzifrmct.supabase.co";
@@ -478,16 +480,55 @@ window.submitVipRequest = async function(){
     return Object.entries(obj || {}).filter(([_, v]) => v && v.enabled);
   }
 
-  function hasValidEnabledApi(obj){
-    return enabledList(obj).some(([_, v]) => v.api_key && (v.secret_key || v.api_secret));
+  function isValidApi(name, v){
+    if(!v || !v.enabled) return false;
+    const okBase = !!v.api_key && !!(v.secret_key || v.api_secret);
+    const okPass = name !== "bitget" || !!(v.passphrase || v.password);
+    return okBase && okPass;
+  }
+
+  function hasAnyValidApi(obj){
+    return Object.entries(obj || {}).some(([name, v]) => isValidApi(name, v));
   }
 
   function hasInvalidEnabledApi(obj){
-    return enabledList(obj).some(([name, v]) => {
-      const baseMissing = !v.api_key || !(v.secret_key || v.api_secret);
-      const passMissing = name === "bitget" && (!v.passphrase && !v.password);
-      return baseMissing || passMissing;
+    return enabledList(obj).some(([name, v]) => !isValidApi(name, v));
+  }
+
+  function cleanSelectedApis(obj){
+    const out = {};
+    Object.entries(obj || {}).forEach(([name, v]) => {
+      if(!isValidApi(name, v)) return;
+      out[name] = {
+        enabled: true,
+        api_key: v.api_key,
+        secret_key: v.secret_key || v.api_secret,
+        api_secret: v.api_secret || v.secret_key
+      };
+      if(name === "bitget"){
+        const pass = v.passphrase || v.password || "";
+        if(pass){
+          out[name].passphrase = pass;
+          out[name].password = pass;
+        }
+      }
     });
+    return out;
+  }
+
+  function mergeApis(oldApis, newApis){
+    return {
+      ...(oldApis || {}),
+      ...(newApis || {})
+    };
+  }
+
+  function normalizeJson(v){
+    if(!v) return {};
+    if(typeof v === "string"){
+      try{ return JSON.parse(v); }catch(e){ return {}; }
+    }
+    return typeof v === "object" ? v : {};
   }
 
   function referralData(){
@@ -510,49 +551,32 @@ window.submitVipRequest = async function(){
 
   if(!tgChatId) return msg("❌ AUTO는 CHAT ID가 필요합니다. 먼저 @Kedge0203bot에서 /start 후 CHAT ID를 입력해주세요.");
 
-  const domestic_apis = {
+  const domestic_apis_raw = {
     bithumb: readApi("payBithumbUse", "payBithumbApiKey", "payBithumbApiSecret")
   };
 
-  const foreign_apis = {
+  const foreign_apis_raw = {
     mexc: readApi("payMexcUse", "payMexcApiKey", "payMexcApiSecret"),
     gate: readApi("payGateUse", "payGateApiKey", "payGateApiSecret"),
     bitget: readApi("payBitgetUse", "payBitgetApiKey", "payBitgetApiSecret", "payBitgetPassphrase"),
     bingx: readApi("payBingxUse", "payBingxApiKey", "payBingxApiSecret")
   };
 
-  if(!hasValidEnabledApi(domestic_apis)) return msg("❌ 빗썸 API KEY와 SECRET을 입력해주세요.");
-  if(!hasValidEnabledApi(foreign_apis)) return msg("❌ 해외 거래소 API를 1개 이상 입력해주세요.");
-  if(hasInvalidEnabledApi(domestic_apis)) return msg("❌ 체크된 국내 거래소는 KEY와 SECRET을 모두 입력해야 합니다.");
-  if(hasInvalidEnabledApi(foreign_apis)) return msg("❌ 체크된 해외 거래소는 KEY와 SECRET을 모두 입력해야 합니다. Bitget은 Passphrase/API 비밀번호도 필요합니다.");
+  if(hasInvalidEnabledApi(domestic_apis_raw)) return msg("❌ 체크된 국내 거래소는 KEY와 SECRET을 모두 입력해야 합니다.");
+  if(hasInvalidEnabledApi(foreign_apis_raw)) return msg("❌ 체크된 해외 거래소는 KEY와 SECRET을 모두 입력해야 합니다. Bitget은 Passphrase/API 비밀번호도 필요합니다.");
 
-  const domesticLegacy = {
-    domestic_exchange: "BITHUMB",
-    domestic_api_key: domestic_apis.bithumb.api_key,
-    domestic_api_secret: domestic_apis.bithumb.secret_key || domestic_apis.bithumb.api_secret
-  };
+  const selectedDomesticApis = cleanSelectedApis(domestic_apis_raw);
+  const selectedForeignApis = cleanSelectedApis(foreign_apis_raw);
 
-  const firstForeign = enabledList(foreign_apis).find(([_, v]) => v.api_key && (v.secret_key || v.api_secret));
-  const foreignLegacy = firstForeign ? {
-    foreign_exchange: firstForeign[0].toUpperCase(),
-    foreign_api_key: firstForeign[1].api_key,
-    foreign_api_secret: firstForeign[1].secret_key || firstForeign[1].api_secret
-  } : {};
-
-  const apiUpdatePayload = {
-    tg_chat_id: tgChatId,
-    telegram: telegramId || "미등록",
-    domestic_apis,
-    foreign_apis,
-    ...domesticLegacy,
-    ...foreignLegacy
-  };
+  if(!hasAnyValidApi(selectedDomesticApis) && !hasAnyValidApi(selectedForeignApis)){
+    return msg("❌ 수정/등록할 거래소 API를 1개 이상 체크하고 KEY/SECRET을 입력해주세요.");
+  }
 
   // 1) 기존 row가 CHAT ID로 있으면 이메일 요구 없이 API 재등록/update
   try{
     const { data: existingRows, error: findErr } = await db
       .from("kedge_requests")
-      .select("id,email,status,created_at,approved_at")
+      .select("id,email,status,created_at,approved_at,domestic_apis,foreign_apis,domestic_exchange,domestic_api_key,domestic_api_secret,foreign_exchange,foreign_api_key,foreign_api_secret")
       .eq("tg_chat_id", tgChatId)
       .order("approved_at", { ascending:false, nullsFirst:false })
       .order("created_at", { ascending:false })
@@ -562,21 +586,56 @@ window.submitVipRequest = async function(){
 
     if(existingRows && existingRows.length){
       const target = existingRows[0];
+
+      const mergedDomesticApis = mergeApis(normalizeJson(target.domestic_apis), selectedDomesticApis);
+      const mergedForeignApis = mergeApis(normalizeJson(target.foreign_apis), selectedForeignApis);
+
+      const bithumb = selectedDomesticApis.bithumb || mergedDomesticApis.bithumb || {};
+      const firstForeign = Object.entries(selectedForeignApis).find(([_, v]) => v && v.api_key && (v.secret_key || v.api_secret))
+        || Object.entries(mergedForeignApis).find(([_, v]) => v && v.enabled && v.api_key && (v.secret_key || v.api_secret));
+
+      const apiUpdatePayload = {
+        tg_chat_id: tgChatId,
+        telegram: telegramId || target.telegram || "미등록",
+        domestic_apis: mergedDomesticApis,
+        foreign_apis: mergedForeignApis,
+        updated_at: new Date().toISOString()
+      };
+
+      if(bithumb && bithumb.api_key && (bithumb.secret_key || bithumb.api_secret)){
+        apiUpdatePayload.domestic_exchange = "BITHUMB";
+        apiUpdatePayload.domestic_api_key = bithumb.api_key;
+        apiUpdatePayload.domestic_api_secret = bithumb.secret_key || bithumb.api_secret;
+      }
+
+      if(firstForeign){
+        apiUpdatePayload.foreign_exchange = firstForeign[0].toUpperCase();
+        apiUpdatePayload.foreign_api_key = firstForeign[1].api_key;
+        apiUpdatePayload.foreign_api_secret = firstForeign[1].secret_key || firstForeign[1].api_secret;
+      }
+
       const { error: updateErr } = await db
         .from("kedge_requests")
         .update(apiUpdatePayload)
         .eq("id", target.id);
+
       if(updateErr){
         console.error(updateErr);
         return msg("❌ API 재등록 실패: " + updateErr.message);
       }
-      return msg("✅ API 재등록 완료. 기존 승인/설정은 유지됩니다.", "success");
+
+      const dCount = Object.keys(selectedDomesticApis).length;
+      const fCount = Object.keys(selectedForeignApis).length;
+      return msg(`✅ API 재등록 완료. 이번에 입력한 거래소만 수정했습니다. 기존 API는 유지됩니다. 국내 ${dCount}개 / 해외 ${fCount}개`, "success");
     }
   }catch(e){
     console.warn("[KEDGE API 재등록 예외]", e);
   }
 
-  // 2) 기존 row가 없으면 신규 신청. 신규 신청만 이메일 필요.
+  // 2) 기존 row가 없으면 신규 신청. 신규 신청은 빗썸 + 해외 1개 이상 필수.
+  if(!hasAnyValidApi(selectedDomesticApis)) return msg("❌ 신규 신청은 빗썸 API KEY와 SECRET이 필요합니다.");
+  if(!hasAnyValidApi(selectedForeignApis)) return msg("❌ 신규 신청은 해외 거래소 API를 1개 이상 입력해야 합니다.");
+
   let user = null;
   try{
     if(typeof window.getCurrentUser === "function") user = await window.getCurrentUser();
@@ -609,6 +668,19 @@ window.submitVipRequest = async function(){
   const base_price_krw = 200000;
   const final_price_krw = base_price_krw * (100 - referral_discount_percent) / 100;
 
+  const domesticLegacy = {
+    domestic_exchange: "BITHUMB",
+    domestic_api_key: selectedDomesticApis.bithumb?.api_key || "",
+    domestic_api_secret: selectedDomesticApis.bithumb?.secret_key || selectedDomesticApis.bithumb?.api_secret || ""
+  };
+
+  const firstForeign = Object.entries(selectedForeignApis).find(([_, v]) => v && v.api_key && (v.secret_key || v.api_secret));
+  const foreignLegacy = firstForeign ? {
+    foreign_exchange: firstForeign[0].toUpperCase(),
+    foreign_api_key: firstForeign[1].api_key,
+    foreign_api_secret: firstForeign[1].secret_key || firstForeign[1].api_secret
+  } : {};
+
   const payload = {
     email: user.email,
     telegram: telegramId || user.telegram || "미등록",
@@ -618,8 +690,8 @@ window.submitVipRequest = async function(){
     memo: payType === "BANK" ? "" : memo,
     status: "PENDING",
     tg_chat_id: tgChatId,
-    domestic_apis,
-    foreign_apis,
+    domestic_apis: selectedDomesticApis,
+    foreign_apis: selectedForeignApis,
     ...domesticLegacy,
     ...foreignLegacy,
     referral_uids: refs,
