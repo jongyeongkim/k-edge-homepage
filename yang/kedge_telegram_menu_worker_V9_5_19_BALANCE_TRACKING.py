@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-K-EDGE V9.5.14 TELEGRAM MENU WORKER - POSITIONS MARGIN/LEVERAGE + CURRENT EDGE
+K-EDGE V9.5.19 TELEGRAM MENU WORKER - BALANCE TRACKING + CURRENT EDGE
 
 핵심:
 - @Kedge0203bot 토큰 자동 선택
 - /start, 메뉴 입력 시 하단 고정 버튼(reply_keyboard) 전송
-- 📊 포지션조회 / 📉 현재엣지 / 📈 통계조회 / 🛑 자동정지 / ▶ 자동시작
+- 📊 포지션조회 / 📉 현재엣지 / 💰 자산조회 / 📈 통계조회 / 🛑 자동정지 / ▶ 자동시작
 - 조회/통계는 읽기 전용
 """
 
@@ -15,6 +15,10 @@ import time
 import glob
 import traceback
 import importlib.util
+import base64
+import hmac
+import hashlib
+import uuid
 from pathlib import Path
 
 try:
@@ -194,10 +198,11 @@ def reply_keyboard_markup():
                 {"text": "📉 현재엣지"},
             ],
             [
+                {"text": "💰 자산조회"},
                 {"text": "📈 통계조회"},
-                {"text": "🛑 자동정지"},
             ],
             [
+                {"text": "🛑 자동정지"},
                 {"text": "▶ 자동시작"},
             ],
         ],
@@ -1589,6 +1594,240 @@ def current_edge_text(chat_id):
 
 
 
+# -------------------------
+# Balance baseline / asset lookup section
+# -------------------------
+BALANCE_TRACKING_ENABLED = os.getenv("KEDGE_MENU_BALANCE_TRACKING", "true").lower() == "true"
+BALANCE_POLL_SEC = float(os.getenv("KEDGE_MENU_BALANCE_POLL_SEC", "10"))
+_BALANCE_LAST_POLL_AT = 0.0
+_BALANCE_FX_CACHE = {"ts": 0.0, "usd_krw": 1509.0}
+_BALANCE_FX_TTL_SEC = 30.0
+
+
+def _supabase_url_menu():
+    return str(getattr(core, "SUPABASE_URL", "") or "").rstrip("/") if core else ""
+
+
+def _supabase_key_menu():
+    return str(getattr(core, "SUPABASE_SERVICE_KEY", "") or "").strip() if core else ""
+
+
+def _supabase_headers_menu(prefer_return=True):
+    key = _supabase_key_menu()
+    h = {"apikey": key, "Authorization": "Bearer " + key, "Content-Type": "application/json"}
+    if prefer_return:
+        h["Prefer"] = "return=representation"
+    return h
+
+
+def _balance_now_iso():
+    try:
+        from datetime import datetime
+        return datetime.now().isoformat(timespec="seconds")
+    except Exception:
+        return time.strftime("%Y-%m-%d %H:%M:%S")
+
+
+def _json_obj(v):
+    if isinstance(v, dict): return v
+    if not v: return {}
+    try: return json.loads(v)
+    except Exception: return {}
+
+
+def _balance_member_chat_id(m):
+    try:
+        if core and hasattr(core, "get_member_chat_id"):
+            cid = str(core.get_member_chat_id(m) or "").strip()
+            if cid: return cid
+    except Exception: pass
+    return str((m or {}).get("tg_chat_id") or (m or {}).get("chat_id") or (m or {}).get("user_id") or "").strip()
+
+
+def _balance_find_member(chat_id=None, email=None):
+    chat_id = str(chat_id or "").strip(); email = str(email or "").strip().lower()
+    try:
+        members = core.supabase_get_approved_members(force_refresh=True) if core and hasattr(core, "supabase_get_approved_members") else []
+    except Exception as e:
+        print(f"{MENU_LOG_PREFIX} balance member load fail: {e}"); members = []
+    for m in members or []:
+        if not isinstance(m, dict): continue
+        try:
+            if core and hasattr(core, "merge_member_auto_settings"):
+                m = core.merge_member_auto_settings(m)
+        except Exception: pass
+        if chat_id and _balance_member_chat_id(m) == chat_id: return m
+        if email and str(m.get("email") or "").strip().lower() == email: return m
+    return None
+
+
+def _supabase_get_auto_setting(chat_id=None, email=None):
+    url = _supabase_url_menu()
+    if not url or not _supabase_key_menu() or requests is None: return None
+    base = url + "/rest/v1/auto_settings"
+    try:
+        if chat_id:
+            r = requests.get(base, headers=_supabase_headers_menu(False), params={"select":"*", "tg_chat_id":"eq."+str(chat_id), "order":"updated_at.desc", "limit":"1"}, timeout=10)
+            if r.status_code in (200,206) and isinstance(r.json(), list) and r.json(): return r.json()[0]
+        if email:
+            r = requests.get(base, headers=_supabase_headers_menu(False), params={"select":"*", "email":"eq."+str(email), "order":"updated_at.desc", "limit":"1"}, timeout=10)
+            if r.status_code in (200,206) and isinstance(r.json(), list) and r.json(): return r.json()[0]
+    except Exception as e:
+        print(f"{MENU_LOG_PREFIX} auto_settings read fail: {e}")
+    return None
+
+
+def _supabase_patch_auto_setting(setting, patch):
+    url = _supabase_url_menu()
+    if not url or not _supabase_key_menu() or not isinstance(setting, dict) or requests is None: return False, "supabase config missing"
+    email = str(setting.get("email") or "").strip(); sid = setting.get("id")
+    params = {"email":"eq."+email} if email else {"id":"eq."+str(sid)}
+    try:
+        r = requests.patch(url+"/rest/v1/auto_settings", headers=_supabase_headers_menu(True), params=params, data=json.dumps(patch, ensure_ascii=False), timeout=12)
+        return (r.status_code in (200,204), "ok" if r.status_code in (200,204) else f"HTTP {r.status_code} {r.text[:300]}")
+    except Exception as e:
+        return False, repr(e)
+
+
+def _menu_usd_krw():
+    now=time.time()
+    if now-float(_BALANCE_FX_CACHE.get("ts") or 0) < _BALANCE_FX_TTL_SEC: return safe_float(_BALANCE_FX_CACHE.get("usd_krw"),1509.0)
+    try: val = safe_float(core.get_usd_krw(), 1509.0) if core and hasattr(core,"get_usd_krw") else safe_float(getattr(core,"FALLBACK_USD_KRW",1509.0),1509.0)
+    except Exception: val = safe_float(getattr(core,"FALLBACK_USD_KRW",1509.0),1509.0)
+    _BALANCE_FX_CACHE.update({"ts":now,"usd_krw":val}); return val
+
+
+def _b64url_bytes(b): return base64.urlsafe_b64encode(b).decode().rstrip("=")
+def _b64url_json(obj): return _b64url_bytes(json.dumps(obj, separators=(",", ":")).encode())
+
+def _bithumb_jwt(access_key, secret_key):
+    signing = _b64url_json({"alg":"HS256","typ":"JWT"}) + "." + _b64url_json({"access_key":access_key,"nonce":str(uuid.uuid4()),"timestamp":int(time.time()*1000)})
+    sig = hmac.new(str(secret_key).encode(), signing.encode(), hashlib.sha256).digest()
+    return signing + "." + _b64url_bytes(sig)
+
+
+def _get_bithumb_keys_from_member(member):
+    apis=_json_obj(member.get("domestic_apis")); b=apis.get("bithumb") or apis.get("BITHUMB") or {}
+    return str(b.get("api_key") or member.get("domestic_api_key") or "").strip(), str(b.get("api_secret") or b.get("secret_key") or b.get("secret") or member.get("domestic_api_secret") or "").strip()
+
+
+def _fetch_bithumb_total_krw(member):
+    key,sec=_get_bithumb_keys_from_member(member)
+    if not key or not sec or requests is None: return 0.0,{"ok":False,"exchange":"BITHUMB","error":"api key missing"}
+    try:
+        r=requests.get("https://api.bithumb.com/v1/accounts", headers={"Authorization":"Bearer "+_bithumb_jwt(key,sec)}, timeout=12)
+        if r.status_code not in (200,201): return 0.0,{"ok":False,"exchange":"BITHUMB","error":f"HTTP {r.status_code} {r.text[:160]}"}
+        total=krw=0.0
+        for x in r.json() if isinstance(r.json(),list) else []:
+            bal=safe_float(x.get("balance"))+safe_float(x.get("locked")); cur=str(x.get("currency") or "").upper()
+            if cur=="KRW": krw+=bal; total+=bal
+            else: total += bal*safe_float(x.get("avg_buy_price"))
+        return total,{"ok":True,"exchange":"BITHUMB","total_krw":round(total,2),"krw":round(krw,2)}
+    except Exception as e: return 0.0,{"ok":False,"exchange":"BITHUMB","error":repr(e)[:180]}
+
+
+def _enabled_foreign_names(member):
+    apis=_json_obj(member.get("foreign_apis")); names=[]
+    for k,v in apis.items():
+        if isinstance(v,dict) and v.get("enabled") is not False and v.get("api_key") and (v.get("api_secret") or v.get("secret_key") or v.get("secret")): names.append(str(k).upper())
+    f=str(member.get("foreign_exchange") or member.get("exchange") or "").upper().strip()
+    if f and f not in names: names.append(f)
+    order=["MEXC","GATE","BITGET","BINGX"]
+    return [x for x in order if x in names]+[x for x in names if x not in order]
+
+
+def _balance_total_from_ccxt_balance(bal):
+    if not isinstance(bal,dict): return 0.0
+    for sec in [bal.get("total"), bal.get("free")]:
+        if isinstance(sec,dict):
+            n=safe_float(sec.get("USDT") or sec.get("usdt"),0.0)
+            if n>0: return n
+    info=bal.get("info") if isinstance(bal.get("info"),dict) else {}
+    for k in ["totalWalletBalance","availableBalance","equity","accountEquity","marginBalance","balance"]:
+        n=safe_float(info.get(k),0.0)
+        if n>0: return n
+    return safe_float(bal.get("USDT") or bal.get("usdt"),0.0)
+
+
+def _fetch_foreign_futures_total_krw(member):
+    usd=_menu_usd_krw(); total=0.0; details=[]
+    for name in _enabled_foreign_names(member):
+        try:
+            ex=core.build_user_exchange_from_member(member,name.lower(),"future") if core and hasattr(core,"build_user_exchange_from_member") else None
+            if ex is None: details.append({"exchange":name,"ok":False,"error":"object missing"}); continue
+            try: bal=ex.fetch_balance({"type":"swap"})
+            except Exception: bal=ex.fetch_balance()
+            usdt=_balance_total_from_ccxt_balance(bal); krw=usdt*usd; total+=krw
+            details.append({"exchange":name,"ok":True,"usdt":round(usdt,4),"krw":round(krw,2)})
+        except Exception as e: details.append({"exchange":name,"ok":False,"error":repr(e)[:160]})
+    return total,details
+
+
+def _calc_user_total_balance(member):
+    dkrw,ddetail=_fetch_bithumb_total_krw(member); fkrw,fdetail=_fetch_foreign_futures_total_krw(member)
+    return {"total_krw":round(dkrw+fkrw,2),"domestic_balance_krw":round(dkrw,2),"foreign_futures_balance_krw":round(fkrw,2),"foreign_spot_balance_krw":0.0,"detail":{"domestic":ddetail,"foreign_futures":fdetail,"usd_krw":round(_menu_usd_krw(),4),"checked_at":_balance_now_iso()}}
+
+
+def _save_balance_snapshot(setting, bal, is_initial=False, notified=None):
+    now=_balance_now_iso(); patch={"last_total_balance_krw":bal.get("total_krw"),"last_domestic_balance_krw":bal.get("domestic_balance_krw"),"last_foreign_futures_balance_krw":bal.get("foreign_futures_balance_krw"),"last_foreign_spot_balance_krw":0,"last_balance_detail":bal.get("detail"),"last_balance_checked_at":now,"balance_snapshot_requested":False,"updated_at":now}
+    if is_initial: patch.update({"initial_total_balance_krw":bal.get("total_krw"),"initial_domestic_balance_krw":bal.get("domestic_balance_krw"),"initial_foreign_futures_balance_krw":bal.get("foreign_futures_balance_krw"),"initial_foreign_spot_balance_krw":0,"initial_balance_detail":bal.get("detail"),"initial_saved_at":now})
+    if notified is not None: patch["balance_snapshot_notified"]=bool(notified)
+    ok,msg=_supabase_patch_auto_setting(setting,patch)
+    if not ok: print(f"{MENU_LOG_PREFIX} balance snapshot save fail: {msg}")
+    return ok
+
+
+def _balance_start_dm_text(setting, bal):
+    lines=["🤖 <b>K-EDGE AUTO 설정 저장 완료</b>","",f"자동매매: <b>{'ON' if setting.get('auto_enabled') else 'OFF'}</b>"]
+    if setting.get("split_count"): lines.append(f"분할: <b>{int(safe_float(setting.get('split_count')))}분할</b>")
+    if setting.get("entry_amount_krw"): lines.append(f"1회 진입금액: <b>{fmt_krw(setting.get('entry_amount_krw'))}</b>")
+    lines += ["","━━━━━━━━━━━━━━","💰 <b>최초 기준잔고</b>",f"총 기준자산: <b>{fmt_krw(bal.get('total_krw'))}</b>",f"빗썸 현물: <b>{fmt_krw(bal.get('domestic_balance_krw'))}</b>",f"해외 선물: <b>{fmt_krw(bal.get('foreign_futures_balance_krw'))}</b>","","이 금액을 기준으로 앞으로 자산조회에서 수익률을 계산합니다.",f"🕒 {_balance_now_iso()}"]
+    return "\n".join(lines)
+
+
+def _balance_lookup_text(setting, bal):
+    initial=safe_float(setting.get("initial_total_balance_krw")) or safe_float(bal.get("total_krw")); diff=safe_float(bal.get("total_krw"))-initial; pct=(diff/initial*100.0) if initial>0 else 0.0; sign="+" if diff>=0 else ""
+    return "\n".join(["💰 <b>K-EDGE 자산조회</b>","",f"최초 기준자산: <b>{fmt_krw(initial)}</b>",f"현재 총자산: <b>{fmt_krw(bal.get('total_krw'))}</b>","",f"증가금액: <b>{sign}{fmt_krw(diff)}</b>",f"수익률: <b>{sign}{pct:.2f}%</b>","","━━━━━━━━━━━━━━",f"빗썸 현물: <b>{fmt_krw(bal.get('domestic_balance_krw'))}</b>",f"해외 선물: <b>{fmt_krw(bal.get('foreign_futures_balance_krw'))}</b>",f"시작일: {html_escape(setting.get('initial_saved_at') or '-')}","","※ 조회 시점 기준이며 보유코인 평가는 거래소 API 제공값 기준입니다."])
+
+
+def process_pending_balance_snapshots():
+    global _BALANCE_LAST_POLL_AT
+    if not BALANCE_TRACKING_ENABLED: return
+    now=time.time()
+    if now-_BALANCE_LAST_POLL_AT < BALANCE_POLL_SEC: return
+    _BALANCE_LAST_POLL_AT=now; url=_supabase_url_menu()
+    if not url or not _supabase_key_menu() or requests is None: return
+    try:
+        r=requests.get(url+"/rest/v1/auto_settings", headers=_supabase_headers_menu(False), params={"select":"*","balance_snapshot_requested":"eq.true","order":"updated_at.desc","limit":"20"}, timeout=10)
+        if r.status_code not in (200,206): print(f"{MENU_LOG_PREFIX} pending balance read fail {r.status_code} {r.text[:160]}"); return
+        for setting in r.json() if isinstance(r.json(),list) else []:
+            member=_balance_find_member(chat_id=setting.get("tg_chat_id"), email=setting.get("email"))
+            if not member: continue
+            bal=_calc_user_total_balance(member)
+            if safe_float(bal.get("total_krw"))<=0: continue
+            first = safe_float(setting.get("initial_total_balance_krw"))<=0
+            _save_balance_snapshot(setting, bal, is_initial=first, notified=True)
+            baseline = bal if first else {**bal,"total_krw":setting.get("initial_total_balance_krw") or bal.get("total_krw"),"domestic_balance_krw":setting.get("initial_domestic_balance_krw") or bal.get("domestic_balance_krw"),"foreign_futures_balance_krw":setting.get("initial_foreign_futures_balance_krw") or bal.get("foreign_futures_balance_krw")}
+            send_message(setting.get("tg_chat_id"), _balance_start_dm_text(setting, baseline), reply_keyboard_markup())
+            print(f"{MENU_LOG_PREFIX} balance baseline notify sent chat={setting.get('tg_chat_id')}")
+    except Exception as e: print(f"{MENU_LOG_PREFIX} pending balance snapshot error: {e}")
+
+
+def balance_text(chat_id):
+    member=_balance_find_member(chat_id=chat_id)
+    if not member: return "💰 <b>K-EDGE 자산조회</b>\n\n승인회원 정보를 찾지 못했습니다. AUTO 승인/CHAT ID 연결을 확인해주세요."
+    setting=_supabase_get_auto_setting(chat_id=chat_id, email=member.get("email")) or {}
+    if not setting: return "💰 <b>K-EDGE 자산조회</b>\n\nAUTO 설정 정보가 없습니다. 홈페이지에서 AUTO 설정을 먼저 저장해주세요."
+    bal=_calc_user_total_balance(member)
+    if safe_float(bal.get("total_krw"))<=0: return "💰 <b>K-EDGE 자산조회</b>\n\n잔고조회에 실패했습니다. 거래소 API 권한/IP/선물 계정 잔고를 확인해주세요."
+    if safe_float(setting.get("initial_total_balance_krw"))<=0:
+        _save_balance_snapshot(setting, bal, is_initial=True, notified=False)
+        setting={**setting,"initial_total_balance_krw":bal.get("total_krw"),"initial_domestic_balance_krw":bal.get("domestic_balance_krw"),"initial_foreign_futures_balance_krw":bal.get("foreign_futures_balance_krw"),"initial_saved_at":_balance_now_iso()}
+    else:
+        _save_balance_snapshot(setting, bal, is_initial=False, notified=None)
+    return _balance_lookup_text(setting, bal)
+
+
 def handle_stop(chat_id):
     return send_message(
         chat_id,
@@ -1662,10 +1901,10 @@ def send_startup_menu_to_approved_members():
 
 def poll_loop():
     print("=" * 70)
-    print("K-EDGE V9.5.14 TELEGRAM MENU WORKER - POSITIONS MARGIN/LEVERAGE + CURRENT EDGE")
+    print("K-EDGE V9.5.19 TELEGRAM MENU WORKER - BALANCE TRACKING + CURRENT EDGE")
     print(f"Target bot: @{TARGET_BOT_USERNAME}")
     print("Keyboard: persistent reply keyboard")
-    print("Buttons: 📊 포지션조회 / 📉 현재엣지 / 📈 통계조회 / 🛑 자동정지 / ▶ 자동시작")
+    print("Buttons: 📊 포지션조회 / 📉 현재엣지 / 💰 자산조회 / 📈 통계조회 / 🛑 자동정지 / ▶ 자동시작")
     print("Safe: read-only lookup, no order, no close")
     print("Start: send /start or 메뉴 to @Kedge0203bot DM")
     print("Stop: Ctrl+C")
@@ -1684,6 +1923,8 @@ def poll_loop():
 
     while True:
         try:
+            process_pending_balance_snapshots()
+
             code, data = tg_api("getUpdates", {
                 "offset": offset + 1 if offset else 0,
                 "timeout": 25,
@@ -1715,6 +1956,9 @@ def poll_loop():
                 elif text in ["📉 현재엣지", "현재엣지", "엣지", "익절거리", "/edge", "/edges"]:
                     send_message(chat_id, "⏳ <b>현재엣지 조회 중...</b>\n\n국내/해외 호가와 BTC 기준값을 확인하고 있습니다.", reply_keyboard_markup())
                     send_message(chat_id, current_edge_text(chat_id), reply_keyboard_markup())
+                elif text in ["💰 자산조회", "자산조회", "잔고조회", "잔고", "자산", "/balance", "/asset", "/assets"]:
+                    send_message(chat_id, "⏳ <b>자산 조회 중...</b>\n\n빗썸 현물과 해외 선물 잔고를 확인하고 있습니다.", reply_keyboard_markup())
+                    send_message(chat_id, balance_text(chat_id), reply_keyboard_markup())
                 elif text in ["📈 통계조회", "통계", "/stats", "통계조회"]:
                     send_message(chat_id, stats_text(chat_id), reply_keyboard_markup())
                 elif text in ["🛑 자동정지", "자동정지", "정지", "/stop"]:

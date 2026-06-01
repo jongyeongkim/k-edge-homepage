@@ -225,6 +225,9 @@ async function saveAutoSettings(){
     capital_krw: mode==='compound' ? Math.floor(bithumbCapital) : Math.floor(entry),
     split_count: split,
     entry_amount_krw: Math.floor(entry),
+    balance_snapshot_requested: val('autoEnabled') === 'true',
+    balance_snapshot_request_at: new Date().toISOString(),
+    balance_snapshot_notified: false,
     updated_at: new Date().toISOString()
   };
   // email unique 충돌 방지: 같은 이메일이면 insert가 아니라 upsert/update로 처리한다.
@@ -236,6 +239,20 @@ async function saveAutoSettings(){
     .single();
 
   let error = result.error;
+
+  // balance tracking 컬럼이 아직 DB에 없으면 기존 설정 저장은 살린다.
+  if(error && String(error.message || '').includes('balance_snapshot')){
+    const fallbackPayload = {...payload};
+    delete fallbackPayload.balance_snapshot_requested;
+    delete fallbackPayload.balance_snapshot_request_at;
+    delete fallbackPayload.balance_snapshot_notified;
+    result = await db
+      .from('auto_settings')
+      .upsert(fallbackPayload, { onConflict: 'email' })
+      .select('*')
+      .single();
+    error = result.error || { message:'AUTO 설정은 저장됐지만 자산추적 컬럼 SQL이 아직 적용되지 않았습니다.' };
+  }
 
   // 승인 row도 AUTO ON/OFF와 동기화한다. 봇은 service_enabled OFF면 자동진입을 스킵한다.
   if(!error){
@@ -254,7 +271,7 @@ async function saveAutoSettings(){
     qs('saveMsg').innerHTML='<span class="err">❌ 저장 실패: '+error.message+'</span>';
   } else {
     existingSetting = result.data || payload;
-    qs('saveMsg').innerHTML='<span class="ok">✅ AUTO 설정 저장 완료</span><br>자동매매: '+(payload.auto_enabled?'ON':'OFF')+'<br>1회 진입금액: '+won(entry)+'<br><span class="small">같은 이메일 기존 설정은 자동으로 업데이트됩니다.</span>';
+    qs('saveMsg').innerHTML='<span class="ok">✅ AUTO 설정 저장 완료</span><br>자동매매: '+(payload.auto_enabled?'ON':'OFF')+'<br>1회 진입금액: '+won(entry)+'<br><span class="small">AUTO ON 저장 시 텔레그램으로 최초 기준잔고 알림이 발송됩니다.</span>';
   }
 }
 

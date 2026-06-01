@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-K-EDGE V9.5.9 ORDER WORKER - FOREIGN-FILL AMOUNT SYNC / CROSS GUARD REMOVED
+K-EDGE V9.5.8 ORDER WORKER - CROSS + FOREIGN-FILL AMOUNT SYNC
 - Reads order_queue.jsonl written by the 4 scanner bots.
 - Performs member lookup, duplicate ACTIVE lock, final recheck, foreign short first, Bithumb buy second.
 - Scanner bots must be scanner-only and must not place orders.
+- V9.5.7: Before every foreign short entry, force/check symbol-level CROSS margin.
+  If CROSS cannot be set/verified, cancel entry before foreign short and before Bithumb buy.
 - V9.5.8: After foreign short order succeeds, sync Bithumb buy KRW to actual foreign filled notional KRW when available.
-- V9.5.9: CROSS MARGIN GUARD removed from entry path due exchange-side false failures.
 """
 import os
 import sys
@@ -126,7 +127,7 @@ def _norm_coin(v: Any) -> str:
 # - 해외숏 주문 전에 심볼별 Cross 전환을 먼저 시도한다.
 # - Cross 전환 실패 시 해외숏 주문과 빗썸 매수를 모두 금지한다.
 
-CROSS_GUARD_ENABLED = False  # V9.5.9: Cross Guard disabled/removed from active entry path
+CROSS_GUARD_ENABLED = os.getenv("ORDER_CROSS_GUARD_ENABLED", "true").lower() == "true"
 CROSS_GUARD_VERIFY_AFTER_SET = os.getenv("ORDER_CROSS_GUARD_VERIFY_AFTER_SET", "true").lower() == "true"
 _CROSS_OK_CACHE_TTL_SEC = float(os.getenv("ORDER_CROSS_GUARD_CACHE_TTL_SEC", "60"))
 _CROSS_OK_CACHE: Dict[str, float] = {}
@@ -869,9 +870,12 @@ def run_member_entry(member: Dict[str, Any], signal: Dict[str, Any], tg_id: str)
         if dup:
             return tg_id, False, "[DUPLICATE ACTIVE LOCK] " + reason
 
-        # V9.5.9: Cross Guard removed from live entry path.
-        # Reason: MEXC/Bitget/BingX can return false margin-mode errors even when account is already CROSS,
-        # causing valid entries to be cancelled. Keep amount sync active below.
+        cross_ok, cross_detail = ensure_cross_margin_before_entry(member, signal)
+        if not cross_ok:
+            notify_cross_guard_fail(tg_id, member, signal, cross_detail)
+            return tg_id, False, "[CROSS MARGIN GUARD] " + cross_detail
+
+        log(f"[CROSS GUARD OK] tg={tg_id} {signal.get('coin')} {signal.get('foreign')} / {cross_detail}")
         begin_amount_sync_context(member, signal, tg_id)
         try:
             ok, detail = core.perform_auto_entry_for_member(member, signal)
@@ -975,7 +979,7 @@ def poll_once(processed: Set[str]) -> Set[str]:
 
 def main():
     print("="*70)
-    print("K-EDGE V9.5.9 ORDER WORKER PARALLEL + DUPLICATE LOCK + AMOUNT SYNC")
+    print("K-EDGE V9.5.8 ORDER WORKER PARALLEL + DUPLICATE LOCK + CROSS + AMOUNT SYNC")
     print("Queue:", ORDER_QUEUE_PATH)
     print(f"Parallel workers: {ORDER_WORKER_MAX_PARALLEL}")
     print("Stop: Ctrl+C")
