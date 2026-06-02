@@ -1,4 +1,6 @@
 (function(){
+  // KEDGE_LIVE_DASHBOARD_TP_COUNT_FIX_20260602
+
   const $ = (id) => document.getElementById(id);
   const fmtNum = (n) => Number(n || 0).toLocaleString('ko-KR');
   const fmtPct = (n) => {
@@ -117,15 +119,64 @@
     return t === 'ENTRY_SUCCESS' || t === 'AUTO_ENTRY_SUCCESS' || t === 'ENTRY_OPEN' || t === 'OPEN_SUCCESS';
   }
 
+  // TP/익절 이벤트명 보강
+  // 봇 버전별로 TP_SUCCESS, TP_TRIGGER, CLOSED 등 저장명이 달라질 수 있어
+  // 홈페이지 집계에서는 성공 청산 계열을 폭넓게 인정한다.
+  const TP_EVENT_TYPES = new Set([
+    'TP_SUCCESS',
+    'TP_TRIGGER',
+    'TP_FORCE',
+    'AUTO_TP_SUCCESS',
+    'AUTO_CLOSED',
+    'AUTO_CLOSE_SUCCESS',
+    'TAKE_PROFIT',
+    'TAKE_PROFIT_SUCCESS',
+    'PROFIT_CLOSED',
+    'CLOSE_SUCCESS',
+    'CLOSED',
+    'POSITION_CLOSED',
+    'AUTO_POSITION_CLOSED',
+    'TRADE_CLOSED'
+  ]);
+
+  function rowText(row, keys){
+    if(!row) return '';
+    return keys.map(k => row[k]).filter(v => v !== null && v !== undefined).join(' ').toUpperCase();
+  }
+
+  function isBadCloseEvent(row){
+    const t = eventType(row);
+    const reason = rowText(row, ['reason','exit_reason','close_reason','status_reason','detail','message','error']);
+    const txt = `${t} ${reason}`;
+    return (
+      txt.includes('SL') ||
+      txt.includes('STOP_LOSS') ||
+      txt.includes('LOSS_CUT') ||
+      txt.includes('EMERGENCY') ||
+      txt.includes('BROKEN_HEDGE') ||
+      txt.includes('LIQUIDAT') ||
+      txt.includes('FAIL') ||
+      txt.includes('ERROR') ||
+      txt.includes('손절') ||
+      txt.includes('강제청산') ||
+      txt.includes('헤지붕괴')
+    );
+  }
+
   function isTpEvent(row){
     const t = eventType(row);
+    if(!t) return false;
+    if(isBadCloseEvent(row)) return false;
+    if(TP_EVENT_TYPES.has(t)) return true;
+
+    // event_type은 CLOSED인데 reason/detail에 TP_TRIGGER, TP_FORCE 등이 들어오는 경우 보강
+    const reason = rowText(row, ['reason','exit_reason','close_reason','status_reason','detail','message']);
     return (
-      t === 'TP_SUCCESS' ||
-      t === 'AUTO_CLOSED' ||
-      t === 'TAKE_PROFIT' ||
-      t === 'TAKE_PROFIT_SUCCESS' ||
-      t === 'PROFIT_CLOSED' ||
-      t === 'CLOSE_SUCCESS'
+      reason.includes('TP') ||
+      reason.includes('TAKE_PROFIT') ||
+      reason.includes('PROFIT') ||
+      reason.includes('익절') ||
+      reason.includes('청산 완료')
     );
   }
 
@@ -185,10 +236,32 @@
   }
 
   function statusText(s){
+    const t = String(s || '').toUpperCase();
     const m = {
-      CANDIDATE:'후보', ENTRY_SUCCESS:'진입성공', ENTRY_FAIL:'진입실패', TP_SUCCESS:'익절완료', AUTO_CLOSED:'익절완료', TAKE_PROFIT:'익절완료', TAKE_PROFIT_SUCCESS:'익절완료', CLOSE_SUCCESS:'청산완료', SL_WARNING:'위험경고', STOPPED:'정지'
+      CANDIDATE:'후보',
+      ENTRY_SUCCESS:'진입성공',
+      AUTO_ENTRY_SUCCESS:'진입성공',
+      ENTRY_OPEN:'진입성공',
+      OPEN_SUCCESS:'진입성공',
+      ENTRY_FAIL:'진입실패',
+      TP_SUCCESS:'익절완료',
+      TP_TRIGGER:'익절완료',
+      TP_FORCE:'익절완료',
+      AUTO_TP_SUCCESS:'익절완료',
+      AUTO_CLOSED:'익절완료',
+      AUTO_CLOSE_SUCCESS:'익절완료',
+      TAKE_PROFIT:'익절완료',
+      TAKE_PROFIT_SUCCESS:'익절완료',
+      PROFIT_CLOSED:'익절완료',
+      CLOSE_SUCCESS:'익절완료',
+      CLOSED:'익절완료',
+      POSITION_CLOSED:'익절완료',
+      AUTO_POSITION_CLOSED:'익절완료',
+      TRADE_CLOSED:'익절완료',
+      SL_WARNING:'위험경고',
+      STOPPED:'정지'
     };
-    return m[s] || s || '-';
+    return m[t] || t || '-';
   }
 
   function statusClass(s){
@@ -198,11 +271,17 @@
   }
 
   // 공개 홈페이지에는 후보/진입성공/익절완료만 표시한다.
-  // ENTRY_FAIL 등 운영 로그는 Supabase DB에는 저장하되 화면에서는 숨긴다.
-  const PUBLIC_EVENT_TYPES = new Set(['CANDIDATE', 'ENTRY_SUCCESS', 'TP_SUCCESS', 'AUTO_CLOSED', 'TAKE_PROFIT', 'TAKE_PROFIT_SUCCESS', 'CLOSE_SUCCESS']);
+  // ENTRY_FAIL / 손절 / 비상청산 / 오류 로그는 Supabase DB에는 저장하되 화면에서는 숨긴다.
+  const PUBLIC_EVENT_TYPES = new Set([
+    'CANDIDATE',
+    'ENTRY_SUCCESS',
+    'AUTO_ENTRY_SUCCESS',
+    'ENTRY_OPEN',
+    'OPEN_SUCCESS'
+  ]);
 
   function isPublicEvent(row){
-    return PUBLIC_EVENT_TYPES.has(eventType(row));
+    return PUBLIC_EVENT_TYPES.has(eventType(row)) || isTpEvent(row);
   }
 
   function renderHeroCandidate(rows){
