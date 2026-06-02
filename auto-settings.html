@@ -302,8 +302,7 @@ async function saveAutoSettings(){
         service_enabled: payload.auto_enabled,
         running: payload.auto_enabled,
         auto_config_done: true,
-        foreign_apis: updatedForeignApis,
-        updated_at: new Date().toISOString()
+        foreign_apis: updatedForeignApis
       })
       .eq('id', latestRequest.id);
     requestUpdateError = requestUpdate.error || null;
@@ -318,7 +317,7 @@ async function saveAutoSettings(){
     existingSetting = result.data || payload;
     latestRequest.foreign_apis = updatedForeignApis;
     syncForeignExchangeToggles();
-    qs('saveMsg').innerHTML='<span class="ok">✅ AUTO 설정 저장 완료</span><br>자동매매: '+(payload.auto_enabled?'ON':'OFF')+'<br>운용 거래소: '+selectedForeignLabels.join(', ')+'<br>1회 진입금액: '+won(entry)+'<br><span class="small">API KEY/SECRET은 건드리지 않고 거래소 ON/OFF만 반영했습니다.</span>';
+    qs('saveMsg').innerHTML='<span class="ok">✅ AUTO 설정 저장 완료</span><br>자동매매: '+(payload.auto_enabled?'ON':'OFF')+'<br>운용 거래소: '+selectedForeignLabels.join(', ')+'<br>1회 진입금액: '+won(entry)+'<br><span class="small">API KEY/SECRET은 건드리지 않고 거래소 ON/OFF만 반영했습니다.<br>텔레그램 개인 DM 알림은 Kedge0203bot 메뉴워커가 자동 발송합니다.</span>';
   }
 }
 
