@@ -1,5 +1,5 @@
 (function(){
-  // KEDGE_LIVE_DASHBOARD_TP_COUNT_FIX_20260602
+  // KEDGE_LIVE_DASHBOARD_TP_DATE_FIX_20260602
 
   const $ = (id) => document.getElementById(id);
   const fmtNum = (n) => Number(n || 0).toLocaleString('ko-KR');
@@ -99,15 +99,36 @@
     el.className = 'kedge-live-status' + (ok ? '' : ' off');
   }
 
-  function kstDateKey(v){
+  // K-EDGE TP count date fix
+  // Bot stores KST-looking time into Supabase timestamptz.
+  // Example: actual KST 20:27 is stored/displayed as 2026-06-02 20:27 UTC.
+  // If browser converts that to Asia/Seoul, it becomes 06-03 05:27 and today's TP count becomes 0.
+  // Therefore, event date is compared by UTC date, while "today" is KST date.
+  function eventStoredDateKey(v){
+    if(!v) return '';
     try{
-      return new Date(v).toLocaleDateString('sv-SE', { timeZone:'Asia/Seoul' });
-    }catch(e){ return ''; }
+      const d = new Date(v);
+      if(isNaN(d.getTime())) return '';
+      const y = d.getUTCFullYear();
+      const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(d.getUTCDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }catch(e){
+      return '';
+    }
+  }
+
+  function todayKstKey(){
+    try{
+      return new Date().toLocaleDateString('sv-SE', { timeZone:'Asia/Seoul' });
+    }catch(e){
+      return '';
+    }
   }
 
   function isToday(v){
     if(!v) return false;
-    return kstDateKey(v) === kstDateKey(new Date());
+    return eventStoredDateKey(v) === todayKstKey();
   }
 
   function eventType(row){
