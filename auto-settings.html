@@ -8,7 +8,7 @@
   <style>
     .auto-wrap{max-width:900px;margin:0 auto;padding:32px 16px 70px}
     .auto-card{background:rgba(12,18,34,.92);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:22px;margin:18px 0;box-shadow:0 16px 45px rgba(0,0,0,.28)}
-    .auto-card h3{margin:0 0 10px}.mini-desc{opacity:.78;line-height:1.6}.setting-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}.setting-row label{display:block;font-size:13px;opacity:.82;margin-bottom:6px}.setting-row input,.setting-row select{width:100%;box-sizing:border-box;padding:13px;border-radius:12px;border:1px solid rgba(255,255,255,.15);background:#090f1d;color:#fff}.mode-tabs{display:flex;gap:10px;flex-wrap:wrap}.mode-tabs label{border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:12px 14px;cursor:pointer;background:rgba(255,255,255,.05)}.result-box{background:rgba(0,0,0,.25);border-radius:14px;padding:14px;margin-top:12px;line-height:1.7}.warn{color:#ffcc66}.ok{color:#69e6a3}.err{color:#ff7b7b}.btn.full{width:100%;text-align:center}.small{font-size:13px;opacity:.78}.pill{display:inline-block;border-radius:999px;padding:6px 10px;background:rgba(74,222,128,.15);color:#86efac;font-weight:700;font-size:12px}
+    .auto-card h3{margin:0 0 10px}.mini-desc{opacity:.78;line-height:1.6}.setting-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}.setting-row label{display:block;font-size:13px;opacity:.82;margin-bottom:6px}.setting-row input,.setting-row select{width:100%;box-sizing:border-box;padding:13px;border-radius:12px;border:1px solid rgba(255,255,255,.15);background:#090f1d;color:#fff}.mode-tabs{display:flex;gap:10px;flex-wrap:wrap}.mode-tabs label{border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:12px 14px;cursor:pointer;background:rgba(255,255,255,.05)}.result-box{background:rgba(0,0,0,.25);border-radius:14px;padding:14px;margin-top:12px;line-height:1.7}.warn{color:#ffcc66}.ok{color:#69e6a3}.err{color:#ff7b7b}.btn.full{width:100%;text-align:center}.small{font-size:13px;opacity:.78}.pill{display:inline-block;border-radius:999px;padding:6px 10px;background:rgba(74,222,128,.15);color:#86efac;font-weight:700;font-size:12px}.exchange-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.exchange-toggle{display:flex;align-items:flex-start;gap:10px;border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:14px;background:rgba(255,255,255,.045)}.exchange-toggle input{width:auto!important;margin-top:4px}.exchange-toggle b{display:block}.exchange-toggle small{display:block;opacity:.72;line-height:1.45;margin-top:4px}.exchange-toggle.disabled{opacity:.45}.exchange-toggle.disabled small{color:#ffcc66}@media(max-width:720px){.exchange-grid{grid-template-columns:1fr}}
     @media(max-width:720px){.setting-row{grid-template-columns:1fr}}
   </style>
 </head>
@@ -68,7 +68,19 @@
     </div>
 
     <div class="auto-card">
-      <h3>2. 자동매매</h3>
+      <h3>2. 해외거래소 운용 선택</h3>
+      <p class="mini-desc">API는 삭제하지 않고 보존합니다. OFF로 둔 거래소는 자동진입 대상에서만 제외됩니다.</p>
+      <div class="exchange-grid" id="foreignExchangeBox">
+        <label class="exchange-toggle" id="toggleWrapMexc"><input type="checkbox" id="useMexc"><span><b>MEXC 사용</b><small id="useMexcInfo">API 확인중</small></span></label>
+        <label class="exchange-toggle" id="toggleWrapGate"><input type="checkbox" id="useGate"><span><b>Gate 사용</b><small id="useGateInfo">API 확인중</small></span></label>
+        <label class="exchange-toggle" id="toggleWrapBitget"><input type="checkbox" id="useBitget"><span><b>Bitget 사용</b><small id="useBitgetInfo">API 확인중</small></span></label>
+        <label class="exchange-toggle" id="toggleWrapBingx"><input type="checkbox" id="useBingx"><span><b>BingX 사용</b><small id="useBingxInfo">API 확인중</small></span></label>
+      </div>
+      <div class="small warn" style="margin-top:10px;">※ API가 등록되지 않은 거래소는 선택할 수 없습니다. API 수정/추가는 등록 페이지에서 진행하세요.</div>
+    </div>
+
+    <div class="auto-card">
+      <h3>3. 자동매매</h3>
       <p class="mini-desc">ON으로 저장하면 조건 충족 시 자동진입을 시도합니다. 빗썸 최소주문금액 5,000원 미만이면 저장하지 마세요.</p>
       <div class="setting-row">
         <div>
@@ -100,7 +112,47 @@ const qs = id => document.getElementById(id);
 const won = n => (Math.floor(Number(n)||0)).toLocaleString('ko-KR') + '원';
 const val = id => (qs(id)?.value || '').trim();
 
+const FOREIGN_EXCHANGES = [
+  {key:'mexc', label:'MEXC', input:'useMexc', wrap:'toggleWrapMexc', info:'useMexcInfo'},
+  {key:'gate', label:'Gate', input:'useGate', wrap:'toggleWrapGate', info:'useGateInfo'},
+  {key:'bitget', label:'Bitget', input:'useBitget', wrap:'toggleWrapBitget', info:'useBitgetInfo'},
+  {key:'bingx', label:'BingX', input:'useBingx', wrap:'toggleWrapBingx', info:'useBingxInfo'}
+];
+
 function normalizeJson(v){ if(!v) return {}; if(typeof v === 'string'){ try{return JSON.parse(v)}catch(e){return {}} } return v; }
+function hasForeignApiCredential(cfg){
+  return !!(cfg && (cfg.api_key || cfg.apiKey) && (cfg.secret_key || cfg.api_secret || cfg.secretKey || cfg.secret));
+}
+function getForeignApis(){ return normalizeJson(latestRequest?.foreign_apis); }
+function syncForeignExchangeToggles(){
+  const apis = getForeignApis();
+  FOREIGN_EXCHANGES.forEach(ex => {
+    const cfg = apis[ex.key] || apis[ex.key.toUpperCase()] || {};
+    const hasApi = hasForeignApiCredential(cfg);
+    const input = qs(ex.input);
+    const wrap = qs(ex.wrap);
+    const info = qs(ex.info);
+    if(!input) return;
+    input.disabled = !hasApi;
+    input.checked = hasApi && cfg.enabled !== false;
+    if(wrap) wrap.classList.toggle('disabled', !hasApi);
+    if(info) info.textContent = hasApi ? (input.checked ? 'API 등록됨 · 자동진입 ON' : 'API 등록됨 · 자동진입 OFF') : 'API 미등록 · 등록 페이지에서 API 추가 필요';
+    input.onchange = () => { if(info) info.textContent = input.checked ? 'API 등록됨 · 자동진입 ON' : 'API 등록됨 · 자동진입 OFF'; };
+  });
+}
+function selectedForeignExchangeLabels(){
+  return FOREIGN_EXCHANGES.filter(ex => qs(ex.input)?.checked && !qs(ex.input)?.disabled).map(ex => ex.label);
+}
+function buildForeignApisWithSelectedEnabled(){
+  const apis = getForeignApis();
+  const out = {...apis};
+  FOREIGN_EXCHANGES.forEach(ex => {
+    const original = apis[ex.key] || apis[ex.key.toUpperCase()] || null;
+    if(!original) return;
+    out[ex.key] = {...original, enabled: !!qs(ex.input)?.checked};
+  });
+  return out;
+}
 function getBithumbKeys(){
   const apis = normalizeJson(latestRequest?.domestic_apis);
   const b = apis.bithumb || {};
@@ -130,6 +182,7 @@ async function loadPage(){
   if(error || !reqs || !reqs.length){ qs('memberInfo').innerHTML = '<span class="err">승인된 AUTO 신청 내역이 없습니다.</span>'; return; }
   latestRequest = reqs[0];
   qs('memberInfo').innerHTML = `<span class="pill">APPROVED</span><br>이메일: ${user.email}<br>요청ID: ${latestRequest.id}<br>CHAT ID: ${latestRequest.tg_chat_id||'-'}`;
+  syncForeignExchangeToggles();
   // 같은 이메일은 auto_settings_email_key unique 제약이 있으므로 이메일 기준으로 먼저 조회한다.
   // request_id는 재등록 때마다 바뀔 수 있어 기존 설정을 못 찾고 duplicate insert가 날 수 있다.
   let {data:sets, error:setErr} = await db
@@ -215,6 +268,9 @@ async function saveAutoSettings(){
   const split = Math.max(1, parseInt(val('splitCount')||'1',10));
   const entry = recalcEntry();
   if(entry < 5000){ qs('saveMsg').style.display='block'; qs('saveMsg').innerHTML='<span class="err">❌ 1회 진입금액이 5,000원 미만입니다. 분할 수를 줄이거나 잔고를 확인하세요.</span>'; return; }
+  const selectedForeignLabels = selectedForeignExchangeLabels();
+  if(selectedForeignLabels.length < 1){ qs('saveMsg').style.display='block'; qs('saveMsg').innerHTML='<span class="err">❌ 사용할 해외거래소를 1개 이상 선택하세요.</span>'; return; }
+  const updatedForeignApis = buildForeignApisWithSelectedEnabled();
   const payload = {
     request_id: latestRequest.id,
     email: currentUser.email,
@@ -236,25 +292,33 @@ async function saveAutoSettings(){
     .single();
 
   let error = result.error;
+  let requestUpdateError = null;
 
-  // 승인 row도 AUTO ON/OFF와 동기화한다. 봇은 service_enabled OFF면 자동진입을 스킵한다.
+  // 승인 row도 AUTO ON/OFF와 거래소 ON/OFF를 동기화한다.
+  // API KEY/SECRET 값은 그대로 보존하고 enabled 값만 바꾼다.
   if(!error){
-    await db.from('kedge_requests')
+    const requestUpdate = await db.from('kedge_requests')
       .update({
         service_enabled: payload.auto_enabled,
         running: payload.auto_enabled,
         auto_config_done: true,
+        foreign_apis: updatedForeignApis,
         updated_at: new Date().toISOString()
       })
       .eq('id', latestRequest.id);
+    requestUpdateError = requestUpdate.error || null;
   }
 
   qs('saveMsg').style.display='block';
   if(error){
     qs('saveMsg').innerHTML='<span class="err">❌ 저장 실패: '+error.message+'</span>';
+  } else if(requestUpdateError){
+    qs('saveMsg').innerHTML='<span class="err">❌ AUTO 기본설정은 저장됐지만 거래소 ON/OFF 반영 실패: '+requestUpdateError.message+'</span><br><span class="small">Supabase kedge_requests 업데이트 권한/RLS를 확인하세요.</span>';
   } else {
     existingSetting = result.data || payload;
-    qs('saveMsg').innerHTML='<span class="ok">✅ AUTO 설정 저장 완료</span><br>자동매매: '+(payload.auto_enabled?'ON':'OFF')+'<br>1회 진입금액: '+won(entry)+'<br><span class="small">같은 이메일 기존 설정은 자동으로 업데이트됩니다.</span>';
+    latestRequest.foreign_apis = updatedForeignApis;
+    syncForeignExchangeToggles();
+    qs('saveMsg').innerHTML='<span class="ok">✅ AUTO 설정 저장 완료</span><br>자동매매: '+(payload.auto_enabled?'ON':'OFF')+'<br>운용 거래소: '+selectedForeignLabels.join(', ')+'<br>1회 진입금액: '+won(entry)+'<br><span class="small">API KEY/SECRET은 건드리지 않고 거래소 ON/OFF만 반영했습니다.</span>';
   }
 }
 
