@@ -64,6 +64,16 @@
           <input id="entryAmount" type="text" readonly value="-">
         </div>
       </div>
+      <div class="setting-row">
+        <div>
+          <label>최대 동시 포지션 수</label>
+          <input id="maxOpenPositions" type="number" value="20" min="1" max="100" step="1">
+        </div>
+        <div>
+          <label>권장값</label>
+          <input type="text" readonly value="기본 20개 / 소액 테스트는 5~10개">
+        </div>
+      </div>
       <div id="entryWarn" class="small warn"></div>
     </div>
 
@@ -120,12 +130,36 @@ const FOREIGN_EXCHANGES = [
 ];
 
 function normalizeJson(v){ if(!v) return {}; if(typeof v === 'string'){ try{return JSON.parse(v)}catch(e){return {}} } return v; }
+function normalizeList(v){
+  if(!v) return [];
+  if(Array.isArray(v)) return v.map(x => String(x||'').toLowerCase()).filter(Boolean);
+  if(typeof v === 'string'){
+    try{
+      const parsed = JSON.parse(v);
+      if(Array.isArray(parsed)) return parsed.map(x => String(x||'').toLowerCase()).filter(Boolean);
+    }catch(e){}
+    return v.split(/[,.|/\s]+/).map(x => x.trim().toLowerCase()).filter(Boolean);
+  }
+  return [];
+}
 function hasForeignApiCredential(cfg){
   return !!(cfg && (cfg.api_key || cfg.apiKey) && (cfg.secret_key || cfg.api_secret || cfg.secretKey || cfg.secret));
 }
 function getForeignApis(){ return normalizeJson(latestRequest?.foreign_apis); }
+function getDomesticApis(){ return normalizeJson(latestRequest?.domestic_apis); }
+function getSavedExchangeKeys(){
+  const saved = normalizeList(existingSetting?.trading_pairs || existingSetting?.exchange_name);
+  if(saved.length) return saved;
+  const reqExchange = normalizeList(latestRequest?.exchange);
+  if(reqExchange.length) return reqExchange;
+  // 현재 kedge_requests 테이블에는 foreign_apis 컬럼이 없을 수 있으므로 기본값은 전체 선택 가능으로 둔다.
+  return FOREIGN_EXCHANGES.map(ex => ex.key);
+}
 function syncForeignExchangeToggles(){
   const apis = getForeignApis();
+  const savedKeys = getSavedExchangeKeys();
+  const hasApiJson = Object.keys(apis || {}).length > 0;
+
   FOREIGN_EXCHANGES.forEach(ex => {
     const cfg = apis[ex.key] || apis[ex.key.toUpperCase()] || {};
     const hasApi = hasForeignApiCredential(cfg);
@@ -133,30 +167,31 @@ function syncForeignExchangeToggles(){
     const wrap = qs(ex.wrap);
     const info = qs(ex.info);
     if(!input) return;
-    input.disabled = !hasApi;
-    input.checked = hasApi && cfg.enabled !== false;
-    if(wrap) wrap.classList.toggle('disabled', !hasApi);
-    if(info) info.textContent = hasApi ? (input.checked ? 'API 등록됨 · 자동진입 ON' : 'API 등록됨 · 자동진입 OFF') : 'API 미등록 · 등록 페이지에서 API 추가 필요';
-    input.onchange = () => { if(info) info.textContent = input.checked ? 'API 등록됨 · 자동진입 ON' : 'API 등록됨 · 자동진입 OFF'; };
+
+    // foreign_apis가 존재하는 구버전/확장 DB에서는 API 존재 여부로 제어한다.
+    // 현재 운영 DB처럼 foreign_apis 컬럼이 없는 경우에는 사용자가 거래소 ON/OFF를 저장할 수 있게 막지 않는다.
+    const selectable = hasApiJson ? hasApi : true;
+    input.disabled = !selectable;
+    input.checked = selectable && (hasApiJson ? cfg.enabled !== false : savedKeys.includes(ex.key));
+
+    if(wrap) wrap.classList.toggle('disabled', !selectable);
+    if(info){
+      if(hasApiJson) info.textContent = hasApi ? (input.checked ? 'API 등록됨 · 자동진입 ON' : 'API 등록됨 · 자동진입 OFF') : 'API 미등록 · 등록 페이지에서 API 추가 필요';
+      else info.textContent = input.checked ? '서버 API 기준 · 자동진입 ON' : '서버 API 기준 · 자동진입 OFF';
+    }
+    input.onchange = () => { if(info) info.textContent = input.checked ? '서버 API 기준 · 자동진입 ON' : '서버 API 기준 · 자동진입 OFF'; };
   });
+}
+function selectedForeignExchangeKeys(){
+  return FOREIGN_EXCHANGES.filter(ex => qs(ex.input)?.checked && !qs(ex.input)?.disabled).map(ex => ex.key);
 }
 function selectedForeignExchangeLabels(){
   return FOREIGN_EXCHANGES.filter(ex => qs(ex.input)?.checked && !qs(ex.input)?.disabled).map(ex => ex.label);
 }
-function buildForeignApisWithSelectedEnabled(){
-  const apis = getForeignApis();
-  const out = {...apis};
-  FOREIGN_EXCHANGES.forEach(ex => {
-    const original = apis[ex.key] || apis[ex.key.toUpperCase()] || null;
-    if(!original) return;
-    out[ex.key] = {...original, enabled: !!qs(ex.input)?.checked};
-  });
-  return out;
-}
 function getBithumbKeys(){
-  const apis = normalizeJson(latestRequest?.domestic_apis);
-  const b = apis.bithumb || {};
-  return { key:(b.api_key||'').trim(), secret:(b.secret_key||b.api_secret||'').trim() };
+  const apis = getDomesticApis();
+  const b = apis.bithumb || apis.BITHUMB || {};
+  return { key:(b.api_key||b.apiKey||'').trim(), secret:(b.secret_key||b.api_secret||b.secretKey||b.secret||'').trim() };
 }
 async function hmacSha256Base64Url(message, secret){
   const enc = new TextEncoder();
@@ -178,7 +213,8 @@ async function loadPage(){
   const {data:{user}} = await db.auth.getUser();
   currentUser = user;
   if(!user){ qs('memberInfo').innerHTML = '<span class="err">로그인 후 이용 가능합니다.</span>'; return; }
-  const {data:reqs,error} = await db.from('kedge_requests').select('*').eq('email', user.email).eq('status','APPROVED').order('approved_at',{ascending:false}).order('created_at',{ascending:false}).limit(1);
+  // kedge_requests 운영 테이블에는 approved_at/created_at 컬럼이 없을 수 있으므로 id 기준 최신 승인건을 조회한다.
+  const {data:reqs,error} = await db.from('kedge_requests').select('*').eq('email', user.email).eq('status','APPROVED').order('id',{ascending:false}).limit(1);
   if(error || !reqs || !reqs.length){ qs('memberInfo').innerHTML = '<span class="err">승인된 AUTO 신청 내역이 없습니다.</span>'; return; }
   latestRequest = reqs[0];
   qs('memberInfo').innerHTML = `<span class="pill">APPROVED</span><br>이메일: ${user.email}<br>요청ID: ${latestRequest.id}<br>CHAT ID: ${latestRequest.tg_chat_id||'-'}`;
@@ -208,6 +244,7 @@ async function loadPage(){
     const mode = existingSetting.capital_mode || existingSetting.operation_mode || 'compound';
     document.querySelector(`input[name="capitalMode"][value="${mode}"]`)?.click();
     qs('splitCount').value = existingSetting.split_count || 20;
+    qs('maxOpenPositions').value = existingSetting.max_open_positions || 20;
     qs('fixedEntryKrw').value = existingSetting.entry_amount_krw || 10000;
     qs('autoEnabled').value = String(!!existingSetting.auto_enabled);
     qs('alertEnabled').value = String(existingSetting.alert_enabled !== false);
@@ -270,17 +307,22 @@ async function saveAutoSettings(){
   if(entry < 5000){ qs('saveMsg').style.display='block'; qs('saveMsg').innerHTML='<span class="err">❌ 1회 진입금액이 5,000원 미만입니다. 분할 수를 줄이거나 잔고를 확인하세요.</span>'; return; }
   const selectedForeignLabels = selectedForeignExchangeLabels();
   if(selectedForeignLabels.length < 1){ qs('saveMsg').style.display='block'; qs('saveMsg').innerHTML='<span class="err">❌ 사용할 해외거래소를 1개 이상 선택하세요.</span>'; return; }
-  const updatedForeignApis = buildForeignApisWithSelectedEnabled();
+  const selectedForeignKeys = selectedForeignExchangeKeys();
+  const maxOpenPositions = Math.max(1, parseInt(val('maxOpenPositions') || '20', 10));
   const payload = {
     request_id: latestRequest.id,
     email: currentUser.email,
     tg_chat_id: latestRequest.tg_chat_id,
+    service_enabled: val('autoEnabled') === 'true',
     alert_enabled: val('alertEnabled') === 'true',
     auto_enabled: val('autoEnabled') === 'true',
     capital_mode: mode,
     capital_krw: mode==='compound' ? Math.floor(bithumbCapital) : Math.floor(entry),
     split_count: split,
     entry_amount_krw: Math.floor(entry),
+    max_open_positions: maxOpenPositions,
+    trading_pairs: selectedForeignKeys,
+    exchange_name: selectedForeignKeys.join(','),
     updated_at: new Date().toISOString()
   };
   // email unique 충돌 방지: 같은 이메일이면 insert가 아니라 upsert/update로 처리한다.
@@ -292,32 +334,14 @@ async function saveAutoSettings(){
     .single();
 
   let error = result.error;
-  let requestUpdateError = null;
-
-  // 승인 row도 AUTO ON/OFF와 거래소 ON/OFF를 동기화한다.
-  // API KEY/SECRET 값은 그대로 보존하고 enabled 값만 바꾼다.
-  if(!error){
-    const requestUpdate = await db.from('kedge_requests')
-      .update({
-        service_enabled: payload.auto_enabled,
-        running: payload.auto_enabled,
-        auto_config_done: true,
-        foreign_apis: updatedForeignApis
-      })
-      .eq('id', latestRequest.id);
-    requestUpdateError = requestUpdate.error || null;
-  }
 
   qs('saveMsg').style.display='block';
   if(error){
     qs('saveMsg').innerHTML='<span class="err">❌ 저장 실패: '+error.message+'</span>';
-  } else if(requestUpdateError){
-    qs('saveMsg').innerHTML='<span class="err">❌ AUTO 기본설정은 저장됐지만 거래소 ON/OFF 반영 실패: '+requestUpdateError.message+'</span><br><span class="small">Supabase kedge_requests 업데이트 권한/RLS를 확인하세요.</span>';
   } else {
     existingSetting = result.data || payload;
-    latestRequest.foreign_apis = updatedForeignApis;
     syncForeignExchangeToggles();
-    qs('saveMsg').innerHTML='<span class="ok">✅ AUTO 설정 저장 완료</span><br>자동매매: '+(payload.auto_enabled?'ON':'OFF')+'<br>운용 거래소: '+selectedForeignLabels.join(', ')+'<br>1회 진입금액: '+won(entry)+'<br><span class="small">API KEY/SECRET은 건드리지 않고 거래소 ON/OFF만 반영했습니다.<br>텔레그램 개인 DM 알림은 Kedge0203bot 메뉴워커가 자동 발송합니다.</span>';
+    qs('saveMsg').innerHTML='<span class="ok">✅ AUTO 설정 저장 완료</span><br>자동매매: '+(payload.auto_enabled?'ON':'OFF')+'<br>운용 거래소: '+selectedForeignLabels.join(', ')+'<br>최대 동시 포지션: '+maxOpenPositions+'개<br>1회 진입금액: '+won(entry)+'<br><span class="small">API KEY/SECRET은 건드리지 않고 auto_settings만 저장했습니다.<br>개인 DM 알림은 @kedge1203bot 메뉴워커가 자동 발송합니다.</span>';
   }
 }
 
