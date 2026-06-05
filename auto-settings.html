@@ -321,8 +321,6 @@ async function saveAutoSettings(){
     split_count: split,
     entry_amount_krw: Math.floor(entry),
     max_open_positions: maxOpenPositions,
-    trading_pairs: selectedForeignKeys,
-    exchange_name: selectedForeignKeys.join(','),
     updated_at: new Date().toISOString()
   };
   // email unique 충돌 방지: 같은 이메일이면 insert가 아니라 upsert/update로 처리한다.
@@ -341,7 +339,7 @@ async function saveAutoSettings(){
   } else {
     existingSetting = result.data || payload;
     syncForeignExchangeToggles();
-    qs('saveMsg').innerHTML='<span class="ok">✅ AUTO 설정 저장 완료</span><br>자동매매: '+(payload.auto_enabled?'ON':'OFF')+'<br>운용 거래소: '+selectedForeignLabels.join(', ')+'<br>최대 동시 포지션: '+maxOpenPositions+'개<br>1회 진입금액: '+won(entry)+'<br><span class="small">API KEY/SECRET은 건드리지 않고 auto_settings만 저장했습니다.<br>개인 DM 알림은 @kedge1203bot 메뉴워커가 자동 발송합니다.</span>';
+    qs('saveMsg').innerHTML='<span class="ok">✅ AUTO 설정 저장 완료</span><br>자동매매: '+(payload.auto_enabled?'ON':'OFF')+'<br>선택 거래소: '+selectedForeignLabels.join(', ')+'<br>최대 동시 포지션: '+maxOpenPositions+'개<br>1회 진입금액: '+won(entry)+'<br><span class="small">API KEY/SECRET은 건드리지 않고 auto_settings만 저장했습니다.<br>개인 DM 알림은 @kedge1203bot 메뉴워커가 자동 발송합니다.</span>';
   }
 }
 
