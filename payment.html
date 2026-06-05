@@ -578,7 +578,8 @@ window.submitVipRequest = async function(){
       .from("kedge_requests")
       .select("*")
       .eq("tg_chat_id", tgChatId)
-      .order("id", { ascending:false })
+      .order("approved_at", { ascending:false, nullsFirst:false })
+      .order("created_at", { ascending:false })
       .limit(1);
 
     if(findErr) console.warn("[KEDGE API 재등록 조회 실패]", findErr);
@@ -613,10 +614,33 @@ window.submitVipRequest = async function(){
         apiUpdatePayload.foreign_api_secret = firstForeign[1].secret_key || firstForeign[1].api_secret;
       }
 
-      const { error: updateErr } = await db
+      // 1차: JSON 컬럼(domestic_apis/foreign_apis)까지 전체 저장
+      let { error: updateErr } = await db
         .from("kedge_requests")
         .update(apiUpdatePayload)
         .eq("id", target.id);
+
+      // 운영 DB 스키마가 아직 덜 반영된 경우를 대비한 fallback.
+      // 없는 컬럼 때문에 실패하면 legacy 컬럼만이라도 저장한다.
+      if(updateErr){
+        console.warn("[KEDGE API 재등록 1차 실패 - fallback 시도]", updateErr);
+        const legacyPayload = {
+          tg_chat_id: tgChatId,
+          telegram: telegramId || target.telegram || "미등록"
+        };
+        if(bithumb && bithumb.api_key && (bithumb.secret_key || bithumb.api_secret)){
+          legacyPayload.domestic_exchange = "BITHUMB";
+          legacyPayload.domestic_api_key = bithumb.api_key;
+          legacyPayload.domestic_api_secret = bithumb.secret_key || bithumb.api_secret;
+        }
+        if(firstForeign){
+          legacyPayload.foreign_exchange = firstForeign[0].toUpperCase();
+          legacyPayload.foreign_api_key = firstForeign[1].api_key;
+          legacyPayload.foreign_api_secret = firstForeign[1].secret_key || firstForeign[1].api_secret;
+        }
+        const fb = await db.from("kedge_requests").update(legacyPayload).eq("id", target.id);
+        updateErr = fb.error || null;
+      }
 
       if(updateErr){
         console.error(updateErr);
@@ -700,7 +724,27 @@ window.submitVipRequest = async function(){
     final_price_krw
   };
 
-  const { error } = await db.from("kedge_requests").insert(payload);
+  let { error } = await db.from("kedge_requests").insert(payload);
+
+  // 신규 신청도 스키마가 덜 반영된 경우 legacy 최소 컬럼으로 fallback 저장한다.
+  if(error){
+    console.warn("[KEDGE 신규 신청 1차 실패 - fallback 시도]", error);
+    const legacyPayload = {
+      email: user.email,
+      telegram: telegramId || user.telegram || "미등록",
+      product: "AUTO",
+      pay_type: payType,
+      pay_name: payName,
+      memo: payType === "BANK" ? "" : memo,
+      status: "PENDING",
+      tg_chat_id: tgChatId,
+      ...domesticLegacy,
+      ...foreignLegacy
+    };
+    const fb = await db.from("kedge_requests").insert(legacyPayload);
+    error = fb.error || null;
+  }
+
   if(error){
     console.error(error);
     return msg("❌ 신청 저장 실패: " + error.message);
